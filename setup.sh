@@ -4,6 +4,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 USERNAME='hatter'
 PASSWORD='H@tt3r123!'
+ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 CURRENT_DIR=$(pwd)
 
 if [ "$EUID" -ne 0 ]; then
@@ -11,6 +12,7 @@ if [ "$EUID" -ne 0 ]; then
   exit 1 
 fi 
 
+clear
 echo -e "${GREEN}[+] Optimizing and Updating Fedora${NC}"
 echo 'fastestmirror=1' | tee -a /etc/dnf/dnf.conf
 echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
@@ -46,7 +48,7 @@ dnf install podman cockpit-podman podman-compose -y
 systemctl enable podman --now
 
 echo -e "${GREEN}[+] Setting up user${NC}"
-useradd -m -G wheel $USERNAME -p $PASSWORD -s $(which fish)
+useradd -m -G wheel $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
