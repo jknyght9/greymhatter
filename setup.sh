@@ -4,6 +4,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 USERNAME='hatter'
 PASSWORD='H@tt3r123!'
+CURRENT_DIR=$(pwd)
 
 if [ "$EUID" -ne 0 ]; then
   echo "Must be ran as root."
@@ -47,18 +48,14 @@ systemctl enable podman --now
 echo -e "${GREEN}[+] Setting up user${NC}"
 useradd -m -G wheel $USERNAME -p $PASSWORD -s $(which fish)
 
+echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
 whoami
-cp ./config/starship.toml ~/.config
-mkdir -p ~/.config/fish
-cp ./config/fish/config.fish ~/.config/fish
-mkdir -p ~/.config/tmux 
-cp ./config/tmux/tmux.conf ~/.config/tmux
+cp -r $CURRENT_DIR/config/* ~/.config
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
-mkdir -p ~/.config/nvim 
-cp -R ./config/nvim/* ~/.config/nvim/
 EOF
 
+echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 whoami
 
 echo -e "${GREEN}[+] Installing Samba (Windows Share)${NC}"
