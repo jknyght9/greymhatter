@@ -1,0 +1,11 @@
+format = '''$all$directory$character'''
+right_format = '''$time'''
+
+[battery]
+disabled = true
+
+[time]
+disabled = false
+format = '[$time]($style)'
+time_format = '%T%z'
+style = 'white dimmed'
