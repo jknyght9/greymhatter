@@ -5,16 +5,12 @@ NC='\033[0m' # No Color
 USERNAME='hatter'
 PASSWORD='H@tt3r123!'
 
-function colorize() {
-	printf "$2$1$NC$3"
-}
-
 if [ "$EUID" -ne 0 ]; then
   echo "Must be ran as root."
   exit 1 
 fi 
 
-colorize "[+]" $GREEN " Optimizing and Updating Fedora"
+echo -e "${GREEN}[+] Optimizing and Updating Fedora${NC}"
 echo 'fastestmirror=1' | tee -a /etc/dnf/dnf.conf
 echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
 echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
@@ -27,28 +23,28 @@ fwupdmgr refresh --force
 fwupdmgr get-updates
 fwupdmgr update -y
 
-colorize "[+]" $GREEN " Setting SELinux to permissive"
+echo -e "${GREEN}[+] Setting SELinux to permissive${NC}"
 sed -i 's/=enforcing/=permissive/g' /etc/selinux/config
 
-colorize "[+]" $GREEN " Installing required software"
+echo -e "${GREEN}[+] Installing required software${NC}"
 dnf install bat btop curl fish duf exa git neovim tmux util-linux-user wget -y
 
-colorize "[+]" $GREEN " Installing Hack Nerd Fonts"
+echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
 	&& unzip Hack.zip -d ~/.fonts \
 	&& fc-cache -fv \
 	&& rm -rf Hack*
 
-colorize "[+]" $GREEN " Installing Starship"
+echo -e "${GREEN}[+] Installing Starship${NC}"
 curl -O https://starship.rs/install.sh \
 	&& sh ./install.sh -f \
 	&& rm -f install.sh
 
-colorize "[+]" $GREEN " Installing Podman"
+echo -e "${GREEN}[+] Installing Podman${NC}"
 dnf install podman cockpit-podman podman-compose -y
 systemctl enable podman --now
 
-colorize "[+]" $GREEN " Setting up user"
+echo -e "${GREEN}[+] Setting up user${NC}"
 useradd -m -G wheel $USERNAME -p $PASSWORD -s $(which fish)
 
 su - $USERNAME << EOF
@@ -65,7 +61,7 @@ EOF
 
 whoami
 
-colorize "[+]" $GREEN " Installing Samba (Windows Share)"
+echo -e "${GREEN}[+] Installing Samba (Windows Share)${NC}"
 mkdir /opt/share
 chown $USERNAME:$USERNAME /opt/share
 dnf install samba -y
