@@ -30,7 +30,7 @@ echo -e "${GREEN}[+] Setting SELinux to permissive${NC}"
 sed -i 's/=enforcing/=permissive/g' /etc/selinux/config
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install bat btop curl fish duf exa git neovim tmux util-linux-user wget -y
+dnf install bat btop curl fish duf exa git neovim python3 python3-pip tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
@@ -64,36 +64,7 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 10
 EOF
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 
-echo -e "${GREEN}[+] Installing Samba (Windows Share)${NC}"
-mkdir /opt/share
-chown $USERNAME:$USERNAME /opt/share
-dnf install samba -y
-systemctl enable smb --now
-firewall-cmd --permanent --zone=FedoraServer --add-service=samba
-firewall-cmd --reload
-groupadd samba
-usermod -aG samba $USERNAME
-chgrp samba /opt/share 
-chmod 770 /opt/share 
-semanage fcontext --add --type "samba_share_t" "/opt/share(/.*)?"
-restorecon -R /opt/share
-echo -e "Enter password for SMB share."
-smbpasswd -a $USERNAME
-cat <<EOF > /etc/samba/smb.conf
-[share]
-	comment = Share for evidence
-	path = /opt/share
-	writable = yes
-	browseable = yes
-	public = yes
-	valid users = @samba
-	create mask = 0660
-	directory mask = 0770
-	force group = +samba
-EOF
-systemctl restart smb
-
-bash ./install-timesketch.sh "$CURRENT_DIR"
+bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Timesketch installation failed"
 else
@@ -106,3 +77,10 @@ if [[ $? -ne 0 ]]; then
 else
   echo "Maxmind installtion completed"
 fi
+
+bash ./install-smbshare.sh "$USERNAME"
+if [[ $? -ne 0 ]]; then
+  echo "Samba share installation failed"
+else 
+  echo "Samba share installation completed"
+fi 
