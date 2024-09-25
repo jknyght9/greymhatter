@@ -43,22 +43,26 @@ curl -O https://starship.rs/install.sh \
 	&& sh ./install.sh -f \
 	&& rm -f install.sh
 
-echo -e "${GREEN}[+] Installing Podman${NC}"
-dnf install podman cockpit-podman podman-compose -y
-systemctl enable podman --now
+echo -e "${GREEN}[+] Installing Docker${NC}"
+curl -fsSL https://get.docker.com -o get-docker.sh
+chmod u+x ./get-docker.sh
+sh ./get-docker.sh
+systemctl enable --now docker 
+systemctl start docker 
 
 echo -e "${GREEN}[+] Setting up user${NC}"
-useradd -m -G wheel $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
+if id "$USERNAME" &>/dev/null; then 
+  echo "$USERNAME exists"
+else 
+  useradd -m -G wheel $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
+fi
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
-whoami
 cp -r $CURRENT_DIR/config/* ~/.config
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
 EOF
-
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
-whoami
 
 echo -e "${GREEN}[+] Installing Samba (Windows Share)${NC}"
 mkdir /opt/share
@@ -73,6 +77,7 @@ chgrp samba /opt/share
 chmod 770 /opt/share 
 semanage fcontext --add --type "samba_share_t" "/opt/share(/.*)?"
 restorecon -R /opt/share
+echo -e "Enter password for SMB share."
 smbpasswd -a $USERNAME
 cat <<EOF > /etc/samba/smb.conf
 [share]
@@ -88,4 +93,16 @@ cat <<EOF > /etc/samba/smb.conf
 EOF
 systemctl restart smb
 
+bash ./install-timesketch.sh "$CURRENT_DIR"
+if [[ $? -ne 0 ]]; then
+  echo "Timesketch installation failed"
+else
+  echo "Timesketch installation completed"
+fi
 
+bash ./install-maxmind.sh
+if [[ $? -ne 0 ]]; then
+  echo "Maxmind installation failed"
+else
+  echo "Maxmind installtion completed"
+fi

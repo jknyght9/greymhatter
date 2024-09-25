@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  timesketch-worker:
+    depends_on: postgres
+    volumes:
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+      - /opt/share/:/share/
+      - /opt/maxmind-geoipupdate/geoip_data:/opt/maxmind
+  timesketch-web:
+    depends_on: timesketch-worker
+  timesketch-web-legacy:
+    depends_on: timesketch-worker
+  nginx:
+    depends_on: timesketch-web
+    volumes:
+      - /opt/timesketch/ssl/:/ssl/
