@@ -3,7 +3,7 @@
 echo -e "Installing Maxmind GeoIP Database"
 CWD=$(pwd)
 cd /opt/ 
-git clone https://github.com/jknyght9/maxmind-geoipupdate.git --depth 1 maxmind-geoipupdate 
+git clone https://github.com/jknyght9/maxmind-geoipupdate.git --depth 1 
 read -p "Enter your Maxmind Account ID: " ACCOUNTID
 read -p "Enter your License Key: " LICENSEKEY
 if [[ -n "$ACCOUNTID" && -n "$LICENSEKEY" ]]; then

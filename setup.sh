@@ -69,12 +69,13 @@ else
   useradd -m -G wheel $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
 fi
 chsh -s $(which fish) $USERNAME
+cp $CURRENT_DIR/media/greymhatter-background.jpg /home/$USERNAME/Pictures/background.jpg
+chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
-cp -r $CURRENT_DIR/config/* ~/.config
+bash -c 'cp -r $CURRENT_DIR/config/* ~/.config'
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
-cp $CURRENT_DIR/media/greymhatter-background.jpg ~/Pictures/background.jpg
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
 EOF
