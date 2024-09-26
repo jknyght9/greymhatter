@@ -74,7 +74,6 @@ chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
-bash -c 'cp -r $CURRENT_DIR/config/* ~/.config'
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
@@ -82,6 +81,8 @@ gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize
 gnome-extentions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
+cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
+chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
 
 read -p "Enter to continue"
 
