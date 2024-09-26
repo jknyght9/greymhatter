@@ -31,7 +31,7 @@ echo -e "${GREEN}[+] Setting SELinux to permissive${NC}"
 sed -i 's/=enforcing/=permissive/g' /etc/selinux/config
 
 echo -e "${GREEN}[+] Setting system hostname${NC}"
-hostnamectl set-HOSTNAME "${HOSTNAME}"
+hostnamectl set-hostname "${HOSTNAME}"
 echo "${HOSTNAME}.jdclabs.io ${HOSTNAME}" > /etc/hosts
 echo "127.0.0.1 ${HOSTNAME}.jdclabs.io ${HOSTNAME}" >> /etc/hosts
 cat >> /etc/hosts <<EOF
