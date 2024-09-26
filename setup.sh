@@ -46,7 +46,7 @@ dnf install bat btop curl fish duf exa gnome-shell-extension-apps-menu git neovi
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
-	&& unzip Hack.zip -d ~/.fonts \
+	&& unzip Hack.zip -d ~/.local/share/fonts \
 	&& fc-cache -fv \
 	&& rm -rf Hack*
 
@@ -79,6 +79,7 @@ export $(dbus-launch)
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
 gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
 gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
