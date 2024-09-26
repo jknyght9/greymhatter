@@ -4,6 +4,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 USERNAME='hatter'
 PASSWORD='H@tt3r123!'
+HOSTNAME='greymhatter'
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 CURRENT_DIR=$(pwd)
 
@@ -20,7 +21,7 @@ echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
 dnf clean all
 dnf upgrade --refresh -y
 dnf check
-dnf autoremove
+dnf autoremove -y
 fwupdmgr get-devices
 fwupdmgr refresh --force
 fwupdmgr get-updates
@@ -29,8 +30,19 @@ fwupdmgr update -y
 echo -e "${GREEN}[+] Setting SELinux to permissive${NC}"
 sed -i 's/=enforcing/=permissive/g' /etc/selinux/config
 
+echo -e "${GREEN}[+] Setting system hostname${NC}"
+HOSTNAMEctl set-HOSTNAME "${HOSTNAME}"
+echo "${HOSTNAME}.jdclabs.io ${HOSTNAME}" > /etc/hosts
+echo "127.0.0.1 ${HOSTNAME}.jdclabs.io ${HOSTNAME}" >> /etc/hosts
+cat >> /etc/hosts <<EOF
+127.0.0.1 localhost
+::1 localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install bat btop curl fish duf exa git neovim python3 python3-pip tmux util-linux-user wget -y
+dnf install bat btop curl fish duf exa git neovim openssl python3 python3-pip tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
@@ -59,11 +71,15 @@ fi
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
+chsh -s $(which fish)
 cp -r $CURRENT_DIR/config/* ~/.config
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 
+read -p "Enter to continue"
+
+echo -e "${GREEN}[+] Installing Timesketch${NC}"
 bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Timesketch installation failed"
@@ -73,6 +89,7 @@ fi
 
 read -p "Enter to continue"
 
+echo -e "${GREEN}[+] Installing Maxmind${NC}"
 bash ./install-maxmind.sh
 if [[ $? -ne 0 ]]; then
   echo "Maxmind installation failed"
@@ -82,6 +99,7 @@ fi
 
 read -p "Enter to continue"
 
+echo -e "${GREEN}[+] Installing Yeti${NC}"
 bash ./install-yeti.sh "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Yeti installation failed"
@@ -91,6 +109,7 @@ fi
 
 read -p "Enter to continue"
 
+echo -e "${GREEN}[+] Installing Spiderfoot${NC}"
 bash ./install-spiderfoot.sh "$CURRENT_DIR"
 if [[ $? -ne 0 ]]; then
   echo "Spiderfoot installation failed"
@@ -100,16 +119,17 @@ fi
 
 read -p "Enter to continue"
 
-bash ./install-volatility.sh "$USERNAME"
+echo -e "${GREEN}[+] Installing Volatility3${NC}"
+bash ./install-volatility3.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
   echo "Volatility installation failed"
 else 
   echo "Volatility installation completed"
 fi 
-read -p "Enter to continue"
 
 read -p "Enter to continue"
 
+echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
 bash ./install-tools.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
   echo "DFIR tools installation failed"
@@ -119,7 +139,8 @@ fi
 
 read -p "Enter to continue"
 
-bash ./install-smbshare.sh "$USERNAME"
+echo -e "${GREEN}[+] Installing Samba${NC}"
+bash ./install-smbshare.sh "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Samba share installation failed"
 else 
@@ -128,6 +149,7 @@ fi
 
 read -p "Enter to continue"
 
+echo -e "${GREEN}[+] Installing Cyberchef${NC}"
 bash ./install-cyberchef.sh "$CURRENT_DIR"
 if [[ $? -ne 0 ]]; then
   echo "Cyberchef installation failed"

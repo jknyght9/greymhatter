@@ -1,6 +1,7 @@
 #!/bin/bash
 
 USERNAME="$1"
+PASSWORD="$2"
 
 echo -e "Installing Samba (Windows Share)"
 mkdir /opt/share
@@ -16,6 +17,8 @@ chmod 770 /opt/share
 semanage fcontext --add --type "samba_share_t" "/opt/share(/.*)?"
 restorecon -R /opt/share
 echo -e "Enter password for SMB share."
+set +H
+echo "$PASSWORD\n$PASSWORD" | smbpasswd -s -a hatter
 smbpasswd -a $USERNAME
 cat <<EOF > /etc/samba/smb.conf
 [share]

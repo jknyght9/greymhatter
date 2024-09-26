@@ -12,7 +12,7 @@ if [[ -n "$ACCOUNTID" && -n "$LICENSEKEY" ]]; then
   echo -e "Configuring Maxmind for Timesketch"
   sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
   docker compose up -d
-  if [[ "$(docker inspect -f '{{.State.Running}}' geoipupdate)" == "true"]]; then
+  if [[ "$(docker inspect -f '{{.State.Running}}' geoipupdate)" == "true" ]]; then
     if [[ "$(docker inspect -f '{{.State.Running}}' timesketch-worker)" == "true" ]]; then
       echo "Restarting Timesketch worker"
       docker compose restart timesketch-worker
