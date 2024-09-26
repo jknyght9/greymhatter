@@ -1,0 +1,13 @@
+version: "3"
+services:
+  spiderfoot:
+    volumes:
+      - spiderfoot-data:/var/lib/spiderfoot
+    image: spiderfoot
+    container_name: spiderfoot
+    ports:
+      - "5001:5001"
+restart: unless-stopped
+
+volumes:
+  spiderfoot-data:

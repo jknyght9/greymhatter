@@ -1,34 +1,32 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
 CURRENT_DIR="$1"
 USERNAME="$2"
 PASSWORD="$3"
 
-echo -e "${GREEN}[+] Installing Timesketch${NC}"
+echo -e "Installing Timesketch"
 cd /opt
 curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
 chmod 755 deploy_timesketch.sh
 bash ./deploy_timesketch.sh
 if [[ $? -eq 0 ]]; then
-  echo -e "${GREEN}[-] Copying required files${NC}"
+  echo -e "Copying required files"
   cp $CURRENT_DIR/timesketch/docker-compose.override.yml /opt/timesketch/
   cp $CURRENT_DIR/timesketch/nginx.conf /opt/timesketch/etc
   cp $CURRENT_DIR/timesketch/*.yaml /opt/timesketch/etc/timesketch
-  echo -e "${GREEN}[-] Configuring Maxmind for Timesketch${NC}"
+  echo -e "Configuring Maxmind for Timesketch"
   sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
-  echo -e "${GREEN}[-] Configuring SSL for Timesketch${NC}"
+  echo -e "Configuring SSL for Timesketch"
   mkdir -p /opt/timesketch/{ssl/certs,ssl/private}
   openssl req -x509 -out /opt/timesketch/ssl/certs/localhost.crt -keyout /opt/timesketch/ssl/private/localhost.key -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -extensions EXT -config <(printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
   chmod 600 /opt/timesketch/ssl/private/localhost.key 
-  echo -e "${GREEN}[+] Starting Timesketch${NC}"
+  echo -e "Starting Timesketch"
   cd /opt/timesketch
   docker compose up -d
-  echo -e "${GREEN}[+] Creating Timesketch User${NC}"
+  echo -e "Creating Timesketch User"
   docker compose exec timesketch-web tsctl create-user $USERNAME --password $PASSWORD
-  echo -e "${GREEN}[+] Installing Timesketch Importer${NC}"
+  echo -e "Installing Timesketch Importer"
   pip3 install timesketch-import-client
 else
-  echo -e "${GREEN}[!] An error occured while installing Timesketch${NC}"
+  echo -e "An error occured while installing Timesketch"
 fi

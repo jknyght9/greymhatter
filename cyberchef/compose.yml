@@ -1,0 +1,6 @@
+services:
+  cyberchef:
+    container_name: cyberchef
+    image: ghcr.io/gchq/cyberchef:latest
+    restart: always
+    ports: [8080:80]
