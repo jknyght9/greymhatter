@@ -75,11 +75,10 @@ chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
-bash -c 'export $(dbus-launch)'
-gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
-gsettings set org.gnome.desktop.background picture-options "zoom"
-gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
-gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
+dconf write /org/gnome/desktop/background/picture-uri "'file:///home/hatter/Pictures/background.jpg'"
+dconf write /org/gnome/desktop/background/picture-options "'zoom'"
+dconf write /org/gnome/desktop/wm/preferences/button-layout "':minimize,maximize,close'"
+dconf write /org/gnome/desktop/interface/monospace-font-name "'Hack Nerd Font 10'"
 gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
