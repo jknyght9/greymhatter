@@ -106,6 +106,7 @@ if [[ $? -ne 0 ]]; then
 else 
   echo "Volatility installation completed"
 fi 
+read -p "Enter to continue"
 
 read -p "Enter to continue"
 
