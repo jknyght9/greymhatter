@@ -42,7 +42,7 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install bat btop curl fish duf exa git neovim openssl python3 python3-pip tmux util-linux-user wget -y
+dnf install bat btop curl fish duf exa gnome-shell-extension-apps-menu git neovim openssl python3 python3-pip tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
@@ -79,6 +79,7 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 10
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
 gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+gnome-extentions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 
