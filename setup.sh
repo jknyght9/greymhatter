@@ -31,7 +31,7 @@ echo -e "${GREEN}[+] Setting SELinux to permissive${NC}"
 sed -i 's/=enforcing/=permissive/g' /etc/selinux/config
 
 echo -e "${GREEN}[+] Setting system hostname${NC}"
-HOSTNAMEctl set-HOSTNAME "${HOSTNAME}"
+hostnamectl set-HOSTNAME "${HOSTNAME}"
 echo "${HOSTNAME}.jdclabs.io ${HOSTNAME}" > /etc/hosts
 echo "127.0.0.1 ${HOSTNAME}.jdclabs.io ${HOSTNAME}" >> /etc/hosts
 cat >> /etc/hosts <<EOF
@@ -78,6 +78,7 @@ bash -c 'cp -r $CURRENT_DIR/config/* ~/.config'
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
+gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 
