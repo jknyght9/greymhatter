@@ -75,6 +75,7 @@ chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux
+export $(dbus-launch)
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
 gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
@@ -83,16 +84,6 @@ EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-
-read -p "Enter to continue"
-
-echo -e "${GREEN}[+] Installing Timesketch${NC}"
-bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
-if [[ $? -ne 0 ]]; then
-  echo "Timesketch installation failed"
-else
-  echo "Timesketch installation completed"
-fi
 
 read -p "Enter to continue"
 
@@ -112,6 +103,16 @@ if [[ $? -ne 0 ]]; then
   echo "Yeti installation failed"
 else
   echo "Yeti installation completed"
+fi
+
+read -p "Enter to continue"
+
+echo -e "${GREEN}[+] Installing Timesketch${NC}"
+bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
+if [[ $? -ne 0 ]]; then
+  echo "Timesketch installation failed"
+else
+  echo "Timesketch installation completed"
 fi
 
 read -p "Enter to continue"
