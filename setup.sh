@@ -78,7 +78,7 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 10
 gsettings set org.gnome.desktop.background picture-uri "file://home/hatter/Pictures/background.jpg"
 gsettings set org.gnome.desktop.background picture-options "zoom"
 gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
-gnome-extentions enable apps-menu@gnome-shell-extensions.gcampax.github.com
+gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 EOF
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
