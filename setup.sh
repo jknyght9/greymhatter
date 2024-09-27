@@ -41,7 +41,7 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install bat btop conky curl fish duf exa gnome-shell-extension-apps-menu gnome-shell-extension-system-monitor git neovim openssl python3 python3-pip tmux util-linux-user wget -y
+dnf install bat btop conky curl fish duf exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neovim openssl python3 python3-pip tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
