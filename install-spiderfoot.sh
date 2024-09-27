@@ -2,7 +2,6 @@
 
 CURRENT_DIR="$1"
 
-echo -e "Installing Spiderfoot"
 CWD=$(pwd)
 cd /opt
 git clone https://github.com/smicallef/spiderfoot.git

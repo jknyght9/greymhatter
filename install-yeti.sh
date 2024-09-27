@@ -3,7 +3,6 @@
 USERNAME="$1"
 PASSWORD="$2"
 
-echo -e "Installing YETI CTI"
 CWD=$(pwd)
 if ! grep -q "sse4_2" /proc/cpuinfo; then
   echo "SSE4.2 is not supported by your CPU. This is required by the database."

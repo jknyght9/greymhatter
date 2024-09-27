@@ -115,7 +115,7 @@ else
   echo "Yeti installation completed"
 fi
 
-read -p "Enter to continue"joun
+read -p "Enter to continue"
 
 echo -e "${GREEN}[+] Installing Timesketch${NC}"
 bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"

@@ -2,7 +2,6 @@
 
 USERNAME="$1"
 
-echo -e "Installing Volatility 3"
 CWD=$(pwd)
 cd /opt
 dnf install gcc python3 python3-devel python3-pip -y
@@ -25,9 +24,9 @@ echo -e "Installing Volatility 3"
 cd volatility3
 pip3 install .
 cd ..
-export PATH="$HOME/.local/bin:$PATH"
-cp *.zip $HOME/.local/lib/python3.12/site-packages/volatility3/symbols/
-cp -r symbols/symbols/windows/ $HOME/.local/lib/python3.12/site-packages/volatility3/symbols/windows
+export PATH="/home/$USERNAME/.local/bin:$PATH"
+cp *.zip /home/$USERNAME/.local/lib/python3.12/site-packages/volatility3/symbols/
+cp -r symbols/symbols/windows/ /home/$USERNAME/.local/lib/python3.12/site-packages/volatility3/symbols/windows
 echo -e "Downloading malware sample and caching symbol tables, this will take a while"
 curl -O https://cc-public.s3.amazonaws.com/0zapftis.zip
 unzip -P infected 0zapftis.zip

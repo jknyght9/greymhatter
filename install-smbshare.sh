@@ -3,7 +3,6 @@
 USERNAME="$1"
 PASSWORD="$2"
 
-echo -e "Installing Samba (Windows Share)"
 mkdir /opt/share
 chown $USERNAME:$USERNAME /opt/share
 dnf install samba -y

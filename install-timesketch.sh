@@ -4,7 +4,7 @@ CURRENT_DIR="$1"
 USERNAME="$2"
 PASSWORD="$3"
 
-echo -e "Installing Timesketch"
+CWD=$(pwd)
 cd /opt
 curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
 chmod 755 deploy_timesketch.sh
@@ -20,6 +20,12 @@ if [[ $? -eq 0 ]]; then
   mkdir -p /opt/timesketch/{ssl/certs,ssl/private}
   openssl req -x509 -out /opt/timesketch/ssl/certs/localhost.crt -keyout /opt/timesketch/ssl/private/localhost.key -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -extensions EXT -config <(printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
   chmod 600 /opt/timesketch/ssl/private/localhost.key 
+  
+  if [[ "$(docker inspect -f '{{.State.Running}}' geoipupdate)" == "true" ]]; then
+    echo -e "Configuring Timesketch with Maxmind"
+    sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
+  fi
+
   echo -e "Starting Timesketch"
   cd /opt/timesketch
   docker compose up -d
@@ -30,3 +36,4 @@ if [[ $? -eq 0 ]]; then
 else
   echo -e "An error occured while installing Timesketch"
 fi
+cd "$CWD"

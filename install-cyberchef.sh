@@ -2,7 +2,6 @@
 
 CURRENT_DIR="$1"
 
-echo -n "Installing Cyberchef"
 CWD=$(pwd)
 mkdir -p /opt/cyberchef
 cp $CURRENT_DIR/cyberchef/compose.yml /opt/cyberchef/
