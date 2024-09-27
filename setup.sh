@@ -71,11 +71,12 @@ fi
 xhost +SI:localuser:hatter
 chsh -s $(which fish) $USERNAME
 cp $CURRENT_DIR/media/greymhatter-background.jpg /home/$USERNAME/Pictures/background.jpg
-cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountService/icons/$USERNAME
+cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountsService/icons/$USERNAME
 chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 su - $USERNAME << EOF
+export DISPLAY=$DISPLAY
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux:
 gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
 gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
