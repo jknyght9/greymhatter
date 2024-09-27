@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=conky --pause=5
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Conky
+Comment=Start Conky at login
+
