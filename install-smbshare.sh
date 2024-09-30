@@ -3,8 +3,8 @@
 USERNAME="$1"
 PASSWORD="$2"
 
-mkdir /opt/share
-chown $USERNAME:$USERNAME /opt/share
+mkdir -p /opt/share /opt/share/plaso
+chown -R $USERNAME:$USERNAME /opt/share
 dnf install samba -y
 systemctl enable smb --now
 firewall-cmd --permanent --zone=FedoraServer --add-service=samba

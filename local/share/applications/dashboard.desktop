@@ -1,9 +1,9 @@
 [Desktop Entry]
 Version=1.0
-Name=Dashboard
+Name=GreymHatter Homepage
 GenericName=Web Browser
 Comment=Open Firefox to a specific site
-Exec=firefox https://localhost:8080
+Exec=firefox https://localhost:3000
 Terminal=false
 Icon=firefox
 Type=Application

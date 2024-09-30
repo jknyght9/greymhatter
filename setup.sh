@@ -111,10 +111,12 @@ cp -r $CURRENT_DIR/conky/conkyrc /home/$USERNAME/.conkyrc
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
 cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
+cp -r $CURRENT_DIR/local /home/$USERNAME/.local 
+chown -R $USERNAME:$USERNAME /home/$USERNAME/.local 
 
 read -p "Enter to continue"
 
-echo -e "${GREEN}[+] Installing DFIR${NC}"
+echo -e "${GREEN}[+] Installing DFIQ${NC}"
 bash ./install-dfiq.sh
 if [[ $? -ne 0 ]]; then
   echo "DFIQ installation failed"
@@ -200,4 +202,12 @@ if [[ $? -ne 0 ]]; then
   echo "Cyberchef installation failed"
 else 
   echo "Cyberchef installation completed"
+fi 
+
+echo -e "${GREEN}[+] Installing Homepage - Dashboard${NC}"
+bash ./install-homepage.sh "$CURRENT_DIR"
+if [[ $? -ne 0 ]]; then
+  echo "Homepage installation failed"
+else
+  echo "Homepage installation completed"
 fi
