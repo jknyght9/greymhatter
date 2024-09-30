@@ -79,43 +79,41 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
 cp -r $CURRENT_DIR/local/* /home/$USERNAME/.local 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.local 
 
-echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
-xhost +SI:localuser:hatter
-#su - $USERNAME << EOF
-runuser -l $USERNAME -c 'bash -s' << 'EOF'
-export DISPLAY=:0
-export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
-
-# Setup TMUX
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-chown -R 1000:1000 ~/.tmux
-
-# Setup Gnome desktop
-gsettings set org.gnome.desktop.interface clock-format '24h'
-gsettings set org.gnome.desktop.interface clock-show-seconds true
-gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
-gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
-gsettings set org.gnome.desktop.background picture-options 'zoom'
-gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
-gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
-gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
-
-# Configuring power settings
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
-gsettings set org.gnome.desktop.session idle-delay 0
-gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-
-# Enabling extensions
-gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
-gnome-extensions enable blur-my-shell@aunetx
-gnome-extensions enable caffeine@patapon.info
-gnome-shell --replace &
-EOF
-xhost -SI:localuser:hatter
-echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
+# echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
+# xhost +SI:localuser:hatter
+# runuser -l $USERNAME -c 'bash -s' << 'EOF'
+# export DISPLAY=:0
+# export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
+# export XDG_RUNTIME_DIR=/run/user/$(id -u)
+#
+# # Setup TMUX
+# git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+# chown -R 1000:1000 ~/.tmux
+#
+# # Setup Gnome desktop
+# gsettings set org.gnome.desktop.interface clock-format '24h'
+# gsettings set org.gnome.desktop.interface clock-show-seconds true
+# gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
+# gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
+# gsettings set org.gnome.desktop.background picture-options 'zoom'
+# gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+# gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+# gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
+# gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
+#
+# # Configuring power settings
+# gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+# gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+# gsettings set org.gnome.desktop.session idle-delay 0
+# gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+#
+# # Enabling extensions
+# gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
+# gnome-extensions enable blur-my-shell@aunetx
+# gnome-extensions enable caffeine@patapon.info
+# EOF
+# xhost -SI:localuser:hatter
+# echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 
 read -p "Enter to continue"
 clear
@@ -226,3 +224,40 @@ if [[ $? -ne 0 ]]; then
 else
   echo "Homepage installation completed"
 fi
+
+echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
+xhost +SI:localuser:hatter
+runuser -l $USERNAME -c 'bash -s' << 'EOF'
+export DISPLAY=:0
+export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+# Setup TMUX
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+chown -R 1000:1000 ~/.tmux
+
+# Setup Gnome desktop
+gsettings set org.gnome.desktop.interface clock-format '24h'
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
+gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
+gsettings set org.gnome.desktop.background picture-options 'zoom'
+gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
+gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
+
+# Configuring power settings
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+
+# Enabling extensions
+gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
+gnome-extensions enable blur-my-shell@aunetx
+gnome-extensions enable caffeine@patapon.info
+EOF
+xhost -SI:localuser:hatter
+echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
+
