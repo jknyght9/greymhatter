@@ -36,6 +36,10 @@ if [[ $? -eq 0 ]]; then
   echo -e "Starting Timesketch"
   cd /opt/timesketch
   docker compose up -d
+
+  while [ "$(docker inspect -f '{{.State.Running}}' timesketch-web 2>/dev/null)" ]; then
+    sleep 5
+  done
   echo -e "Creating Timesketch User"
   docker compose exec timesketch-web tsctl create-user $USERNAME --password $PASSWORD
   echo -e "Installing Timesketch Importer"

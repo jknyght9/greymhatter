@@ -111,7 +111,7 @@ cp -r $CURRENT_DIR/conky/conkyrc /home/$USERNAME/.conkyrc
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
 cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-cp -r $CURRENT_DIR/local /home/$USERNAME/.local 
+cp -r $CURRENT_DIR/local/* /home/$USERNAME/.local 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.local 
 
 read -p "Enter to continue"
