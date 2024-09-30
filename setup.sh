@@ -81,10 +81,11 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
 xhost +SI:localuser:hatter
-su - $USERNAME << EOF
-export DISPLAY=$DISPLAY
-export DBUS_SESSION_BUS_ADDRESS=\$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
-export XDG_RUNTIME_DIR=/run/user/\$(id -u)
+#su - $USERNAME << EOF
+runuser -l $USERNAME -c 'bash -s' << 'EOF'
+export DISPLAY=:0
+export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
 
 # Setup TMUX
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
