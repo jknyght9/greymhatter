@@ -82,7 +82,7 @@ export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 
 # Setup TMUX
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-chown -R 1000:1000 ~/.tmux:
+chown -R 1000:1000 ~/.tmux
 
 # Setup Gnome desktop
 gsettings set org.gnome.desktop.interface clock-format '24h'

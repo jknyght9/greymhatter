@@ -21,9 +21,16 @@ if [[ $? -eq 0 ]]; then
   openssl req -x509 -out /opt/timesketch/ssl/certs/localhost.crt -keyout /opt/timesketch/ssl/private/localhost.key -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -extensions EXT -config <(printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
   chmod 600 /opt/timesketch/ssl/private/localhost.key 
   
+  # Setup Maxmind
   if [[ "$(docker inspect -f '{{.State.Running}}' geoipupdate)" == "true" ]]; then
     echo -e "Configuring Timesketch with Maxmind"
     sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
+  fi
+
+  # Setup DFIQ
+  if [[ -d "/opt/dfiq" ]]; then
+    echo -e "Configuring Timesketch with DFIQ"
+    sed -i 's/DFIQ_ENABLED = false/DFIQ_ENABLED = true/g' /opt/timesketch/etc/timesketch/timesketch.conf
   fi
 
   echo -e "Starting Timesketch"
