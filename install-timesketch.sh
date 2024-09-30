@@ -33,6 +33,7 @@ if [[ $? -eq 0 ]]; then
   docker compose exec timesketch-web tsctl create-user $USERNAME --password $PASSWORD
   echo -e "Installing Timesketch Importer"
   pip3 install timesketch-import-client
+  rm /opt/deploy_timesketch.sh
 else
   echo -e "An error occured while installing Timesketch"
 fi

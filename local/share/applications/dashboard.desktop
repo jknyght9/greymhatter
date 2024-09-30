@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Dashboard
+GenericName=Web Browser
+Comment=Open Firefox to a specific site
+Exec=firefox https://localhost:8080
+Terminal=false
+Icon=firefox
+Type=Application
+Categories=Network;WebBrowser;
+Keywords=browser;internet;web;www;
+

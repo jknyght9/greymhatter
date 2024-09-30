@@ -66,34 +66,61 @@ ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 if id "$USERNAME" &>/dev/null; then 
   echo "$USERNAME exists"
 else 
-  useradd -m -G wheel $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
+  useradd -m -G wheel,docker $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
 fi
-xhost +SI:localuser:hatter
 chsh -s $(which fish) $USERNAME
 cp $CURRENT_DIR/media/greymhatter-background.jpg /home/$USERNAME/Pictures/background.jpg
 cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountsService/icons/$USERNAME
 chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 
 echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
+xhost +SI:localuser:hatter
 su - $USERNAME << EOF
 export DISPLAY=$DISPLAY
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && chown -R 1000:1000 ~/.tmux:
+export DBUS_SESSION_BUS_ADDRESS=\$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
+export XDG_RUNTIME_DIR=/run/user/\$(id -u)
+
+# Setup TMUX
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+chown -R 1000:1000 ~/.tmux:
+
+# Setup Gnome desktop
+gsettings set org.gnome.desktop.interface clock-format '24h'
+gsettings set org.gnome.desktop.interface clock-show-seconds true
 gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
 gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
 gsettings set org.gnome.desktop.background picture-options 'zoom'
 gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
-gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop']"
+gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
 gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
 gnome-extensions enable blur-my-shell@aunetx
 gnome-extensions enable caffeine@patapon.info
+
+# Configuring power settings
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
 EOF
+xhost -SI:localuser:hatter
+
 echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
 cp -r $CURRENT_DIR/conky/conkyrc /home/$USERNAME/.conkyrc
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
 cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
+
+read -p "Enter to continue"
+
+echo -e "${GREEN}[+] Installing DFIR${NC}"
+bash ./install-dfiq.sh
+if [[ $? -ne 0 ]]; then
+  echo "DFIQ installation failed"
+else
+  echo "DFIQ installation completed"
+fi
 
 read -p "Enter to continue"
 

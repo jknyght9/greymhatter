@@ -1,0 +1,11 @@
+---
+- search:
+    provider: duckduckgo
+    focus: true
+    showSearchSuggestions: true
+    target: _blank
+
+- datetime:
+    format:
+      dateStyle: long
+      timeStyle: long

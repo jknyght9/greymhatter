@@ -1,0 +1,16 @@
+---
+- Timesketch:
+    - icon: mdi-timelapse
+      href: https://localhost
+
+- Yeti:
+    - icon: mdi-footprint
+      href: https://localhost:8888
+
+- Cyberchef:
+    - icon: mdi-knife
+      href: https://localhost:8080
+
+- Spiderfoot:
+    - icon: mdi-spider
+      href: https://localhost:5001
