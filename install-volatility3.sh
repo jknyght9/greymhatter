@@ -11,10 +11,10 @@ su - $USERNAME << EOF
 git clone --branch="stable" --recursive --single-branch https://github.com/volatilityfoundation/volatility3.git
 git clone --branch="main" --recursive --single-branch https://github.com/JPCERTCC/Windows-Symbol-Tables.git symbols
 git clone --branch="master" --recursive --single-branch https://github.com/VirusTotal/yara-python
-curl --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip --output windows.zip
-curl --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip --output linux.zip
-curl --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip --output mac.zip
-curl --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/SHA256SUMS --output symbols.sha256
+curl --insecure --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip --output windows.zip
+curl --insecure --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip --output linux.zip
+curl --insecure --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip --output mac.zip
+curl --insecure --location --max-redirs 1 https://downloads.volatilityfoundation.org/volatility3/symbols/SHA256SUMS --output symbols.sha256
 sha256sum -c symbols.sha256
 echo -e "Installing Yara"
 cd yara-python
