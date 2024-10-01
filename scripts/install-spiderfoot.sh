@@ -7,7 +7,7 @@ cd /opt
 git clone https://github.com/smicallef/spiderfoot.git
 cd spiderfoot
 docker build -t spiderfoot .
-cp $CURRENT_DIR/spiderfoot/compose.yml /opt/spiderfoot
+cp $CURRENT_DIR/docker/spiderfoot/compose.yml /opt/spiderfoot
 cd /opt/spiderfoot
 docker compose up -d
 if [[ "$(docker inspect -f '{{.State.Running}}' spiderfoot)" == "true" ]]; then

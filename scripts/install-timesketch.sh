@@ -11,9 +11,9 @@ chmod 755 deploy_timesketch.sh
 bash ./deploy_timesketch.sh
 if [[ $? -eq 0 ]]; then
   echo -e "Copying required files"
-  cp $CURRENT_DIR/timesketch/docker-compose.override.yml /opt/timesketch/
-  cp $CURRENT_DIR/timesketch/nginx.conf /opt/timesketch/etc
-  cp $CURRENT_DIR/timesketch/*.yaml /opt/timesketch/etc/timesketch
+  cp $CURRENT_DIR/docker/timesketch/docker-compose.override.yml /opt/timesketch/
+  cp $CURRENT_DIR/docker/timesketch/nginx.conf /opt/timesketch/etc
+  cp $CURRENT_DIR/docker/timesketch/*.yaml /opt/timesketch/etc/timesketch
   echo -e "Configuring Maxmind for Timesketch"
   sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
   echo -e "Configuring SSL for Timesketch"
