@@ -65,7 +65,7 @@ rm get-docker.sh
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 if id "$USERNAME" &>/dev/null; then 
-  usermod -a wheel,docker $USERNAME
+  usermod -a -G wheel,docker $USERNAME
   echo "$USERNAME exists"
 else 
   useradd -m -G wheel,docker $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
@@ -201,7 +201,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Setting up GNOME${NC}"
-bash ./scripts/install-gnome-environment.sh "$CURRENT_DIR"
+bash ./scripts/install-gnome-environment.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
   echo "Gnome configuration failed"
 else
