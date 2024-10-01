@@ -60,66 +60,38 @@ chmod u+x ./get-docker.sh
 sh ./get-docker.sh
 systemctl enable --now docker 
 systemctl start docker 
+rm get-docker.sh
 
-echo -e "${GREEN}[+] Setting up user${NC}"
+echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 if id "$USERNAME" &>/dev/null; then 
+  usermod -a wheel,docker $USERNAME
   echo "$USERNAME exists"
 else 
   useradd -m -G wheel,docker $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
 fi
+
+echo -e "${GREEN}[+] Setting up user profile${NC}"
 chsh -s $(which fish) $USERNAME
 cp $CURRENT_DIR/media/greymhatter-background.jpg /home/$USERNAME/Pictures/background.jpg
-cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountsService/icons/$USERNAME
 chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
-cp -r $CURRENT_DIR/conky/conkyrc /home/$USERNAME/.conkyrc
+cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountsService/icons/$USERNAME
+cp -r $CURRENT_DIR/home/conky/conkyrc /home/$USERNAME/.conkyrc
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
-cp -r $CURRENT_DIR/config/* /home/$USERNAME/.config
+cp -r $CURRENT_DIR/home/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-cp -r $CURRENT_DIR/local/* /home/$USERNAME/.local 
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.local 
-
-# echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
-# xhost +SI:localuser:hatter
-# runuser -l $USERNAME -c 'bash -s' << 'EOF'
-# export DISPLAY=:0
-# export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
-# export XDG_RUNTIME_DIR=/run/user/$(id -u)
-#
-# # Setup TMUX
-# git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-# chown -R 1000:1000 ~/.tmux
-#
-# # Setup Gnome desktop
-# gsettings set org.gnome.desktop.interface clock-format '24h'
-# gsettings set org.gnome.desktop.interface clock-show-seconds true
-# gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
-# gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
-# gsettings set org.gnome.desktop.background picture-options 'zoom'
-# gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-# gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
-# gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
-# gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
-#
-# # Configuring power settings
-# gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
-# gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
-# gsettings set org.gnome.desktop.session idle-delay 0
-# gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-#
-# # Enabling extensions
-# gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
-# gnome-extensions enable blur-my-shell@aunetx
-# gnome-extensions enable caffeine@patapon.info
-# EOF
-# xhost -SI:localuser:hatter
-# echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
+chmod +x /home/$USERNAME/.config/autostart/conky.desktop
+cp -r $CURRENT_DIR/home/local/* /home/$USERNAME/.local 
+chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
+chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
+git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugins/tpm
+chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
 
 read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing DFIQ${NC}"
-bash ./install-dfiq.sh
+bash ./scripts/install-dfiq.sh
 if [[ $? -ne 0 ]]; then
   echo "DFIQ installation failed"
 else
@@ -130,7 +102,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Maxmind${NC}"
-bash ./install-maxmind.sh
+bash ./scripts/install-maxmind.sh
 if [[ $? -ne 0 ]]; then
   echo "Maxmind installation failed"
 else
@@ -141,7 +113,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Yeti${NC}"
-bash ./install-yeti.sh "$USERNAME" "$PASSWORD"
+bash ./scripts/install-yeti.sh "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Yeti installation failed"
 else
@@ -152,7 +124,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Timesketch${NC}"
-bash ./install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
+bash ./scripts/install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Timesketch installation failed"
 else
@@ -163,7 +135,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Spiderfoot${NC}"
-bash ./install-spiderfoot.sh "$CURRENT_DIR"
+bash ./scripts/install-spiderfoot.sh "$CURRENT_DIR"
 if [[ $? -ne 0 ]]; then
   echo "Spiderfoot installation failed"
 else
@@ -174,7 +146,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Volatility3${NC}"
-bash ./install-volatility3.sh "$USERNAME"
+bash ./scripts/install-volatility3.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
   echo "Volatility installation failed"
 else 
@@ -185,7 +157,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
-bash ./install-tools.sh "$USERNAME"
+bash ./scripts/install-tools.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
   echo "DFIR tools installation failed"
 else 
@@ -196,7 +168,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Samba${NC}"
-bash ./install-smbshare.sh "$USERNAME" "$PASSWORD"
+bash ./scripts/install-smbshare.sh "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Samba share installation failed"
 else 
@@ -207,7 +179,7 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Cyberchef${NC}"
-bash ./install-cyberchef.sh "$CURRENT_DIR"
+bash ./scripts/install-cyberchef.sh "$CURRENT_DIR"
 if [[ $? -ne 0 ]]; then
   echo "Cyberchef installation failed"
 else 
@@ -218,46 +190,20 @@ read -p "Enter to continue"
 clear
 
 echo -e "${GREEN}[+] Installing Homepage - Dashboard${NC}"
-bash ./install-homepage.sh "$CURRENT_DIR"
+bash ./scripts/install-homepage.sh "$CURRENT_DIR"
 if [[ $? -ne 0 ]]; then
   echo "Homepage installation failed"
 else
   echo "Homepage installation completed"
 fi
 
-echo -e "${GREEN}[+] Switching to ${USERNAME}${NC}"
-xhost +SI:localuser:hatter
-runuser -l $USERNAME -c 'bash -s' << 'EOF'
-export DISPLAY=:0
-export DBUS_SESSION_BUS_ADDRESS=$(dbus-launch | grep -Po '(?<=DBUS_SESSION_BUS_ADDRESS=)[^\n]+')
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
+read -p "Enter to continue"
+clear
 
-# Setup TMUX
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-chown -R 1000:1000 ~/.tmux
-
-# Setup Gnome desktop
-gsettings set org.gnome.desktop.interface clock-format '24h'
-gsettings set org.gnome.desktop.interface clock-show-seconds true
-gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
-gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
-gsettings set org.gnome.desktop.background picture-options 'zoom'
-gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
-gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
-gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
-
-# Configuring power settings
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
-gsettings set org.gnome.desktop.session idle-delay 0
-gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-
-# Enabling extensions
-gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
-gnome-extensions enable blur-my-shell@aunetx
-gnome-extensions enable caffeine@patapon.info
-EOF
-xhost -SI:localuser:hatter
-echo -e "${GREEN}[+] Switching to $(whoami)${NC}"
-
+echo -e "${GREEN}[+] Setting up GNOME${NC}"
+bash ./scripts/install-gnome-environment.sh "$CURRENT_DIR"
+if [[ $? -ne 0 ]]; then
+  echo "Gnome configuration failed"
+else
+  echo "Gnome configuration completed"
+fi
