@@ -35,6 +35,6 @@ make
 make install
 fls -V
 dnf groupremove "Development Tools" -y
-dnf remove autoconf automake libtool maven zlib-devel e2fsprogs-devel libuuid-devel afflib-devel libewf-devel -y
+dnf remove autoconf automake libtool maven -y
 rm -rf sleuthkit*
 cd "$CWD"
