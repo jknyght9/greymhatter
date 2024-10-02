@@ -4,7 +4,7 @@ CURRENT_DIR="$1"
 
 CWD=$(pwd)
 mkdir -p /opt/cyberchef
-cp $CURRENT_DIR/cyberchef/compose.yml /opt/cyberchef/
+cp $CURRENT_DIR/docker/cyberchef/compose.yml /opt/cyberchef/
 cd /opt/cyberchef
 docker compose up -d
 if [[ "$(docker inspect -f '{{.State.Running}}' cyberchef)" == "true" ]]; then

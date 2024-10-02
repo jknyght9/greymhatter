@@ -81,5 +81,4 @@ function netioc
   whois -h whois.cymru.com " -v $argv"
 end
 
-conky -q -d -a tm > /dev/null &
 starship init fish | source
