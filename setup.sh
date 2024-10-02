@@ -41,7 +41,7 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install bat btop conky curl fish duf exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neovim openssl python3 python3-pip tmux util-linux-user wget -y
+dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neovim ntfs-3g openssl python3 python3-pip tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
@@ -65,7 +65,7 @@ rm get-docker.sh
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
 if id "$USERNAME" &>/dev/null; then 
-  usermod -a -G wheel,docker $USERNAME
+  usermod -aG wheel,docker $USERNAME
   echo "$USERNAME exists"
 else 
   useradd -m -G wheel,docker $USERNAME -p "$ENC_PASSWORD" -s $(which fish)
@@ -86,6 +86,11 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
 chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
 git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugins/tpm
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
+
+echo -e "${GREEN}[+] Setting up EWF mount points${NC}"
+mkdir -p /mnt/{ewf,ewf1,ewf2}
+chgrp -R $USERNAME /mnt/ewf*
+chmod -R 777 /mnt/ewf*
 
 read -p "Enter to continue"
 clear

@@ -1,0 +1,6 @@
+[timesketch]
+host_uri = http://localhost
+username = hatter
+verify = True
+auth_mode = userpass
+

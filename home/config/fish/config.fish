@@ -18,7 +18,7 @@ alias vim=nvim
 
 function log2timeline
   if [ (pwd) = "/opt/share" ]
-    sudo podman exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -26,7 +26,7 @@ end
 
 function log2timeline-triage
   if [ (pwd) = "/opt/share" ]
-    sudo podman exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] -f /usr/share/plaso/filter_windows.txt --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] -f /usr/share/plaso/filter_windows.txt --partitions "all"
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -34,7 +34,7 @@ end
 
 function log2timeline-targeted
   if [ (pwd) = "/opt/share" ]
-    sudo podman exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,usnjrnl,prefetch,winreg,esedb/srum" --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,usnjrnl,prefetch,winreg,esedb/srum" --partitions "all"
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -42,7 +42,7 @@ end
 
 function log2timeline-full
   if [ (pwd) = "/opt/share" ]
-    sudo podman exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,mft,prefetch,esedb,win_gen,winreg,olecf/olecf_automatic_destinations" --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,mft,prefetch,esedb,win_gen,winreg,olecf/olecf_automatic_destinations" --partitions "all"
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -54,11 +54,31 @@ function mountewf
 end
 
 function mountewfpartition
-  mount -t ntfs-3g -o loop,ro,show_sys_files,stream_interface=windows,offset=argv[1] /mnt/ewf/ewf1 /mnt/windows_mount/
+  mount -t ntfs-3g -o loop,ro,show_sys_files,stream_interface=windows,offset=$argv[1] /mnt/ewf/ewf1 /mnt/windows_mount/
+end
+
+function hayabusa-metrics
+  /opt/tools/hayabusa/hayabusa computer-metrics -d $argv[1]
+  /opt/tools/hayabusa/hayabusa eid-metrics -d $argv[1]
+end
+
+function hayabusa-summary
+  /opt/tools/hayabusa/hayabusa logon-summary -d $argv[1] -o /opt/share/hayabusa/$argv[2]-logonsummary
+end
+
+function hayabusa-timeline
+  echo -e "hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T -G geoip/ -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv"
+  /opt/tools/hayabusa/hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T -G /opt/maxmind-geoipupdate/geoip_data/ -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv
+end
+
+function timesketch-import
+  docker exec timesketch-web tsctl list-sketches
+  read -p "Enter the sketch to import the timeline to: " SKETCH
+  timesketch_importer --sketch_id $SKETCH $argv[1]
 end
 
 function netioc
-    whois -h whois.cymru.com " -v $argv"
+  whois -h whois.cymru.com " -v $argv"
 end
 
 conky -q -d -a tm > /dev/null &
