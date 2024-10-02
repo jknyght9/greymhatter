@@ -88,9 +88,9 @@ git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugi
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
 
 echo -e "${GREEN}[+] Setting up EWF mount points${NC}"
-mkdir -p /mnt/{ewf,ewf1,ewf2}
-chgrp -R $USERNAME /mnt/ewf*
-chmod -R 777 /mnt/ewf*
+mkdir -p /mnt/{ewf,windows_mount}
+chgrp -R $USERNAME /mnt/*
+chmod -R 777 /mnt/*
 
 read -p "Enter to continue"
 clear

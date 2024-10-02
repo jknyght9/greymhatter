@@ -31,7 +31,7 @@ if [[ $? -eq 0 ]]; then
   # Setup DFIQ
   if [[ -d "/opt/dfiq" ]]; then
     echo -e "Configuring Timesketch with DFIQ"
-    sed -i 's/DFIQ_ENABLED = false/DFIQ_ENABLED = true/g' /opt/timesketch/etc/timesketch/timesketch.conf
+    sed -i 's/DFIQ_ENABLED = False/DFIQ_ENABLED = True/g' /opt/timesketch/etc/timesketch/timesketch.conf
   fi
 
   echo -e "Starting Timesketch"
