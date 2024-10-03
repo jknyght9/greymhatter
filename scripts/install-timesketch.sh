@@ -14,7 +14,7 @@ if [[ $? -eq 0 ]]; then
   cp $CURRENT_DIR/docker/timesketch/docker-compose.override.yml /opt/timesketch/
   cp $CURRENT_DIR/docker/timesketch/nginx.conf /opt/timesketch/etc
   cp $CURRENT_DIR/docker/timesketch/*.yaml /opt/timesketch/etc/timesketch
-  cp $CURRENT_DUR/docker/timesketch/timesketchrc /home/$USERNAME/.timesketchrc
+  cp $CURRENT_DIR/docker/timesketch/timesketchrc /home/$USERNAME/.timesketchrc
   echo -e "Configuring Maxmind for Timesketch"
   sed -i "s/MAXMIND_DB_PATH = ''/MAXMIND_DB_PATH = '\/opt\/maxmind\/GeoLite2-City.mmdb'/g" /opt/timesketch/etc/timesketch/timesketch.conf
   echo -e "Configuring SSL for Timesketch"
