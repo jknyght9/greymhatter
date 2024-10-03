@@ -75,7 +75,7 @@ function timesketch-import
   set CWD $(pwd)
   cd /opt/timesketch
   docker compose exec timesketch-web tsctl list-sketches
-  read -p "Enter the sketch to import the timeline to: " SKETCH
+  read -P "Enter the sketch to import the timeline to: " SKETCH
   timesketch_importer --sketch_id $SKETCH $argv[1]
   cd "$CWD"
 end
