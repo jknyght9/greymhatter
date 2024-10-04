@@ -86,6 +86,11 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
 chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
 git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugins/tpm
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
+runuser -l $USERNAME -c 'bash -s' << 'EOF'
+systemctl --user daemon-reload
+systemctl --user enable conky.service
+systemctl --user start conky.service
+EOF
 
 echo -e "${GREEN}[+] Setting up EWF mount points${NC}"
 mkdir -p /mnt/{ewf,windows_mount}
