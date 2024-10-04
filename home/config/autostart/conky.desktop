@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Exec=/usr/bin/conky &
-Name=Conky
-Comment=Start Conky at login
-Terminal=false
-Icon=conky
-Categories=System;
-StartupNotify=false
