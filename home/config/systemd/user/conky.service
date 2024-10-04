@@ -1,0 +1,11 @@
+[Unit]
+Description=Conky System Monitor
+After=graphical.target
+
+[Service]
+ExecStart=/usr/bin/conky --quiet
+Restart=always
+Type=simple
+
+[Install]
+WantedBy=default.target
