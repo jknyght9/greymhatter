@@ -80,13 +80,14 @@ cp -r $CURRENT_DIR/home/conky/conkyrc /home/$USERNAME/.conkyrc
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
 cp -r $CURRENT_DIR/home/config/* /home/$USERNAME/.config
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-chmod +x /home/$USERNAME/.config/autostart/conky.desktop
 cp -r $CURRENT_DIR/home/local/* /home/$USERNAME/.local 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
 chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
 git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugins/tpm
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
 runuser -l $USERNAME -c 'bash -s' << 'EOF'
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 systemctl --user daemon-reload
 systemctl --user enable conky.service
 systemctl --user start conky.service
