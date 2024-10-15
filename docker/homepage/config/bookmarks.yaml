@@ -10,7 +10,7 @@
     - Spiderfoot:
         - icon: mdi-spider
           href: http://localhost:5001
-- Healper Apps:
+- Helper Apps:
     - Cyberchef:
         - icon: mdi-knife
           href: http://localhost:8080
