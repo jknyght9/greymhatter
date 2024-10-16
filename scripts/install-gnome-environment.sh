@@ -29,6 +29,7 @@ gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
 
 # Enabling extensions
 gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
+gnome-extensions enable window-list@gnome-shell-extensions.gcampax.github.com
 gnome-extensions enable blur-my-shell@aunetx
 gnome-extensions enable caffeine@patapon.info
 EOF
