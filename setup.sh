@@ -41,7 +41,11 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neovim ntfs-3g openssl python3 python3-pip tmux util-linux-user wget -y
+dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neofetch neovim ntfs-3g openssl python3 python3-pip tmux util-linux-user wget -y
+
+echo -e "${GREEN}[+] Installing CTOP${NC}"
+wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
+chmod +x /usr/local/bin/ctop
 
 echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
