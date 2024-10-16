@@ -5,7 +5,7 @@
           href: https://localhost
     - Yeti:
         - icon: mdi-foot-print
-          href: https://localhost:8888
+          href: http://localhost:8888
 - OSINT:
     - Spiderfoot:
         - icon: mdi-spider
