@@ -1,5 +1,5 @@
 ---
-- DFIR:
+- DFIR & Threat Intelligence:
     - Timesketch:
         - icon: mdi-timelapse
           href: https://localhost
@@ -10,7 +10,14 @@
     - Spiderfoot:
         - icon: mdi-spider
           href: http://localhost:5001
-- Helper Apps:
+- Helper Applications:
     - Cyberchef:
         - icon: mdi-knife
           href: http://localhost:8080
+- Important Sites:
+    - DFIR Madness:
+        - icon: mdi-fingerprint
+          href: https://dfirmadness.com/
+    - Yeti Documentation:
+        - icon: mdi-foot-print
+          href: https://yeti-platform.io/
