@@ -41,7 +41,7 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-caffeine git neofetch neovim ntfs-3g openssl python3 python3-pip tmux util-linux-user wget -y
+dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing CTOP${NC}"
 wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
@@ -52,6 +52,20 @@ wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
 	&& unzip Hack.zip -d /usr/share/fonts/ \
 	&& fc-cache -fv \
 	&& rm -rf Hack*
+
+echo -e "${GREEN}[+] Installing Colloid theme${NC}"
+mkdir theme
+cd theme
+wget -O colloid-icons.zip https://github.com/vinceliuice/Colloid-icon-theme/archive/refs/tags/2024-10-18.zip
+wget -O colloid-theme.zip https://github.com/vinceliuice/Colloid-gtk-theme/archive/refs/tags/2024-06-18.zip
+unzip colloid-icons.zip -d colloid-icons
+unzip colloid-theme.zip -d colloid-theme
+cd colloid-icons 
+./install.sh -s nord
+cd ../collid-theme
+./install.sh
+cd ../..
+rm -rf theme
 
 echo -e "${GREEN}[+] Installing Starship${NC}"
 curl -O https://starship.rs/install.sh \
