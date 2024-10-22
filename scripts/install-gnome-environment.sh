@@ -27,11 +27,21 @@ gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-typ
 gsettings set org.gnome.desktop.session idle-delay 0
 gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
 
+# Installing required gnome extensions
+wget -O desktop-icons-ng.zip https://extensions.gnome.org/extension-data/dingrastersoft.com.v67.shell-extension.zip
+wget -O logo-menu.zip https://extensions.gnome.org/extension-data/logomenuaryan_k.v35.shell-extension.zip
+gnome-extensions install desktop-icons-ng.zip
+gnome-extensions install logo-menu.zip
+
 # Enabling extensions
 gnome-extensions enable apps-menu@gnome-shell-extensions.gcampax.github.com
-gnome-extensions enable window-list@gnome-shell-extensions.gcampax.github.com
 gnome-extensions enable blur-my-shell@aunetx
 gnome-extensions enable caffeine@patapon.info
+gnome-extensions enable dash-to-dock@micxgx.gmail.com
+gnome-extensions enable ding@rastersoft.com
+gnome-extensions enable logomenu@aryan_k
+gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
+
 EOF
 xhost -SI:localuser:$USERNAME
 echo -e "Switching to $(whoami)"
