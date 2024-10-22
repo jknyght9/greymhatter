@@ -60,11 +60,11 @@ wget -O colloid-icons.zip https://github.com/vinceliuice/Colloid-icon-theme/arch
 wget -O colloid-theme.zip https://github.com/vinceliuice/Colloid-gtk-theme/archive/refs/tags/2024-06-18.zip
 unzip colloid-icons.zip -d colloid-icons
 unzip colloid-theme.zip -d colloid-theme
-cd colloid-icons 
+cd colloid-icons/Colloid* 
 ./install.sh -s nord
-cd ../collid-theme
+cd ../../collid-theme/Colloid*
 ./install.sh
-cd ../..
+cd ../../..
 rm -rf theme
 
 echo -e "${GREEN}[+] Installing Starship${NC}"
