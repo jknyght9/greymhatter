@@ -42,6 +42,8 @@ gnome-extensions enable ding@rastersoft.com
 gnome-extensions enable logomenu@aryan_k
 gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
 
+rm -rf *.zip
+
 EOF
 xhost -SI:localuser:$USERNAME
 echo -e "Switching to $(whoami)"
