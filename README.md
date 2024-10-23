@@ -36,9 +36,18 @@ Other tools included are:
 | sleuthkit   | For analyzing disk images                       |
 | volatility3 | Memory analysis platform with JPCERT/CC symbols |
 
+## Download
+
+Download the latest OVF version here.
+
+| Name         | Link |
+| ------------ | ---- |
+| Image        | []() |
+| Image Hashes | []() |
+
 ## Installation
 
-Begin by installing Fedora Linux 40 with Gnome Desktop. Then fully update the system using
+If you choose to do a fresh installation, begin by installing Fedora Linux 40 with Gnome Desktop. Then fully update the system using
 
 ```shell
 sudo dnf upgrade --refresh -y
@@ -67,6 +76,26 @@ password: H@tt3r123!
 
 ## Screeshots
 
-### Desktop
+**Desktop**
 
 ![Desktop](./media/desktop.png)
+
+**Fish Terminal with TMUX, BTOP, and CTOP**
+
+![Terminal](./media/terminal.png)
+
+**Homepage**
+
+![Homepage](./media/homepage.png)
+
+**Timesketch**
+
+![Timesketch](./media/timesketch.png)
+
+**Yeti Threat Intelligence**
+
+![Yeti](./media/yeti.png)
+
+**Spiderfoot**
+
+![Spiderfoot](./media/spiderfoot.png)
