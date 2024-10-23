@@ -66,3 +66,7 @@ password: H@tt3r123!
 > **Note**: during the Samba (Windows share) setup, you will be asked to set a password. Remember this if you plan on using the Samba share on a Windows system.
 
 ## Screeshots
+
+### Desktop
+
+![Desktop](./media/desktop.png)
