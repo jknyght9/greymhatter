@@ -62,7 +62,7 @@ unzip colloid-icons.zip -d colloid-icons
 unzip colloid-theme.zip -d colloid-theme
 cd colloid-icons/Colloid* 
 ./install.sh -s nord
-cd ../../collid-theme/Colloid*
+cd ../../colloid-theme/Colloid*
 ./install.sh
 cd ../../..
 rm -rf theme
@@ -141,23 +141,23 @@ fi
 read -p "Enter to continue"
 clear
 
-echo -e "${GREEN}[+] Installing Yeti${NC}"
-bash ./scripts/install-yeti.sh "$USERNAME" "$PASSWORD"
-if [[ $? -ne 0 ]]; then
-  echo "Yeti installation failed"
-else
-  echo "Yeti installation completed"
-fi
-
-read -p "Enter to continue"
-clear
-
 echo -e "${GREEN}[+] Installing Timesketch${NC}"
 bash ./scripts/install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
 if [[ $? -ne 0 ]]; then
   echo "Timesketch installation failed"
 else
   echo "Timesketch installation completed"
+fi
+
+read -p "Enter to continue"
+clear
+
+echo -e "${GREEN}[+] Installing Yeti${NC}"
+bash ./scripts/install-yeti.sh "$USERNAME" "$PASSWORD"
+if [[ $? -ne 0 ]]; then
+  echo "Yeti installation failed"
+else
+  echo "Yeti installation completed"
 fi
 
 read -p "Enter to continue"
