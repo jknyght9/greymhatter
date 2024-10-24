@@ -174,12 +174,23 @@ fi
 read -p "Enter to continue"
 clear
 
+echo -e "${GREEN}[+] Installing Volatility2${NC}"
+bash ./scripts/install-volatility2.sh "$USERNAME"
+if [[ $? -ne 0 ]]; then
+  echo "Volatility 2 installation failed"
+else 
+  echo "Volatility 2 installation completed"
+fi 
+
+read -p "Enter to continue"
+clear
+
 echo -e "${GREEN}[+] Installing Volatility3${NC}"
 bash ./scripts/install-volatility3.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
-  echo "Volatility installation failed"
+  echo "Volatility 3 installation failed"
 else 
-  echo "Volatility installation completed"
+  echo "Volatility 3 installation completed"
 fi 
 
 read -p "Enter to continue"
@@ -191,6 +202,17 @@ if [[ $? -ne 0 ]]; then
   echo "DFIR tools installation failed"
 else 
   echo "DFIR tools installation completed"
+fi 
+
+read -p "Enter to continue"
+clear
+
+echo -e "${GREEN}[+] Installing Powershell${NC}"
+bash ./scripts/install-pwsh.sh
+if [[ $? -ne 0 ]]; then
+  echo "Powershell installation failed"
+else 
+  echo "Powershell installation completed"
 fi 
 
 read -p "Enter to continue"
