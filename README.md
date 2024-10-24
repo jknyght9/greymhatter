@@ -7,8 +7,8 @@
 - Timeline development and analysis
 - System log analysis
 - Memory analysis
-- Open Source Intelligence Gathering
-- Cyber Threat Intelligence Utilization
+- Open Source Intelligence gathering
+- Cyber Threat Intelligence utilization
 
 ## Legal
 
@@ -18,23 +18,28 @@ This platform was developed for instructional purposes and has not been tested i
 
 GreymHatter is built on the Fedora Workstation Linux distribution with the Gnome desktop environment. It uses the Docker container environment to house several applications. Furthermore, several forensic tools have been installed and configured. Tools installed include:
 
-| Name              | Purpose                            | Type      | Run                    |
-| ----------------- | ---------------------------------- | --------- | ---------------------- |
-| cyberchef         | Self-hosted data operations site   | Container | http://localhost:8080  |
-| homepage          | Self-hosted homepage for all sites | Container | http://localhost:3000  |
-| maxmind-geoupdate | Updates GeoIP databases every day  | Container | -                      |
-| spiderfoot        | OSINT gathering platform           | Container | http://localhost:5001  |
-| timesketch        | Forensic timeline analysis tool    | Container | https://localhost      |
-| yeti              | Cyber Threat Intelligence platform | Container | https://localhost:8888 |
+| Name              | Purpose                                              | Type      | Local Access           | Website                                 |
+| ----------------- | ---------------------------------------------------- | --------- | ---------------------- | --------------------------------------- |
+| cyberchef         | Self-hosted data operations site                     | Container | http://localhost:8080  | https://cyberchef.org/                  |
+| homepage          | Self-hosted homepage for all sites                   | Container | http://localhost:3000  | https://gethomepage.dev/                |
+| maxmind-geoupdate | Updates GeoIP databases every day (requires API key) | Container | -                      | https://www.maxmind.com/en/home         |
+| spiderfoot        | OSINT gathering platform                             | Container | http://localhost:5001  | https://github.com/smicallef/spiderfoot |
+| timesketch        | Forensic timeline analysis tool                      | Container | https://localhost      | https://timesketch.org/                 |
+| yeti              | Cyber Threat Intelligence platform                   | Container | https://localhost:8888 | https://yeti-platform.io/               |
 
 Other tools included are:
 
-| Name        | Purpose                                         |
-| ----------- | ----------------------------------------------- |
-| dfiq        | Digital Forensics Investigative Questions       |
-| hayabusa    | Windows Event Log Analysis                      |
-| sleuthkit   | For analyzing disk images                       |
-| volatility3 | Memory analysis platform with JPCERT/CC symbols |
+| Name        | Purpose                                              | Website                                             |
+| ----------- | ---------------------------------------------------- | --------------------------------------------------- |
+| capa        | Mandiant file capability detector                    | https://github.com/mandiant/capa                    |
+| dfiq        | Digital Forensics Investigative Questions            | https://dfiq.org/                                   |
+| floss       | Mandiant FLARE Obfuscated String Solver              | https://github.com/mandiant/flare-floss             |
+| hayabusa    | Windows Event Log Analysis                           | https://github.com/Yamato-Security/hayabusa         |
+| powershell  | Powershell core for Linux                            | --                                                  |
+| sleuthkit   | For analyzing disk images                            | https://sleuthkit.org/                              |
+| volatility2 | Memory analysis for legacy systems                   | https://github.com/volatilityfoundation/volatility  |
+| volatility3 | Memory analysis platform with JPCERT/CC symbols      | https://github.com/volatilityfoundation/volatility3 |
+| vt-cli      | VirusTotal Command Line Interface (requires API key) | https://virustotal.github.io/vt-cli/                |
 
 ## Download
 
@@ -112,3 +117,7 @@ password: H@tt3r123!
 **Spiderfoot**
 
 ![Spiderfoot](./media/spiderfoot.png)
+
+## References
+
+[https://google.github.io/osdfir-infrastructure/](https://google.github.io/osdfir-infrastructure/)

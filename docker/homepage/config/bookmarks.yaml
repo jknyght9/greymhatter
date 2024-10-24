@@ -1,5 +1,8 @@
 ---
 - DFIR & Threat Intelligence:
+    - Cyberchef:
+        - icon: mdi-knife
+          href: http://localhost:8080
     - Timesketch:
         - icon: mdi-timelapse
           href: https://localhost
@@ -10,14 +13,29 @@
     - Spiderfoot:
         - icon: mdi-spider
           href: http://localhost:5001
-- Helper Applications:
-    - Cyberchef:
-        - icon: mdi-knife
-          href: http://localhost:8080
-- Important Sites:
-    - DFIR Madness:
-        - icon: mdi-fingerprint
-          href: https://dfirmadness.com/
+- References:
+    - VirusTotal CLI Reference:
+        - icon: mdi-viruse
+          href: https://virustotal.github.io/vt-cli/
+    - Volatility 2 Plugin Reference:
+        - icon: mdi-memory
+          href: https://github.com/volatilityfoundation/volatility/wiki/Command-Reference
+    - Volatility 3 Plugin Reference:
+        - icon: mdi-memory
+          href: https://volatility3.readthedocs.io/en/latest/volatility3.plugins.html
     - Yeti Documentation:
         - icon: mdi-foot-print
           href: https://yeti-platform.io/
+- Tutorials:
+    - DFIR Madness:
+        - icon: mdi-fingerprint
+          href: https://dfirmadness.com/
+    - R2D2 Malware Analysis 1:
+        - icon: mdi-bookmark
+          href: https://apps.dtic.mil/sti/pdfs/AD1004194.pdf
+    - R2D2 Malware Analysis 2:
+        - icon: mdi-bookmark
+          href: https://digitalitskills.com/volatility-forensic-analysis-r2d2-malware/
+    - R2D2 Malware Analysis 3:
+        - icon: mdi-bookmark
+          href: https://05t3.github.io/posts/CyberConFinals/
