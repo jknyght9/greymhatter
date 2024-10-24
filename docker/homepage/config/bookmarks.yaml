@@ -13,6 +13,9 @@
     - Spiderfoot:
         - icon: mdi-spider
           href: http://localhost:5001
+    - VirusTotal:
+        - icon: mdi-virus
+          href: https://www.virustotal.com
 - References:
     - VirusTotal CLI Reference:
         - icon: mdi-viruse
