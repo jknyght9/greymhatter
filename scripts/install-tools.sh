@@ -6,7 +6,7 @@ echo -e "Installing Hayabusa"
 CWD=$(pwd)
 mkdir /opt/tools/
 cd /opt/tools/
-wget $(wget -q -O - https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.assets[] | select(.name | contains ("linux-intel")) | .browser_download_url')
+wget $(wget -q -O - https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.assets[] | select(.name | contains ("all-platforms")) | .browser_download_url')
 unzip hayabusa*.zip -d hayabusa
 cd hayabusa
 mv hayabusa*-musl hayabusa
