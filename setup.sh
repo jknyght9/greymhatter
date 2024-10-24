@@ -41,36 +41,11 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install afflib bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
 
 echo -e "${GREEN}[+] Installing CTOP${NC}"
 wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
 chmod +x /usr/local/bin/ctop
-
-echo -e "${GREEN}[+] Installing Hack Nerd Fonts${NC}"
-wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Hack.zip\
-	&& unzip Hack.zip -d /usr/share/fonts/ \
-	&& fc-cache -fv \
-	&& rm -rf Hack*
-
-echo -e "${GREEN}[+] Installing Colloid theme${NC}"
-mkdir theme
-cd theme
-wget -O colloid-icons.zip https://github.com/vinceliuice/Colloid-icon-theme/archive/refs/tags/2024-10-18.zip
-wget -O colloid-theme.zip https://github.com/vinceliuice/Colloid-gtk-theme/archive/refs/tags/2024-06-18.zip
-unzip colloid-icons.zip -d colloid-icons
-unzip colloid-theme.zip -d colloid-theme
-cd colloid-icons/Colloid* 
-./install.sh -s nord
-cd ../../colloid-theme/Colloid*
-./install.sh
-cd ../../..
-rm -rf theme
-
-echo -e "${GREEN}[+] Installing Starship${NC}"
-curl -O https://starship.rs/install.sh \
-	&& sh ./install.sh -f \
-	&& rm -f install.sh
 
 echo -e "${GREEN}[+] Installing Docker${NC}"
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -116,15 +91,48 @@ mkdir -p /mnt/{ewf,windows_mount}
 chgrp -R $USERNAME /mnt/*
 chmod -R 777 /mnt/*
 
-read -p "Enter to continue"
-clear
+# Starting long installations in parallel
+echo -e "${GREEN}[+] Installing Gnome and Terminal Themes${NC}"
+sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh; read -p \"Enter to continue\""
 
-# Starting long installations first
 echo -e "${GREEN}[+] Installing Volatility3${NC}"
 sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-volatility3.sh $USERNAME; read -p \"Enter to continue\""
 
 echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
-sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "./scripts/install-tools.sh $USERNAME; read -p \"Enter to continue\""
+sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-tools.sh $USERNAME; read -p \"Enter to continue\""
+
+echo -e "${GREEN}[+] Installing Volatility2${NC}"
+bash ./scripts/install-volatility2.sh "$USERNAME"
+if [[ $? -ne 0 ]]; then
+  echo "Volatility 2 installation failed"
+else 
+  echo "Volatility 2 installation completed"
+fi 
+
+read -p "Enter to continue"
+clear
+
+echo -e "${GREEN}[+] Installing Powershell${NC}"
+bash ./scripts/install-pwsh.sh
+if [[ $? -ne 0 ]]; then
+  echo "Powershell installation failed"
+else 
+  echo "Powershell installation completed"
+fi 
+
+read -p "Enter to continue"
+clear
+
+echo -e "${GREEN}[+] Installing Samba${NC}"
+bash ./scripts/install-smbshare.sh "$USERNAME" "$PASSWORD"
+if [[ $? -ne 0 ]]; then
+  echo "Samba share installation failed"
+else 
+  echo "Samba share installation completed"
+fi
+
+read -p "Enter to continue"
+clear
 
 echo -e "${GREEN}[+] Installing DFIQ${NC}"
 bash ./scripts/install-dfiq.sh
@@ -137,6 +145,7 @@ fi
 read -p "Enter to continue"
 clear
 
+# Install containers
 echo -e "${GREEN}[+] Installing Maxmind${NC}"
 bash ./scripts/install-maxmind.sh
 if [[ $? -ne 0 ]]; then
@@ -181,38 +190,6 @@ fi
 read -p "Enter to continue"
 clear
 
-echo -e "${GREEN}[+] Installing Volatility2${NC}"
-bash ./scripts/install-volatility2.sh "$USERNAME"
-if [[ $? -ne 0 ]]; then
-  echo "Volatility 2 installation failed"
-else 
-  echo "Volatility 2 installation completed"
-fi 
-
-read -p "Enter to continue"
-clear
-
-echo -e "${GREEN}[+] Installing Powershell${NC}"
-bash ./scripts/install-pwsh.sh
-if [[ $? -ne 0 ]]; then
-  echo "Powershell installation failed"
-else 
-  echo "Powershell installation completed"
-fi 
-
-read -p "Enter to continue"
-clear
-
-echo -e "${GREEN}[+] Installing Samba${NC}"
-bash ./scripts/install-smbshare.sh "$USERNAME" "$PASSWORD"
-if [[ $? -ne 0 ]]; then
-  echo "Samba share installation failed"
-else 
-  echo "Samba share installation completed"
-fi
-
-read -p "Enter to continue"
-clear
 
 echo -e "${GREEN}[+] Installing Cyberchef${NC}"
 bash ./scripts/install-cyberchef.sh "$CURRENT_DIR"
@@ -236,6 +213,7 @@ fi
 read -p "Enter to continue"
 clear
 
+# Do not resequence this section!
 echo -e "${GREEN}[+] Setting up GNOME${NC}"
 bash ./scripts/install-gnome-environment.sh "$USERNAME"
 if [[ $? -ne 0 ]]; then
