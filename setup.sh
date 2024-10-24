@@ -119,6 +119,22 @@ chmod -R 777 /mnt/*
 read -p "Enter to continue"
 clear
 
+# Starting long installations first
+echo -e "${GREEN}[+] Installing Volatility3${NC}"
+gnome-terminal -- bash -c "./scripts/install-volatility3.sh $USERNAME; read -p \"Enter to continue\""
+
+echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
+gnome-terminal -- bash -c "./scripts/install-tools.sh $USERNAME; read -p \"Enter to continue\""
+
+# if [[ $? -ne 0 ]]; then
+#   echo "Volatility 3 installation failed"
+# else 
+#   echo "Volatility 3 installation completed"
+# fi 
+#
+# read -p "Enter to continue"
+# clear
+
 echo -e "${GREEN}[+] Installing DFIQ${NC}"
 bash ./scripts/install-dfiq.sh
 if [[ $? -ne 0 ]]; then
@@ -180,17 +196,6 @@ if [[ $? -ne 0 ]]; then
   echo "Volatility 2 installation failed"
 else 
   echo "Volatility 2 installation completed"
-fi 
-
-read -p "Enter to continue"
-clear
-
-echo -e "${GREEN}[+] Installing Volatility3${NC}"
-bash ./scripts/install-volatility3.sh "$USERNAME"
-if [[ $? -ne 0 ]]; then
-  echo "Volatility 3 installation failed"
-else 
-  echo "Volatility 3 installation completed"
 fi 
 
 read -p "Enter to continue"

@@ -43,7 +43,7 @@ Host:$alignr$nodename
 Uptime:$alignr$uptime
 
 ${font hack-mono:bold:size=10}CPU ${hr 2}
-${font hack-mono:normal:size=8}${cpugraph cpu1}
+${font hack-mono:normal:size=8}${cpugraph cpu1 0000ff 00ff00} 
 CPU: ${cpu cpu1}% ${cpubar cpu1}
 
 ${font hack-mono:bold:size=10}MEMORY ${hr 2}
