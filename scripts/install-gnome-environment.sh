@@ -16,9 +16,13 @@ gsettings set org.gnome.desktop.interface clock-show-seconds true
 gsettings set org.gnome.desktop.background picture-uri 'file:///home/hatter/Pictures/background.jpg'
 gsettings set org.gnome.desktop.background picture-uri-dark 'file:///home/hatter/Pictures/background.jpg'
 gsettings set org.gnome.desktop.background picture-options 'zoom'
-gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
-gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+gsettings set org.gnome.desktop.default-applications.terminal exec 'alacritty'
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+gsettings set org.gnome.desktop.interface gtk-theme 'Colloid-Dark'
+gsettings set org.gnome.desktop.interface icon-theme 'Colloid-Nord-Dark'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
+gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+gsettings set org.gnome.shell.extensions.user-theme name 'Colloid-Dark'
 gsettings set org.gnome.shell favorite-apps "['dashboard.desktop', 'org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
 
 # Configuring power settings
