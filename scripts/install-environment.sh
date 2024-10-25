@@ -22,4 +22,8 @@ cd ../../colloid-theme/Colloid*
 ./install.sh
 cd ../../..
 rm -rf theme
+
+echo -e "${GREEN}[+] Installing Btop Config${NC}"
+sed -i 's#color_theme = .*#color_theme = \"/usr/share/btop/themes/nord.theme\"#g' /home/$USERNAME/.config/btop/btop.config 
+sed -i 's#theme_background =.*#theme_background = False#g' /home/$USERNAME/.config/btop/btop.config
 cd "$CWD"
