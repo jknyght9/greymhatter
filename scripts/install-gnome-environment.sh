@@ -23,7 +23,7 @@ gsettings set org.gnome.desktop.interface icon-theme 'Colloid-Nord-Dark'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'
 gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
 gsettings set org.gnome.shell.extensions.user-theme name 'Colloid-Dark'
-gsettings set org.gnome.shell favorite-apps "['dashboard.desktop', 'org.mozilla.firefox.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
+gsettings set org.gnome.shell favorite-apps "['dashboard.desktop', 'org.mozilla.firefox.desktop', 'Alacritty.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.TextEditor.desktop', 'org.gnome.Settings.desktop']"
 
 # Configuring power settings
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'

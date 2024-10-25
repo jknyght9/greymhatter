@@ -53,7 +53,7 @@ semantic_escape_chars = ",│`|:\"' ()[]{}<>"
 
 [shell]
 args = ["--login"]
-program = "/opt/homebrew/bin/fish"
+program = "/usr/bin/fish"
 
 [window]
 #decorations = "buttonless"
