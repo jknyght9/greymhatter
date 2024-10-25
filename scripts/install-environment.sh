@@ -22,9 +22,4 @@ cd ../../colloid-theme/Colloid*
 ./install.sh
 cd ../../..
 rm -rf theme
-
-echo -e "${GREEN}[+] Installing Starship${NC}"
-curl -O https://starship.rs/install.sh \
-	&& sh ./install.sh -f \
-	&& rm -f install.sh
 cd "$CWD"
