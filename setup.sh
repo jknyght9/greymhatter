@@ -47,6 +47,11 @@ echo -e "${GREEN}[+] Installing CTOP${NC}"
 wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
 chmod +x /usr/local/bin/ctop
 
+echo -e "${GREEN}[+] Installing Starship${NC}"
+curl -O https://starship.rs/install.sh \
+	&& sh ./install.sh -f \
+	&& rm -f install.sh
+
 echo -e "${GREEN}[+] Installing Docker${NC}"
 curl -fsSL https://get.docker.com -o get-docker.sh
 chmod u+x ./get-docker.sh
@@ -92,14 +97,14 @@ chgrp -R $USERNAME /mnt/*
 chmod -R 777 /mnt/*
 
 # Starting long installations in parallel
-echo -e "${GREEN}[+] Installing Gnome and Terminal Themes${NC}"
-sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh; read -p \"Enter to continue\""
-
 echo -e "${GREEN}[+] Installing Volatility3${NC}"
 sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-volatility3.sh $USERNAME; read -p \"Enter to continue\""
 
 echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
 sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-tools.sh $USERNAME; read -p \"Enter to continue\""
+
+echo -e "${GREEN}[+] Installing Gnome and Terminal Themes${NC}"
+sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh; read -p \"Enter to continue\""
 
 echo -e "${GREEN}[+] Installing Volatility2${NC}"
 bash ./scripts/install-volatility2.sh "$USERNAME"
