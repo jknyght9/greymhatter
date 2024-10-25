@@ -47,18 +47,18 @@ Download the latest OVF version here.
 
 | Name         | Link                                                                                                                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Image        | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241022.zip](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241022.zip)       |
-| Image Hashes | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241022.sha256](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241022.sha256) |
+| Image        | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip)       |
+| Image Hashes | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256) |
 
 Once downloaded, verify the zip file with the hash file using `sha256sum` or any other hashing program.
 
 ```shell
 # On Linux
-sha256sum -c GreymHatter-F40-Gnome-20241022.sha256
+sha256sum -c GreymHatter-F40-Gnome-20241024.sha256
 
 # Powershell
-Get-Filehash GreymHatter-F40-Gnome-20241022.zip
-Get-Content GreymHatter-F40-Gnome-20241022.sha256
+Get-Filehash GreymHatter-F40-Gnome-20241024.zip
+Get-Content GreymHatter-F40-Gnome-20241024.sha256
 ```
 
 Finally, unzip the file and import the OVF into your virtual machine software.
