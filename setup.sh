@@ -6,11 +6,19 @@ USERNAME='hatter'
 PASSWORD='H@tt3r123!'
 HOSTNAME='greymhatter'
 CURRENT_DIR=$(pwd)
+ARCH=$(uname -m)
 
 if [ "$EUID" -ne 0 ]; then
   echo "Must be ran as root."
   exit 1 
 fi 
+
+echo -e "${GREEN}[+] Checking architecture${NC}"
+if [[ "$ARCH" == "x86_64" ]]; then
+    echo "Running on x86_64"
+elif [[ "$ARCH" == "aarch64" ]]; then
+    echo "Running on ARM64"
+fi
 
 clear
 echo -e "${GREEN}[+] Optimizing and Updating Fedora${NC}"
@@ -41,10 +49,19 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+
+if [[ "$ARCH" == "aarch64" ]]; then
+  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-user-theme gnome-tweaks git neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+else 
+  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+fi
 
 echo -e "${GREEN}[+] Installing CTOP${NC}"
-wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
+if [[ "$ARCH" == "aarch64" ]]; then
+  wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-arm64 -O /usr/local/bin/ctop
+else
+  wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
+fi
 chmod +x /usr/local/bin/ctop
 
 echo -e "${GREEN}[+] Installing Starship${NC}"
