@@ -49,12 +49,7 @@ ff02::2 ip6-allrouters
 EOF
 
 echo -e "${GREEN}[+] Installing required software${NC}"
-
-if [[ "$ARCH" == "aarch64" ]]; then
-  dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools exa firefox gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-user-theme gnome-terminal gnome-tweaks git neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip util-linux-user wget wireshark xorg-x11-server-utils -y
-else 
-  dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools exa firefox gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-terminal gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip util-linux-user wget wireshark xorg-x11-server-utils -y
-fi
+dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools exa firefox gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-terminal gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable
 
 echo -e "${GREEN}[+] Installing CTOP${NC}"
 if [[ "$ARCH" == "aarch64" ]]; then
