@@ -24,6 +24,7 @@ cd ../../..
 rm -rf theme
 
 echo -e "${GREEN}[+] Installing Btop Config${NC}"
+btop &
 sed -i 's#color_theme = .*#color_theme = \"/usr/share/btop/themes/nord.theme\"#g' /home/$USERNAME/.config/btop/btop.config 
 sed -i 's#theme_background =.*#theme_background = False#g' /home/$USERNAME/.config/btop/btop.config
 cd "$CWD"
