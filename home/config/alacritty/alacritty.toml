@@ -34,7 +34,7 @@ live_config_reload = true
 [mouse]
 hide_when_typing = true
 
-[mouse.bindings]
+[[mouse.bindings]]
 action = "PasteSelection"
 mouse = "Middle"
 
