@@ -25,8 +25,8 @@ cd volatility3
 pip3 install .
 cd ..
 export PATH="/home/$USERNAME/.local/bin:$PATH"
-cp *.zip /home/$USERNAME/.local/lib/python3.12/site-packages/volatility3/symbols/
-cp -r symbols/symbols/windows/ /home/$USERNAME/.local/lib/python3.12/site-packages/volatility3/symbols/windows
+cp *.zip /home/$USERNAME/.local/lib/python3.13/site-packages/volatility3/symbols/
+cp -r symbols/symbols/windows/ /home/$USERNAME/.local/lib/python3.13/site-packages/volatility3/symbols/windows
 echo -e "Downloading malware sample and caching symbol tables, this will take a while"
 curl -O https://cc-public.s3.amazonaws.com/0zapftis.zip
 unzip -P infected 0zapftis.zip
