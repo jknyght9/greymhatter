@@ -51,9 +51,9 @@ EOF
 echo -e "${GREEN}[+] Installing required software${NC}"
 
 if [[ "$ARCH" == "aarch64" ]]; then
-  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-user-theme gnome-tweaks git neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-user-theme gnome-terminal gnome-tweaks git neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
 else 
-  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
+  dnf install afflib alacritty bat btop conky curl fish duf ewftools exa gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-terminal gnome-tweaks git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tmux util-linux-user wget -y
 fi
 
 echo -e "${GREEN}[+] Installing CTOP${NC}"
