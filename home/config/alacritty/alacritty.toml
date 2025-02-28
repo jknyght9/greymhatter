@@ -52,7 +52,7 @@ history = 100000
 save_to_clipboard = true
 semantic_escape_chars = ",│`|:\"' ()[]{}<>"
 
-[shell]
+[terminal.shell]
 args = ["--login"]
 program = "/usr/bin/fish"
 
