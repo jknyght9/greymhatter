@@ -49,7 +49,7 @@ Download the latest OVF version here.
 | ------------ | ----| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | VM        | x86_64/AMD64 | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip)       |
 | VM Hashes | x86_64/AMD64 | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256) |
-| VM        | ARM64        | [https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.zip](https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.zip) |
+| VM        | ARM64        | [https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova](https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova) |
 | VM Hashes | ARM64        | [https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256](https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256) |
 
 Once downloaded, verify the zip file with the hash file using `sha256sum` or any other hashing program.
