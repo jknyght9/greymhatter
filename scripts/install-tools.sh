@@ -42,8 +42,22 @@ cd sleuthkit*
 make
 make install
 fls -V
-dnf groupremove "Development Tools" -y
-dnf remove autoconf automake libtool maven -y
 cd ..
 rm -rf sleuthkit*
+
+echo -e "Installing Bulk Extractor"
+cd /opt/tools
+git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
+cd bulk_extractor
+dnf install autoconf automake re2 re2-devel flex -y 
+./bootstrap
+./configure --disable-libewf 
+make 
+make install 
+bulk_extractor -V
+
+echo -e "Cleaning up"
+dnf groupremove "Development Tools" -y
+dnf remove autoconf automake libtool maven -y
+
 cd "$CWD"

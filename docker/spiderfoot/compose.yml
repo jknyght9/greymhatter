@@ -7,7 +7,7 @@ services:
     container_name: spiderfoot
     ports:
       - "5001:5001"
-    restart: unless-stopped
+    restart: no
 
 volumes:
   spiderfoot-data:
