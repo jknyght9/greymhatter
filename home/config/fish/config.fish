@@ -5,17 +5,29 @@ set -g -x fish_greeting ''
 fish_add_path ~/.local/bin/
 fish_add_path /opt/tools/
 
-# Aliases
-alias cat='bat --paging=never'
+# Aliases: File Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 alias c='clear'
+alias ls='eza -lh --icons --group --group-directories-first --time-style long-iso'
+alias la='eza -lah --icons --group --group-directories-first --time-style long-iso'
+alias lt='eza --tree'
+
+# Aliases: File manipulation
+alias cat='bat --paging=never'
+alias catp='bat -p --paging=never'
+alias grep='rg'
+
+# Aliases: System
 alias df='duf'
-alias ls='exa -l --icons --group --git --group-directories-first --time-style long-iso'
+alias disku='du -sh * | sort -h'
 alias myip='curl https://ifconfig.co'
 alias myipj='curl https://ifconfig.co/json'
+alias reload='source ~/.config/fish/config.fish'
 alias vim=nvim
 
 # Functions
-
 function log2timeline
   if [ (pwd) = "/opt/share" ]
     sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
@@ -26,7 +38,7 @@ end
 
 function log2timeline-triage
   if [ (pwd) = "/opt/share" ]
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] -f /usr/share/plaso/filter_windows.txt --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2]
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -34,7 +46,7 @@ end
 
 function log2timeline-targeted
   if [ (pwd) = "/opt/share" ]
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,usnjrnl,prefetch,winreg,esedb/srum" --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers=$argv[3] --partitions "all"
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
@@ -42,7 +54,7 @@ end
 
 function log2timeline-full
   if [ (pwd) = "/opt/share" ]
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers="winevtx,mft,prefetch,esedb,win_gen,winreg,olecf/olecf_automatic_destinations" --partitions "all"
+    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --partitions "all" --vss_stores "all"
   else
     printf "Your evidence and current directory must be '/opt/share'"
   end
