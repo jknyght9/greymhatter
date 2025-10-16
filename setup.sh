@@ -83,18 +83,22 @@ fi
 
 echo -e "${GREEN}[+] Setting up user profile${NC}"
 chsh -s $(which fish) $USERNAME
+mkdir -p /home/$USERNAME/Pictures
 cp $CURRENT_DIR/media/greymhatter-background.jpg /home/$USERNAME/Pictures/background.jpg
-chown $USERNAME:$USERNAME /home/$USERNAME/Pictures/background.jpg
 cp $CURRENT_DIR/media/greymhatter-logo.png /var/lib/AccountsService/icons/$USERNAME
 cp -r $CURRENT_DIR/home/conky/conkyrc /home/$USERNAME/.conkyrc
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.conkyrc
 cp -r $CURRENT_DIR/home/config/* /home/$USERNAME/.config
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
 cp -r $CURRENT_DIR/home/local/* /home/$USERNAME/.local 
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.local
 chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
 git clone https://github.com/tmux-plugins/tpm /home/$USERNAME/.config/tmux/plugins/tpm
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.config/tmux
+
+chown -R $USERNAME:$USERNAME /home/$USERNAME
+chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
+
+echo -e "${YELLOW}[!] Please login as user '$USERNAME' in another terminal or TTY to complete the user session setup.${NC}"
+echo -e "${YELLOW}Once logged in, return here and press Enter to continue...${NC}"
+read -p ""
+
 runuser -l $USERNAME -c 'bash -s' << 'EOF'
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
