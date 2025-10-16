@@ -63,7 +63,7 @@ wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-F
 rpm -i https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
 
 echo -e "Installing bdemount from source"
-dnf install bison gcc gettext-devel libtool pkg-config fuse-devel zlib-devel python3-devel python3-setuptools
+dnf install bison gcc gettext-devel libtool pkg-config fuse-devel zlib-devel python3-devel python3-setuptools -y 
 ln -s /usr/bin/bison /usr/bin/yacc
 git clone https://github.com/libyal/libbde.git
 cd libbde
