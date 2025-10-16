@@ -1,6 +1,7 @@
 #!/bin/bash
 
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 USERNAME='hatter'
 PASSWORD='H@tt3r123!'
@@ -96,6 +97,10 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME
 chmod +x /home/$USERNAME/.local/share/applications/dashboard.desktop
 
 echo -e "${YELLOW}[!] Please login as user '$USERNAME' in another terminal or TTY to complete the user session setup.${NC}"
+echo -e "1. Open new Terminal or Terminal tab"
+echo -e "2. Run 'su -l hatter'"
+echo -e "3. Run 'xdg-user-dirs-update && xdg-open .'"
+echo -e "4. Run 'exit' and close the Terminal or tab"
 echo -e "${YELLOW}Once logged in, return here and press Enter to continue...${NC}"
 read -p ""
 
