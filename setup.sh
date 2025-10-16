@@ -123,7 +123,7 @@ echo -e "${GREEN}[+] Installing DFIR Tools${NC}"
 sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-tools.sh $USERNAME; read -p \"Enter to continue\""
 
 echo -e "${GREEN}[+] Installing Gnome and Terminal Themes${NC}"
-sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh; read -p \"Enter to continue\""
+sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh $USERNAME; read -p \"Enter to continue\""
 
 echo -e "${GREEN}[+] Installing Volatility2${NC}"
 bash ./scripts/install-volatility2.sh "$USERNAME"
