@@ -45,22 +45,22 @@ Other tools included are:
 
 Download the latest OVF version here.
 
-| Name         | Architecture | Link                                                                                                                                                                     |
-| ------------ | ----| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| VM        | x86_64/AMD64 | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.zip)       |
-| VM Hashes | x86_64/AMD64 | [https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256](https://cc-public.s3.us-east-1.amazonaws.com/GreymHatter-F40-Gnome-20241024.sha256) |
-| VM        | ARM64        | [https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova](https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova) |
-| VM Hashes | ARM64        | [https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256](https://cc-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256) |
+| Name      | Architecture | Link                                                                                                                                                                         |
+| --------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VM        | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.zip](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.zip)       |
+| VM Hashes | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.sha256) |
+| VM        | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova)       |
+| VM Hashes | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256) |
 
 Once downloaded, verify the zip file with the hash file using `sha256sum` or any other hashing program.
 
 ```shell
 # On Linux
-sha256sum -c GreymHatter-F40-Gnome-20241024.sha256
+sha256sum -c greymhatter-f40-gnome-amd64.sha256
 
 # Powershell
-Get-Filehash GreymHatter-F40-Gnome-20241024.zip
-Get-Content GreymHatter-F40-Gnome-20241024.sha256
+Get-Filehash greymhatter-f40-gnome-amd64.zip
+Get-Content greymhatter-f40-gnome-amd64.sha256
 ```
 
 Finally, unzip the file and import the OVF into your virtual machine software.
