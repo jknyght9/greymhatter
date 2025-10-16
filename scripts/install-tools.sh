@@ -56,6 +56,34 @@ make
 make install 
 bulk_extractor -V
 
+echo -e "Installing Encryption Tools"
+cd /opt/tools
+dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
+wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
+rpm -i https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
+
+echo -e "Installing bdemount from source"
+dnf install bison gcc gettext-devel libtool pkg-config fuse-devel zlib-devel python3-devel python3-setuptools
+ln -s /usr/bin/bison /usr/bin/yacc
+git clone https://github.com/libyal/libbde.git
+cd libbde
+./synclibs.sh
+./autogen.sh
+./configure --enable-python
+make
+sudo make install
+sudo ldconfig
+
+echo -e "Installing fvdeemount from source"
+git clone https://github.com/libyal/libfvde.git
+cd libfvde
+./synclibs.sh
+./autogen.sh
+./configure --enable-python
+make
+sudo make install
+sudo ldconfig
+
 echo -e "Cleaning up"
 rm -rf lib*
 dnf groupremove "Development Tools" -y
