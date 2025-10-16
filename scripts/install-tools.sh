@@ -57,6 +57,7 @@ make install
 bulk_extractor -V
 
 echo -e "Cleaning up"
+rm -rf lib*
 dnf groupremove "Development Tools" -y
 dnf remove autoconf automake libtool maven -y
 
