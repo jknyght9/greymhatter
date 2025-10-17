@@ -1,5 +1,30 @@
 local plugins = {
   {
+    "lukas-reineke/headlines.nvim",
+    dependencies = "nvim-treesitter/nvim-treesitter",
+    config = function()
+      require("headlines").setup()
+    end
+  },
+  {
+    "jakewvincent/mkdnflow.nvim",
+    config = function()
+      require("mkdnflow").setup({})
+    end,
+  },
+  {
+    "mzlogin/vim-markdown-toc", -- Auto Table of Contents for Markdown
+    ft = { "markdown" },
+  },
+  {
+    "williamboman/mason.nvim",
+    opts = {
+      ensure_installed = {
+        "rust-analyzer"
+      }
+    }
+  },
+  {
     "nvimtools/none-ls.nvim",
     event = "VeryLazy",
     opts = function()
@@ -14,6 +39,9 @@ local plugins = {
     end,
   },
   {
+    "mfussenegger/nvim-dap"
+  },
+  {
     "windwp/nvim-ts-autotag",
     ft = {
       "html",
@@ -26,29 +54,6 @@ local plugins = {
       require("nvim-ts-autotag").setup()
     end
   },
-  {
-    "michaelrommel/nvim-silicon",
-    laz = true,
-    cmd = "Silicon",
-    init = function()
-      local wk = require("which-key")
-      wk.register({
-        ["<leader>sc"] = { ":Silicon<CR>", "Snapshot Code"},
-      }, { mode = "v" })
-    end,
-    config = function()
-      require("silicon").setup({
-        command = "/opt/homebrew/bin/silicon",
-        --font = "Hack Nerd Font=34;Apple Color Emoji=34",
-        font = "Hack Nerd Font=24",
-        theme = "Visual Studio Dark+",
-        background = "#94e2d5",
-        window_title = function()
-          return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()), ":t")
-        end
-      })
-    end
-  }
 }
 
 return plugins

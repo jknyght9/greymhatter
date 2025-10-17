@@ -1,1 +1,35 @@
 ---
+- DFIR & CTI:
+    - Cyberchef:
+        href: http://localhost:8080
+        description: Swiss Army knife for cyber professionals
+        icon: mdi-knife
+        container: cyberchef
+        server: my-docker
+        showStats: true
+    - Timesketch:
+        href: https://localhost
+        description: Forensic timeline analysis
+        icon: mdi-timelapse
+        container: timesketch-web
+        server: my-docker
+        showStats: true
+    - Yeti:
+        href: http://localhost:8888
+        description: Cyber threat intelligence platform
+        icon: mdi-foot-print
+        container: yeti
+        server: my-docker
+        showStats: true
+- OSINT:
+    - Spiderfoot:
+        href: http://localhost:5001
+        description: Open source intelligence automation
+        icon: mdi-spider
+        container: spiderfoot
+        server: my-docker
+        showStats: true
+    - VirusTotal:
+        href: https://www.virustotal.com
+        description: Virus total website
+        icon: mdi-virus
