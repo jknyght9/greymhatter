@@ -66,12 +66,13 @@ curl -O https://starship.rs/install.sh \
 	&& rm -f install.sh
 
 echo -e "${GREEN}[+] Installing Docker${NC}"
-curl -fsSL https://get.docker.com -o get-docker.sh
-chmod u+x ./get-docker.sh
-sh ./get-docker.sh
-systemctl enable --now docker 
-systemctl start docker 
-rm get-docker.sh
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager \
+    --add-repo \
+    https://download.docker.com/linux/fedora/docker-ce.repo
+sudo rpm --import https://download.docker.com/linux/fedora/gpg
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
 
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
