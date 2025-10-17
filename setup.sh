@@ -65,16 +65,12 @@ curl -O https://starship.rs/install.sh \
 	&& sh ./install.sh -f \
 	&& rm -f install.sh
 
-echo "[+] Installing Docker on Fedora"
-sudo dnf remove -y docker \
-    docker-client \
-    docker-client-latest \
-    docker-common \
-    docker-latest \
-    docker-latest-logrotate \
-    docker-logrotate \
-    docker-engine
-sudo dnf install -y dnf-plugins-core ca-certificates curl gnupg lsb-release
+echo -e "${GREEN}[+] Installing Docker CE...${NC}"
+sudo dnf remove -y docker* containerd.io
+sudo rpm --erase gpg-pubkey --allmatches || true
+sudo dnf clean all
+sudo rm -rf /var/cache/dnf
+sudo rpm --import https://download.docker.com/linux/fedora/gpg
 sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
 [docker-ce-stable]
 name=Docker CE Stable - $basearch
@@ -83,12 +79,9 @@ enabled=1
 gpgcheck=1
 gpgkey=https://download.docker.com/linux/fedora/gpg
 EOF
-sudo rpm --import https://download.docker.com/linux/fedora/gpg
-sudo dnf clean all
 sudo dnf makecache
 sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo systemctl enable --now docker
-docker --version && docker compose version
 
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
