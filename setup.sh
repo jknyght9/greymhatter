@@ -77,7 +77,7 @@ enabled=1
 gpgcheck=0
 EOF
 echo -e "${GREEN}[+] Installing Docker packages with --nogpgcheck${NC}"
-sudo dnf install -y --nogpgcheck docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+sudo dnf install -y --nogpgcheck --setopt=install_weak_deps=False docker-ce docker-ce-cli containerd.io docker-buildx-plugin
 echo -e "${GREEN}[+] Enabling and starting Docker${NC}"
 sudo systemctl daemon-reload
 sudo systemctl enable --now docker || true
