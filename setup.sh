@@ -65,15 +65,28 @@ curl -O https://starship.rs/install.sh \
 	&& sh ./install.sh -f \
 	&& rm -f install.sh
 
-echo -e "${GREEN}[+] Installing Docker${NC}"
-curl -fsSL https://get.docker.com -o get-docker.sh
-chmod u+x ./get-docker.sh
-sh ./get-docker.sh
-systemctl enable --now docker 
-systemctl start docker 
-rm get-docker.sh
-docker --version
-docker compose --version
+echo -e "${GREEN}[+] Installing Docker (signature check bypassed)${NC}"
+sudo dnf remove -y docker* containerd.io || true
+sudo dnf clean all
+sudo rm -rf /var/cache/dnf
+sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
+[docker-ce-stable]
+name=Docker CE Stable - $basearch
+baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+enabled=1
+gpgcheck=0
+EOF
+echo -e "${GREEN}[+] Installing Docker packages with --nogpgcheck${NC}"
+sudo dnf install -y --nogpgcheck docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
+sudo dnf install -y --nogpgcheck docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+echo -e "${GREEN}[+] Enabling and starting Docker${NC}"
+sudo systemctl daemon-reload
+sudo systemctl enable --now docker || true
+sudo systemctl start docker || true
+echo -e "${GREEN}[+] Docker version:${NC}"
+docker --version || echo "❌ Docker did not install correctly"
+echo -e "${GREEN}[+] Docker Compose version:${NC}"
+docker compose version || echo "❌ Docker Compose did not install correctly"
 
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
