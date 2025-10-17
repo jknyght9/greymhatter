@@ -16,7 +16,8 @@ cd /opt/
 git clone https://github.com/yeti-platform/yeti-docker
 cd /opt/yeti-docker/prod
 sed -i 's/- 80:80/- 8888:80/' docker-compose.yaml
-docker compose up -d
+echo -e "Initializing Yeti"
+./init.sh
 API=$(docker compose run --rm api create-user "$USERNAME" "$PASSWORD" --admin)
 if [[ "$API" == *"API key:"* ]]; then
   APIKEY=$(echo "$API" | grep -oP "(?<=API key: ).*")
