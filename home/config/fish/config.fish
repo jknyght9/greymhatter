@@ -13,6 +13,7 @@ alias c='clear'
 alias ls='eza -lh --icons --group --group-directories-first --time-style long-iso'
 alias la='eza -lah --icons --group --group-directories-first --time-style long-iso'
 alias lt='eza --tree'
+alias lat='eza -lah --icons --group --group-directories-first --time-style long-iso --tree'
 
 # Aliases: File manipulation
 alias cat='bat --paging=never'
@@ -81,6 +82,34 @@ end
 function hayabusa-timeline
   echo -e "hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T -G geoip/ -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv"
   /opt/tools/hayabusa/hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T -G /opt/maxmind-geoipupdate/geoip_data/ -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv
+end
+
+function startspiderfoot
+  set CWD $(pwd)
+  cd /opt/spiderfoot
+  docker compose up -d
+  cd "$CWD" 
+end
+
+function stopspiderfoot
+  set CWD $(pwd)
+  cd /opt/spiderfoot
+  docker compose down
+  cd "$CWD"
+end
+
+function starttimesketch
+  set CWD $(pwd)
+  cd /opt/timesketch
+  docker compose up -d
+  cd "$CWD" 
+end
+
+function stoptimesketch
+  set CWD $(pwd)
+  cd /opt/timesketch
+  docker compose down
+  cd "$CWD"
 end
 
 function timesketch-import
