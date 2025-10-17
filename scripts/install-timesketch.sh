@@ -42,6 +42,7 @@ if [[ $? -eq 0 ]]; then
     sleep 10
   done
   echo -e "Creating Timesketch User"
+  docker compose up -d
   docker compose exec timesketch-web tsctl create-user $USERNAME --password $PASSWORD
   echo -e "Installing Timesketch Importer"
   pip3 install timesketch-import-client
