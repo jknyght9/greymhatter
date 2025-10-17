@@ -27,7 +27,7 @@ echo 'fastestmirror=1' | tee -a /etc/dnf/dnf.conf
 echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
 echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
 dnf clean all
-dnf upgrade --refresh -y
+#dnf upgrade --refresh -y
 dnf check
 dnf autoremove -y
 fwupdmgr get-devices
@@ -65,23 +65,15 @@ curl -O https://starship.rs/install.sh \
 	&& sh ./install.sh -f \
 	&& rm -f install.sh
 
-echo -e "${GREEN}[+] Installing Docker CE...${NC}"
-sudo dnf remove -y docker* containerd.io
-sudo rpm --erase gpg-pubkey --allmatches || true
-sudo dnf clean all
-sudo rm -rf /var/cache/dnf
-sudo rpm --import https://download.docker.com/linux/fedora/gpg
-sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
-[docker-ce-stable]
-name=Docker CE Stable - $basearch
-baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
-enabled=1
-gpgcheck=1
-gpgkey=https://download.docker.com/linux/fedora/gpg
-EOF
-sudo dnf makecache
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo systemctl enable --now docker
+echo -e "${GREEN}[+] Installing Docker${NC}"
+curl -fsSL https://get.docker.com -o get-docker.sh
+chmod u+x ./get-docker.sh
+sh ./get-docker.sh
+systemctl enable --now docker 
+systemctl start docker 
+rm get-docker.sh
+docker --version
+docker compose --version
 
 echo -e "${GREEN}[+] Creating $USERNAME user${NC}"
 ENC_PASSWORD=$(openssl passwd -6 $PASSWORD)
