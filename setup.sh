@@ -27,7 +27,7 @@ echo 'fastestmirror=1' | tee -a /etc/dnf/dnf.conf
 echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
 echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
 dnf clean all
-#dnf upgrade --refresh -y
+dnf upgrade --refresh -y
 dnf check
 dnf autoremove -y
 fwupdmgr get-devices
@@ -77,7 +77,6 @@ enabled=1
 gpgcheck=0
 EOF
 echo -e "${GREEN}[+] Installing Docker packages with --nogpgcheck${NC}"
-sudo dnf install -y --nogpgcheck docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
 sudo dnf install -y --nogpgcheck docker-ce docker-ce-cli containerd.io docker-buildx-plugin
 echo -e "${GREEN}[+] Enabling and starting Docker${NC}"
 sudo systemctl daemon-reload
@@ -85,6 +84,12 @@ sudo systemctl enable --now docker || true
 sudo systemctl start docker || true
 echo -e "${GREEN}[+] Docker version:${NC}"
 docker --version || echo "❌ Docker did not install correctly"
+
+DOCKER_COMPOSE_VERSION="2.24.0"
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 echo -e "${GREEN}[+] Docker Compose version:${NC}"
 docker compose version || echo "❌ Docker Compose did not install correctly"
 
