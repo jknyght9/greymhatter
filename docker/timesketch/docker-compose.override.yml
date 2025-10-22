@@ -1,4 +1,12 @@
 services:
+  nginx:
+    depends_on:
+      - timesketch-web
+    restart: no
+    volumes:
+      - /opt/timesketch/ssl/:/ssl/
+  opensearch:
+    restart: no
   postgres:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U timesketch"]
@@ -6,6 +14,8 @@ services:
       retries: 5
       start_period: 30s
       timeout: 5s
+    restart: no
+  redis:
     restart: no
   timesketch-web:
     depends_on:
@@ -21,7 +31,3 @@ services:
       - /opt/share/:/share/
       - /opt/maxmind-geoipupdate/geoip_data:/opt/maxmind
       - /opt/dfiq/dfiq/data/:/etc/timesketch/dfiq
-  nginx:
-    restart: no
-    volumes:
-      - /opt/timesketch/ssl/:/ssl/

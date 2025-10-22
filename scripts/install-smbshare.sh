@@ -8,8 +8,7 @@ chown -R $USERNAME:$USERNAME /opt/share
 dnf install samba -y
 systemctl enable smb --now
 systemctl enable nmb --now
-firewall-cmd --permanent --zone=FedoraWorkstation --add-service=samba
-firewall-cmd --permanent --zone=FedoraServer --add-service=samba
+firewall-cmd --permanent --add-service=samba
 firewall-cmd --reload
 groupadd samba
 usermod -aG samba $USERNAME

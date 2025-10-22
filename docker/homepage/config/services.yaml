@@ -18,7 +18,7 @@
         href: http://localhost:8888
         description: Cyber threat intelligence platform
         icon: mdi-foot-print
-        container: yeti
+        container: yeti-frontend
         server: my-docker
         showStats: true
 - OSINT:

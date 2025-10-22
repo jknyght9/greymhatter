@@ -8,6 +8,8 @@ unzip vol2.zip
 mkdir -p /home/$USERNAME/.local/bin
 chown -R "$USERNAME:$USERNAME" /home/$USERNAME/.local
 mv ./volatility_2.6_lin64_standalone/volatility_2.6_lin64_standalone /home/$USERNAME/.local/bin/vol2
+chown "$USERNAME":"$USERNAME" /home/$USERNAME/.local/bin/vol2
+chmod 755 /home/$USERNAME/.local/bin/vol2
 rm -rf vol2*
 rm -rf volatilitiy*
 
