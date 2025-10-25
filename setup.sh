@@ -75,9 +75,14 @@ fastestmirror=1
 max_parallel_downloads=10
 deltarpm=true
 EOF
+
+  systemctl stop packagekit || true
+  rm -rf /var/cache/dnf /var/cache/yum
+  rm -f /var/lib/rpm/__db*
+  rpm --rebuilddb
   dnf clean all
   dnf makecache --refresh
-  #dnf upgrade --refresh -y -q
+  dnf upgrade --refresh -y -q
   dnf autoremove -y
   fwupdmgr get-devices
   fwupdmgr refresh --force
