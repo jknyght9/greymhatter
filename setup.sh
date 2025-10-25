@@ -76,8 +76,9 @@ max_parallel_downloads=10
 deltarpm=true
 EOF
   dnf clean all
-  dnf upgrade --refresh -y -q
+  dnf makecache --refresh
   dnf check
+  dnf upgrade --refresh -y -q
   dnf autoremove -y
   fwupdmgr get-devices
   fwupdmgr refresh --force
