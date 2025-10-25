@@ -245,6 +245,7 @@ function runToolInstallation() {
   checkStatus
 }
 
+header
 checkRequirements
 updatingOS
 configuringOS
