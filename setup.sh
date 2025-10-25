@@ -77,8 +77,7 @@ deltarpm=true
 EOF
   dnf clean all
   dnf makecache --refresh
-  dnf check
-  dnf upgrade --refresh -y -q
+  #dnf upgrade --refresh -y -q
   dnf autoremove -y
   fwupdmgr get-devices
   fwupdmgr refresh --force
