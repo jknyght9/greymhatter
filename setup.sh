@@ -61,9 +61,9 @@ function checkRequirements() {
 
   doing "Checking architecture"
   if [[ "$ARCH" == "x86_64" ]]; then
-      info "Running on x86_64"
+      info "\tRunning on x86_64"
   elif [[ "$ARCH" == "aarch64" ]]; then
-      info "Running on ARM64"
+      info "\tRunning on ARM64"
   fi
 }
 
@@ -167,7 +167,7 @@ function installRequiredSoftware() {
   doing "Installing required software"
   dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools firefox \
     git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip \
-    util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable -q
+    util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable --nogpgcheck -q
   installDocker
   installGnomeRequirements
   install3dPartySources
