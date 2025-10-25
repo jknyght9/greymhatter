@@ -69,9 +69,12 @@ function checkRequirements() {
 
 function updatingOS() {
   doing "Optimizing and Updating Fedora"
-  echo 'fastestmirror=1' | tee -a /etc/dnf/dnf.conf
-  echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
-  echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
+  echo << EOF > /etc/dnf/dnf.conf
+[main]
+fastestmirror=1
+max_parallel_downloads=10
+deltarpm=true
+EOF
   dnf clean all
   dnf upgrade --refresh -y -q
   dnf check
