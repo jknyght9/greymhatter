@@ -73,7 +73,7 @@ function updatingOS() {
   echo 'max_parallel_downloads=10' | tee -a /etc/dnf/dnf.conf
   echo 'deltarpm=true' | tee -a /etc/dnf/dnf.conf
   dnf clean all
-  dnf upgrade --refresh -y
+  dnf upgrade --refresh -y -q
   dnf check
   dnf autoremove -y
   fwupdmgr get-devices
