@@ -106,7 +106,7 @@ EOF
 
 function installDocker() {
   doing "Installing Docker (signature check bypassed)"
-  sudo dnf remove -y docker* containerd.io || true
+  sudo dnf remove -y docker* containerd.io -q || true
   sudo dnf clean all
   sudo rm -rf /var/cache/dnf
   sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
@@ -117,7 +117,7 @@ enabled=1
 gpgcheck=0
 EOF
   doing "Installing Docker packages with --nogpgcheck"
-  sudo dnf install -y --nogpgcheck --setopt=install_weak_deps=False docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+  sudo dnf install -y --nogpgcheck --setopt=install_weak_deps=False docker-ce docker-ce-cli containerd.io docker-buildx-plugin -q
   doing "Enabling and starting Docker"
   sudo systemctl daemon-reload
   sudo systemctl enable --now docker || true
@@ -139,7 +139,7 @@ function installGnomeRequirements() {
   doing "Installing Gnome requirements"
   dnf install gnome-shell-extension-apps-menu gnome-shell-extension-blur-my-shell \
     gnome-shell-extension-dash-to-dock gnome-shell-extension-dash-to-panel \
-    gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-terminal gnome-tweaks -y --skip-unavailable
+    gnome-shell-extension-caffeine gnome-shell-extension-user-theme gnome-terminal gnome-tweaks -y --skip-unavailable -q
 }
 
 function install3dPartySources() {
@@ -167,7 +167,7 @@ function installRequiredSoftware() {
   doing "Installing required software"
   dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools firefox \
     git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip \
-    util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable
+    util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable -q
   installDocker
   installGnomeRequirements
   install3dPartySources
