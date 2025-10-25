@@ -3,11 +3,11 @@
 USERNAME="$1"
 CWD=$(pwd)
 
-echo -e "Installing Eza (ls replacement)"
-wget -q -O - https://github.com/eza-community/eza/releases/download/v0.23.4/eza_x86_64-unknown-linux-musl.tar.gz | tar zx
-chown root:root eza
-chmod 755 eza
-mv eza /usr/local/bin
+echo -e "Installing Powershell"
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+curl https://packages.microsoft.com/config/rhel/7/prod.repo | tee /etc/yum.repos.d/microsoft.repo
+dnf makecache -y
+dnf install powershell -y
 
 echo -e "Installing Hayabusa"
 mkdir /opt/tools/
