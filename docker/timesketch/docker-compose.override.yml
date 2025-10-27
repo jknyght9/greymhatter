@@ -1,3 +1,7 @@
+networks:
+  default:
+    name: yeti_network
+
 services:
   nginx:
     depends_on:

@@ -241,16 +241,16 @@ function runToolInstallation() {
   runToolParallelInstallations
   doing "Installing DFIR Tools"
   bash ./scripts/install-tools.sh $USERNAME
-  checkStatus
+  checkStatus "Installing DFIR Tools"
 
   doing "Installing Samba"
   bash ./scripts/install-smbshare.sh "$USERNAME" "$PASSWORD"
-  checkStatus
+  checkStatus "Installing Samba"
 
   # Do not resequence this section!
   doing "Configuring up GNOME"
   bash ./scripts/install-gnome-environment.sh "$USERNAME"
-  checkStatus
+  checkStatus "Configuring up GNOME"
 }
 
 header

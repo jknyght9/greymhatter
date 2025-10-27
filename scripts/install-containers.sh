@@ -29,36 +29,34 @@ function checkStatus()  {
     success "${task_name} completed successfully"
     return 0
   fi
-  pressAnyKey
-  clear
 }
 
 doing "Installing DFIQ"
 bash ./scripts/install-dfiq.sh
-checkStatus
+checkStatus "Installing DFIQ"
 
 doing "Installing Maxmind"
 bash ./scripts/install-maxmind.sh
-checkStatus
+checkStatus "Installing Maxmind"
 
 doing "Installing Timesketch"
 bash ./scripts/install-timesketch.sh "$CURRENT_DIR" "$USERNAME" "$PASSWORD"
-checkStatus
+checkStatus "Installing Timesketch"
 
 doing "Installing Yeti"
 bash ./scripts/install-yeti.sh "$USERNAME" "$PASSWORD"
-checkStatus
+checkStatus "Installing Yeti"
 
 doing "Installing Spiderfoot"
 bash ./scripts/install-spiderfoot.sh "$CURRENT_DIR"
-checkStatus
+checkStatus "Installing Spiderfoot"
 
 doing "Installing Cyberchef"
 bash ./scripts/install-cyberchef.sh "$CURRENT_DIR"
-checkStatus
+checkStatus "Installing Cyberchef"
 
 doing "Installing Homepage - Dashboard"
 bash ./scripts/install-homepage.sh "$CURRENT_DIR"
-checkStatus
+checkStatus "Installing Homepage - Dashboard"
 
 cd "$CWD"

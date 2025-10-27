@@ -19,7 +19,7 @@ This platform was developed for instructional purposes and has not been tested i
 GreymHatter is built on the Fedora Workstation Linux distribution with the Gnome desktop environment. It uses the Docker container environment to house several applications. Furthermore, several forensic tools have been installed and configured. Tools installed include:
 
 | Name              | Purpose                                              | Type      | Local Access           | Website                                 |
-| ----------------- | ---------------------------------------------------- | --------- | ---------------------- | --------------------------------------- |
+|-------------------|------------------------------------------------------|-----------|------------------------|-----------------------------------------|
 | cyberchef         | Self-hosted data operations site                     | Container | http://localhost:8080  | https://cyberchef.org/                  |
 | homepage          | Self-hosted homepage for all sites                   | Container | http://localhost:3000  | https://gethomepage.dev/                |
 | maxmind-geoupdate | Updates GeoIP databases every day (requires API key) | Container | -                      | https://www.maxmind.com/en/home         |
@@ -30,7 +30,7 @@ GreymHatter is built on the Fedora Workstation Linux distribution with the Gnome
 Other tools included are:
 
 | Name        | Purpose                                              | Website                                             |
-| ----------- | ---------------------------------------------------- | --------------------------------------------------- |
+|-------------|------------------------------------------------------|-----------------------------------------------------|
 | capa        | Mandiant file capability detector                    | https://github.com/mandiant/capa                    |
 | dfiq        | Digital Forensics Investigative Questions            | https://dfiq.org/                                   |
 | floss       | Mandiant FLARE Obfuscated String Solver              | https://github.com/mandiant/flare-floss             |
@@ -45,22 +45,22 @@ Other tools included are:
 
 Download the latest OVF version here.
 
-| Name      | Architecture | Link                                                                                                                                                                         |
-| --------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VM        | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.zip](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.zip)       |
-| VM Hashes | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f40-gnome-amd64.sha256) |
-| VM        | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.ova)       |
-| VM Hashes | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/greymhatter-f41-gnome-arm64.sha256) |
+| Name      | Architecture | Link                                                                                                                                                                                                   |
+|-----------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VM        | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-42-gnome-x86_64.zip](https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-42-gnome-x86_64.zip)               |
+| VM Hashes | x86_64/AMD64 | [https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-42-gnome-x86_64.zip.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-42-gnome-x86_64.zip.sha256) |
+| VM        | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-f41-gnome-arm64.ova](https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-f41-gnome-arm64.ova)               |
+| VM Hashes | ARM64        | [https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-f41-gnome-arm64.sha256](https://jdclabs-public.s3.us-east-1.amazonaws.com/software/greymhatter-f41-gnome-arm64.sha256)         |
 
 Once downloaded, verify the zip file with the hash file using `sha256sum` or any other hashing program.
 
 ```shell
 # On Linux
-sha256sum -c greymhatter-f40-gnome-amd64.sha256
+sha256sum -c greymhatter*.sha256
 
 # Powershell
-Get-Filehash greymhatter-f40-gnome-amd64.zip
-Get-Content greymhatter-f40-gnome-amd64.sha256
+Get-Filehash greymhatter*.zip
+Get-Content greymhatter*.sha256
 ```
 
 Finally, unzip the file and import the OVF into your virtual machine software.
