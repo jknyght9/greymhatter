@@ -116,7 +116,10 @@ function installDocker() {
   sudo rm -rf /var/cache/dnf
 
   curl -fsSL https://get.docker.com -o get-docker.sh
-  sh ./get-docker.sh --dry-run
+  sh ./get-docker.sh
+  systemctl daemon-reload
+  systemctl enable --now docker || true
+  systemctl start docker || true
 
 #   sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
 # [docker-ce-stable]

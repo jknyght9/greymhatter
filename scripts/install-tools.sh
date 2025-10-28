@@ -3,13 +3,18 @@
 USERNAME="$1"
 CWD=$(pwd)
 
-echo -e "Installing Powershell"
+# Functions for convenience
+function doing()        { echo -e "${C_BLUE}[>] $*${C_RESET}"; }
+function pressAnyKey()  { read -n 1 -s -p "$(question "Press any key to continue")"; echo; }
+
+doing "Installing Powershell"
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 curl https://packages.microsoft.com/config/rhel/7/prod.repo | tee /etc/yum.repos.d/microsoft.repo
 dnf makecache -y
 dnf install powershell -y
+pressAnyKey
 
-echo -e "Installing Hayabusa"
+doing "Installing Hayabusa"
 mkdir /opt/tools/
 cd /opt/tools/
 wget $(wget -q -O - https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.assets[] | select(.name | contains ("all-platforms")) | .browser_download_url')
@@ -21,8 +26,9 @@ chmod +x hayabusa
 ln -s /opt/tools/hayabusa/hayabusa /home/$USERNAME/.local/bin/hayabusa
 cd ..
 rm hayabusa*.zip 
+pressAnyKey
 
-echo -e "Installing Malware Analysis Tools"
+doing "Installing Malware Analysis Tools"
 cd /opt/tools
 wget $(wget -q -O - https://api.github.com/repos/mandiant/capa/releases/latest | jq -r '.assets[] | select(.name | contains ("linux.zip")) | .browser_download_url')
 wget $(wget -q -O - https://api.github.com/repos/mandiant/flare-floss/releases/latest | jq -r '.assets[] | select(.name | contains ("linux")) | .browser_download_url')
@@ -35,8 +41,9 @@ ln -s /opt/tools/capa /home/$USERNAME/.local/bin/capa
 ln -s /opt/tools/floss /home/$USERNAME/.local/bin/floss
 ln -s /opt/tools/vt /home/$USERNAME/.local/bin/vt
 rm capa*.zip floss*.zip Linux64.zip
+pressAnyKey
 
-echo -e "Installing Sleuthkit"
+doing "Installing Sleuthkit"
 cd /opt/tools
 wget $(wget -q -O - https://api.github.com/repos/sleuthkit/sleuthkit/releases/latest | jq -r '.assets[] | select(.name | contains ("tar.gz")) | .browser_download_url')
 dnf groupinstall "Development Tools" -y
@@ -50,8 +57,9 @@ make install
 fls -V
 cd ..
 rm -rf sleuthkit*
+pressAnyKey
 
-echo -e "Installing Bulk Extractor"
+doing "Installing Bulk Extractor"
 cd /opt/tools
 git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
 cd bulk_extractor
@@ -61,14 +69,16 @@ dnf install autoconf automake re2 re2-devel flex -y
 make 
 make install 
 bulk_extractor -V
+pressAnyKey
 
-echo -e "Installing Encryption Tools"
+doing "Installing Encryption Tools"
 cd /opt/tools
 dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
 wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
 rpm -i https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
+pressAnyKey
 
-echo -e "Installing bdemount from source"
+doing "Installing bdemount from source"
 dnf install bison gcc gettext-devel libtool pkg-config fuse-devel zlib-devel python3-devel python3-setuptools -y 
 ln -s /usr/bin/bison /usr/bin/yacc
 git clone https://github.com/libyal/libbde.git
@@ -79,8 +89,9 @@ cd libbde
 make
 sudo make install
 sudo ldconfig
+pressAnyKey
 
-echo -e "Installing fvdeemount from source"
+doing "Installing fvdeemount from source"
 git clone https://github.com/libyal/libfvde.git
 cd libfvde
 ./synclibs.sh
@@ -89,8 +100,9 @@ cd libfvde
 make
 sudo make install
 sudo ldconfig
+pressAnyKey
 
-echo -e "Cleaning up"
+doing "Cleaning up"
 rm -rf lib*
 dnf groupremove "Development Tools" -y
 dnf remove autoconf automake libtool maven -y
