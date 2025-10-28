@@ -20,8 +20,8 @@ echo -e "Initializing Yeti"
 ./init.sh
 API=$(docker compose run --rm api create-user "$USERNAME" "$PASSWORD" --admin)
 if [[ "$API" == *"API key:"* ]]; then
-  APIKEY=$(echo "$API" | grep -oP "(?<=API key: ).*")
-  sed -i "s#YETI_API_ROOT = ''#YETI_API_ROOT = 'https://localhost:8000/api/v2'#g" /opt/timesketch/etc/timesketch/timesketch.conf
+  APIKEY=$(echo "$API" | grep -oP "(?<=API key: ).*" | cut -d ':' -f2)
+  sed -i "s#YETI_API_ROOT = ''#YETI_API_ROOT = 'https://yeti-api:8000'#g" /opt/timesketch/etc/timesketch/timesketch.conf
   sed -i "s#YETI_API_KEY = ''#YETI_API_KEY = '$APIKEY'#g" /opt/timesketch/etc/timesketch/timesketch.conf
   echo -e "Yeti API key set for Timesketch"
 else

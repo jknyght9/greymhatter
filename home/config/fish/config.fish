@@ -145,7 +145,8 @@ end
 function starttimesketch
   set CWD $(pwd)
   cd /opt/timesketch
-  docker compose up --profile v3-ui -d
+  docker compose up -d
+  #docker compose up --profile v3-ui -d
   cd "$CWD" 
 end
 

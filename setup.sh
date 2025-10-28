@@ -114,28 +114,32 @@ function installDocker() {
   sudo dnf remove -y docker* containerd.io -q || true
   sudo dnf clean all
   sudo rm -rf /var/cache/dnf
-  sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
-[docker-ce-stable]
-name=Docker CE Stable - $basearch
-baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
-enabled=1
-gpgcheck=0
-EOF
-  doing "Installing Docker packages with --nogpgcheck"
-  sudo dnf install -y --nogpgcheck --setopt=install_weak_deps=False docker-ce docker-ce-cli containerd.io docker-buildx-plugin -q
-  doing "Enabling and starting Docker"
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now docker || true
-  sudo systemctl start docker || true
+
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sh ./get-docker.sh --dry-run
+
+#   sudo tee /etc/yum.repos.d/docker-ce.repo > /dev/null << 'EOF'
+# [docker-ce-stable]
+# name=Docker CE Stable - $basearch
+# baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+# enabled=1
+# gpgcheck=0
+# EOF
+#   doing "Installing Docker packages with --nogpgcheck"
+#   sudo dnf install -y --nogpgcheck --setopt=install_weak_deps=False docker-ce docker-ce-cli containerd.io docker-buildx-plugin -q
+#   doing "Enabling and starting Docker"
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now docker || true
+#   sudo systemctl start docker || true
   info "Docker version:"
   docker --version || error "Docker did not install correctly"
 
-  DOCKER_COMPOSE_VERSION="2.24.0"
-  doing "Installing Docker compose"
-  sudo mkdir -p /usr/local/lib/docker/cli-plugins
-  sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
-    -o /usr/local/lib/docker/cli-plugins/docker-compose
-  sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+  # DOCKER_COMPOSE_VERSION="2.24.0"
+  # doing "Installing Docker compose"
+  # sudo mkdir -p /usr/local/lib/docker/cli-plugins
+  # sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
+  #   -o /usr/local/lib/docker/cli-plugins/docker-compose
+  # sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
   info "Docker Compose version:${NC}"
   docker compose version || error "Docker Compose did not install correctly"
 }
@@ -170,8 +174,8 @@ function install3dPartySources() {
 
 function installRequiredSoftware() {
   doing "Installing required software"
-  dnf install afflib alacritty bat btop conky curl fish dbus-x11 duf ewftools firefox \
-    git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip \
+  dnf install afflib alacritty bat btop clamav conky curl fish dbus-x11 duf ewftools firefox \
+    freshclam git neofetch neovim ntfs-3g openssl python3 python3-pip sassc tcpdump tmux unzip xxd \
     util-linux-user wget wireshark xorg-x11-server-utils -y --skip-unavailable --nogpgcheck -q
   installDocker
   installGnomeRequirements
