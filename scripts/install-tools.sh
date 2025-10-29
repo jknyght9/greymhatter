@@ -1,6 +1,7 @@
 #!/bin/bash
 
 USERNAME="$1"
+ARCH="$2"
 CWD=$(pwd)
 
 # Colors for terminal outputs
@@ -26,7 +27,13 @@ cd /opt/tools/
 wget $(wget -q -O - https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.assets[] | select(.name | contains ("all-platforms")) | .browser_download_url')
 unzip -q hayabusa*.zip -d hayabusa
 cd hayabusa
-mv hayabusa*-musl hayabusa
+
+if [[ "$ARCH" == "x86_64" ]]; then
+  mv hayabusa*-musl hayabusa
+elif [[ "$ARCH" == "aarch64" ]]; then
+  find . -name "$ARCH-gnu" -exec mv {} hayabusa \;
+fi
+
 chmod +x hayabusa
 ./hayabusa update-rules
 ln -s /opt/tools/hayabusa/hayabusa /home/$USERNAME/.local/bin/hayabusa
@@ -34,20 +41,22 @@ cd ..
 rm hayabusa*.zip 
 pressAnyKey
 
-doing "Installing Malware Analysis Tools"
-cd /opt/tools
-wget $(wget -q -O - https://api.github.com/repos/mandiant/capa/releases/latest | jq -r '.assets[] | select(.name | contains ("linux.zip")) | .browser_download_url')
-wget $(wget -q -O - https://api.github.com/repos/mandiant/flare-floss/releases/latest | jq -r '.assets[] | select(.name | contains ("linux")) | .browser_download_url')
-wget $(wget -q -O - https://api.github.com/repos/VirusTotal/vt-cli/releases/latest | jq -r '.assets[] | select(.name | contains ("Linux64")) | .browser_download_url')
-rm capa*-py311.zip 
-unzip -q capa*.zip 
-unzip -q floss*.zip
-unzip -q Linux64.zip
-ln -s /opt/tools/capa /home/$USERNAME/.local/bin/capa
-ln -s /opt/tools/floss /home/$USERNAME/.local/bin/floss
-ln -s /opt/tools/vt /home/$USERNAME/.local/bin/vt
-rm capa*.zip floss*.zip Linux64.zip
-pressAnyKey
+if [[ "$ARCH" == "x86_64" ]]; then
+  doing "Installing Malware Analysis Tools"
+  cd /opt/tools
+  wget $(wget -q -O - https://api.github.com/repos/mandiant/capa/releases/latest | jq -r '.assets[] | select(.name | contains ("linux.zip")) | .browser_download_url')
+  wget $(wget -q -O - https://api.github.com/repos/mandiant/flare-floss/releases/latest | jq -r '.assets[] | select(.name | contains ("linux")) | .browser_download_url')
+  wget $(wget -q -O - https://api.github.com/repos/VirusTotal/vt-cli/releases/latest | jq -r '.assets[] | select(.name | contains ("Linux64")) | .browser_download_url')
+  rm capa*-py311.zip 
+  unzip -q capa*.zip 
+  unzip -q floss*.zip
+  unzip -q Linux64.zip
+  ln -s /opt/tools/capa /home/$USERNAME/.local/bin/capa
+  ln -s /opt/tools/floss /home/$USERNAME/.local/bin/floss
+  ln -s /opt/tools/vt /home/$USERNAME/.local/bin/vt
+  rm capa*.zip floss*.zip Linux64.zip
+  pressAnyKey
+fi
 
 doing "Installing Sleuthkit"
 cd /opt/tools
@@ -80,8 +89,14 @@ pressAnyKey
 doing "Installing Encryption Tools"
 cd /opt/tools
 dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
-wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
-rpm -i https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
+
+dnf install dnf-plugins-core
+dnf copr enable architektapx/veracrypt
+dnf install veracrypt
+veracrypt --version
+
+# wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
+# rpm -i https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm
 pressAnyKey
 
 doing "Installing bdemount from source"
@@ -93,8 +108,8 @@ cd libbde
 ./autogen.sh
 ./configure --enable-python
 make
-sudo make install
-sudo ldconfig
+make install
+ldconfig
 pressAnyKey
 
 doing "Installing fvdeemount from source"
@@ -104,8 +119,8 @@ cd libfvde
 ./autogen.sh
 ./configure --enable-python
 make
-sudo make install
-sudo ldconfig
+make install
+ldconfig
 pressAnyKey
 
 doing "Cleaning up"

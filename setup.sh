@@ -247,7 +247,7 @@ function runToolParallelInstallations() {
 function runToolInstallation() {
   runToolParallelInstallations
   doing "Installing DFIR Tools"
-  bash ./scripts/install-tools.sh $USERNAME
+  bash ./scripts/install-tools.sh $USERNAME $ARCH
   checkStatus "Installing DFIR Tools"
 
   doing "Installing Samba"
