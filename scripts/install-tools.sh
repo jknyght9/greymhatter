@@ -31,7 +31,7 @@ cd hayabusa
 if [[ "$ARCH" == "x86_64" ]]; then
   mv hayabusa*-musl hayabusa
 elif [[ "$ARCH" == "aarch64" ]]; then
-  find . -name "$ARCH-gnu" -exec mv {} hayabusa \;
+  find . -name "*$ARCH-gnu*" -exec mv {} hayabusa \;
 fi
 
 chmod +x hayabusa
