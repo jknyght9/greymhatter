@@ -62,7 +62,7 @@ doing "Installing Sleuthkit"
 cd /opt/tools
 wget $(wget -q -O - https://api.github.com/repos/sleuthkit/sleuthkit/releases/latest | jq -r '.assets[] | select(.name | contains ("tar.gz")) | .browser_download_url')
 dnf groupinstall "Development Tools" -y
-dnf install autoconf automake libtool maven zlib-devel e2fsprogs-devel libuuid-devel afflib-devel libewf-devel -y
+dnf install autoconf automake gcc gcc-c++ libtool maven zlib-devel e2fsprogs-devel libuuid-devel afflib-devel libewf-devel libvmdk-devel libvhdi-devel libvhdx-devel libuuid-devel -y
 tar zxf sleuthkit*.tar.gz
 rm -f *.tar.gz*
 cd sleuthkit*
