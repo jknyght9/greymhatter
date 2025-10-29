@@ -3,8 +3,14 @@
 USERNAME="$1"
 CWD=$(pwd)
 
+# Colors for terminal outputs
+C_RESET="\033[0m"
+C_YELLOW="\033[1;33m"
+C_BLUE="\033[0;34m"
+
 # Functions for convenience
 function doing()        { echo -e "${C_BLUE}[>] $*${C_RESET}"; }
+function question()     { echo -e "  ${C_YELLOW}[?] $*${C_RESET}"; }
 function pressAnyKey()  { read -n 1 -s -p "$(question "Press any key to continue")"; echo; }
 
 doing "Installing Powershell"
@@ -18,7 +24,7 @@ doing "Installing Hayabusa"
 mkdir /opt/tools/
 cd /opt/tools/
 wget $(wget -q -O - https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.assets[] | select(.name | contains ("all-platforms")) | .browser_download_url')
-unzip hayabusa*.zip -d hayabusa
+unzip -q hayabusa*.zip -d hayabusa
 cd hayabusa
 mv hayabusa*-musl hayabusa
 chmod +x hayabusa
@@ -34,9 +40,9 @@ wget $(wget -q -O - https://api.github.com/repos/mandiant/capa/releases/latest |
 wget $(wget -q -O - https://api.github.com/repos/mandiant/flare-floss/releases/latest | jq -r '.assets[] | select(.name | contains ("linux")) | .browser_download_url')
 wget $(wget -q -O - https://api.github.com/repos/VirusTotal/vt-cli/releases/latest | jq -r '.assets[] | select(.name | contains ("Linux64")) | .browser_download_url')
 rm capa*-py311.zip 
-unzip capa*.zip 
-unzip floss*.zip
-unzip Linux64.zip
+unzip -q capa*.zip 
+unzip -q floss*.zip
+unzip -q Linux64.zip
 ln -s /opt/tools/capa /home/$USERNAME/.local/bin/capa
 ln -s /opt/tools/floss /home/$USERNAME/.local/bin/floss
 ln -s /opt/tools/vt /home/$USERNAME/.local/bin/vt

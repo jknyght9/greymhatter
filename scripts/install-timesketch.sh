@@ -5,6 +5,11 @@ USERNAME="$2"
 PASSWORD="$3"
 CWD=$(pwd)
 
+# Colors for terminal outputs
+C_RESET="\033[0m"
+C_RED="\033[0;31m"
+C_BLUE="\033[0;34m"
+
 # Functions for convenience
 function doing()        { echo -e "${C_BLUE}[>] $*${C_RESET}"; }
 function error()        { echo -e "${C_RED}[X] $*${C_RESET}"; }

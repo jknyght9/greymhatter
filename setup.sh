@@ -232,7 +232,7 @@ EOF
 function runToolParallelInstallations() {
   # Do not put anything that requires dnf here
   doing "Installing Containers"
-  sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-containers.sh $USERNAME $PASSWORD"
+  sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-containers.sh $USERNAME $PASSWORD; read -p \"Enter to continue\""
   
   doing "Installing GTK Themes and Fonts"
   sudo gnome-terminal --working-directory="$CURRENT_DIR" -- bash -c "bash ./scripts/install-environment.sh $USERNAME; read -p \"Enter to continue\""

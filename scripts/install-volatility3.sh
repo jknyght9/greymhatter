@@ -29,7 +29,7 @@ cp *.zip /home/$USERNAME/.local/lib/python3.13/site-packages/volatility3/symbols
 cp -r symbols/symbols/windows/ /home/$USERNAME/.local/lib/python3.13/site-packages/volatility3/symbols/windows
 echo -e "Downloading malware sample and caching symbol tables, this will take a while"
 curl -O https://cc-public.s3.amazonaws.com/0zapftis.zip
-unzip -P infected 0zapftis.zip
+unzip -q -P infected 0zapftis.zip
 vol -vvv -f 0zapftis.vmem windows.info
 rm -rf 0zapftis* linux.zip mac.zip symbols/ symbols.sha256 volatility3/ windows.zip yara-python/
 EOF
