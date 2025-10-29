@@ -97,9 +97,9 @@ doing "Installing Encryption Tools"
 cd /opt/tools
 dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
 # Install veracrypt
-dnf install dnf-plugins-core
+dnf install dnf-plugins-core -y
 dnf copr enable architektapx/veracrypt
-dnf install veracrypt
+dnf install veracrypt -y
 veracrypt --version
 
 # wget https://launchpad.net/veracrypt/trunk/1.26.20/+download/veracrypt-1.26.20-Fedora-40-x86_64.rpm

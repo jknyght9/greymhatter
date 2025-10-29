@@ -169,7 +169,12 @@ function install3dPartySources() {
     && rm -f install.sh
 
   doing "Installing Eza (ls replacement)"
-  wget -q -O - https://github.com/eza-community/eza/releases/download/v0.23.4/eza_x86_64-unknown-linux-musl.tar.gz | tar zx
+  
+  if [[ "$ARCH" == "x86_64" ]]; then
+    wget -q -O - https://github.com/eza-community/eza/releases/download/v0.23.4/eza_$ARCH-unknown-linux-musl.tar.gz | tar zx
+  elif [[ "$ARCH" == "aarch64" ]]; then
+    wget -q -O - https://github.com/eza-community/eza/releases/download/v0.23.4/eza_$ARCH-unknown-linux-gnu.tar.gz | tar zx
+  fi
   chown root:root eza
   chmod 755 eza
   mv eza /usr/local/bin
