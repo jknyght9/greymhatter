@@ -59,37 +59,44 @@ if [[ "$ARCH" == "x86_64" ]]; then
 fi
 
 doing "Installing Sleuthkit"
-cd /opt/tools
-wget $(wget -q -O - https://api.github.com/repos/sleuthkit/sleuthkit/releases/latest | jq -r '.assets[] | select(.name | contains ("tar.gz")) | .browser_download_url')
-dnf groupinstall "Development Tools" -y
-dnf install autoconf automake gcc gcc-c++ libtool maven zlib-devel e2fsprogs-devel libuuid-devel afflib-devel libewf-devel libvmdk-devel libvhdi-devel libvhdx-devel libuuid-devel -y
-tar zxf sleuthkit*.tar.gz
-rm -f *.tar.gz*
-cd sleuthkit*
-./configure
-make
-make install
-fls -V
-cd ..
-rm -rf sleuthkit*
+if [[ "$ARCH" == "x86_64" ]]; then
+  cd /opt/tools
+  wget $(wget -q -O - https://api.github.com/repos/sleuthkit/sleuthkit/releases/latest | jq -r '.assets[] | select(.name | contains ("tar.gz")) | .browser_download_url')
+  dnf groupinstall "Development Tools" -y
+  dnf install autoconf automake gcc gcc-c++ libtool maven zlib-devel e2fsprogs-devel libuuid-devel afflib-devel libewf-devel libvmdk-devel libvhdi-devel libvhdx-devel libuuid-devel -y
+  tar zxf sleuthkit*.tar.gz
+  rm -f *.tar.gz*
+  cd sleuthkit*
+  ./configure
+  make
+  make install
+  fls -V
+  cd ..
+  rm -rf sleuthkit*
+elif [[ "$ARCH" == "aarch64" ]]; then
+  dnf install sleuthkit -y
+  fls -V
+fi
 pressAnyKey
 
-doing "Installing Bulk Extractor"
-cd /opt/tools
-git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
-cd bulk_extractor
-dnf install autoconf automake re2 re2-devel flex -y 
-./bootstrap
-./configure --disable-libewf 
-make 
-make install 
-bulk_extractor -V
-pressAnyKey
+if [[ "$ARCH" == "x86_64" ]]; then
+  doing "Installing Bulk Extractor"
+  cd /opt/tools
+  git clone --recurse-submodules https://github.com/simsong/bulk_extractor.git 
+  cd bulk_extractor
+  dnf install autoconf automake re2 re2-devel flex -y 
+  ./bootstrap
+  ./configure --disable-libewf 
+  make 
+  make install 
+  bulk_extractor -V
+  pressAnyKey
+fi
 
 doing "Installing Encryption Tools"
 cd /opt/tools
 dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
-
+# Install veracrypt
 dnf install dnf-plugins-core
 dnf copr enable architektapx/veracrypt
 dnf install veracrypt
