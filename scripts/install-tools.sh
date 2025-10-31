@@ -98,7 +98,7 @@ cd /opt/tools
 dnf install apfs-fuse cryptsetup dislocker exfatprogs foremost hashcat scalpel -y
 # Install veracrypt
 dnf install dnf-plugins-core -y
-dnf copr enable architektapx/veracrypt
+dnf copr enable architektapx/veracrypt -y
 dnf install veracrypt -y
 veracrypt --version
 
