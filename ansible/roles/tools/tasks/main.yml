@@ -1,0 +1,74 @@
+---
+# roles/tools - DFIR tool installation
+# Replaces: install-tools.sh, install-volatility2.sh, install-volatility3.sh
+
+# Create tools directory
+- name: Create tools directory
+  ansible.builtin.file:
+    path: "{{ tools_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create user local bin directory
+  ansible.builtin.file:
+    path: "{{ user_local_bin }}"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+# --- Runtime libraries (needed by compiled tools) ---
+# libvmdk and libvhdi are compiled from source in Docker builder
+- name: Install runtime libraries for compiled tools
+  ansible.builtin.dnf:
+    name:
+      - fuse
+      - fuse-libs
+      - afflib
+      - libewf
+      - re2
+      - abseil-cpp
+    state: present
+    install_weak_deps: false
+
+# --- Binary downloads (pre-built) ---
+- name: Install PowerShell
+  ansible.builtin.include_tasks: powershell.yml
+
+- name: Install Hayabusa
+  ansible.builtin.include_tasks: hayabusa.yml
+
+- name: Install capa
+  ansible.builtin.include_tasks: capa.yml
+
+- name: Install FLOSS
+  ansible.builtin.include_tasks: floss.yml
+
+- name: Install VirusTotal CLI
+  ansible.builtin.include_tasks: vt-cli.yml
+
+# --- Docker-compiled tools (sleuthkit, bulk_extractor, libbde, libfvde) ---
+- name: Build and install compiled tools via Docker
+  ansible.builtin.include_tasks: docker-build.yml
+
+# --- Encryption tools (dnf packages) ---
+- name: Install encryption tools
+  ansible.builtin.include_tasks: encryption.yml
+
+# --- Python-based tools ---
+- name: Install Volatility 2
+  ansible.builtin.include_tasks: volatility2.yml
+
+- name: Install Volatility 3
+  ansible.builtin.include_tasks: volatility3.yml
+
+- name: Install YARA
+  ansible.builtin.include_tasks: yara.yml
+
+# --- DFIR utilities ---
+- name: Install dfir-pstools
+  ansible.builtin.include_tasks: dfir-pstools.yml
+
+- name: Install Autopsy (AMD64 only, via Snap)
+  ansible.builtin.include_tasks: autopsy.yml
+  when: ansible_architecture == "x86_64"

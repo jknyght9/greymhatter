@@ -1,0 +1,45 @@
+---
+# Autopsy — digital forensics platform (installed via Snap)
+# https://www.autopsy.com/
+# AMD64 only — TSK Java bindings have known ARM64 issues
+
+- name: Install snapd
+  ansible.builtin.dnf:
+    name: snapd
+    state: present
+
+- name: Enable and start snapd
+  ansible.builtin.systemd:
+    name: snapd.socket
+    enabled: true
+    state: started
+
+- name: Create snap symlink
+  ansible.builtin.file:
+    src: /var/lib/snapd/snap
+    dest: /snap
+    state: link
+
+- name: Wait for snapd to be ready
+  ansible.builtin.command:
+    cmd: snap wait system seed.loaded
+  changed_when: false
+  retries: 3
+  delay: 10
+  register: snap_ready
+  until: snap_ready.rc == 0
+
+- name: Install Autopsy via Snap
+  ansible.builtin.command:
+    cmd: snap install autopsy
+  register: autopsy_install
+  changed_when: "'already installed' not in autopsy_install.stderr"
+
+- name: Connect Autopsy filesystem interfaces
+  ansible.builtin.command:
+    cmd: "snap connect autopsy:{{ item }}"
+  loop:
+    - removable-media
+    - home
+  changed_when: true
+  failed_when: false
