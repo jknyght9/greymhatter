@@ -220,6 +220,12 @@ function test3() {
     fi
     success "Timesketch is running"
 
+    # Ensure hatter user exists
+    if ! docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "hatter"; then
+        info "Creating Timesketch user..."
+        docker compose --env-file config.env exec -T timesketch-web tsctl create-user hatter --password 'H@tt3r123!' 2>/dev/null
+    fi
+
     # Mount E01 and extract EVTX for hayabusa
     info "--- Mounting E01 ---"
     EWF_MOUNT="/mnt/ewf"
@@ -299,18 +305,46 @@ function test3() {
     # Import timelines into Timesketch
     info "--- Timesketch Import ---"
 
+    # Get a session cookie for API verification
+    TS_CSRF=$(curl -sk -c /tmp/ts-cookies http://localhost/login/ 2>/dev/null \
+        | sed -n 's/.*csrf_token.*value="\([^"]*\)".*/\1/p')
+    curl -sk -c /tmp/ts-cookies -b /tmp/ts-cookies -X POST http://localhost/login/ \
+        -d "username=hatter&password=H@tt3r123!&csrf_token=$TS_CSRF" \
+        -H "Content-Type: application/x-www-form-urlencoded" -o /dev/null 2>/dev/null
+
     if [ -f "$HAYABUSA_OUT" ]; then
         info "Importing hayabusa timeline..."
         timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
             --sketch_name "XX-T001" --timeline_name "hayabusa" "$HAYABUSA_OUT" 2>&1 | tail -5 || true
-        success "Hayabusa timeline imported"
     fi
 
     if [ -f "$PLASO_OUT" ]; then
         info "Importing plaso timeline..."
         timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
             --sketch_name "XX-T001" --timeline_name "plaso" "$PLASO_OUT" 2>&1 | tail -5 || true
-        success "Plaso timeline imported"
+    fi
+
+    # Verify timelines exist in Timesketch via API
+    info "Verifying timelines in Timesketch..."
+    sleep 5
+    SKETCH_DATA=$(curl -sk -b /tmp/ts-cookies http://localhost/api/v1/sketches/ 2>/dev/null)
+    SKETCH_COUNT=$(echo "$SKETCH_DATA" | python3 -c "import sys,json; print(json.load(sys.stdin).get('meta',{}).get('total_items',0))" 2>/dev/null || echo 0)
+    if [ "$SKETCH_COUNT" -gt 0 ] 2>/dev/null; then
+        success "Timesketch sketch created ($SKETCH_COUNT sketch(es))"
+    else
+        fail "No sketches found in Timesketch"
+    fi
+
+    TIMELINE_COUNT=$(echo "$SKETCH_DATA" | python3 -c "
+import sys,json
+sketches = json.load(sys.stdin).get('objects',[])
+total = sum(len(s.get('timelines',[])) for s in sketches)
+print(total)
+" 2>/dev/null || echo 0)
+    if [ "$TIMELINE_COUNT" -ge 2 ] 2>/dev/null; then
+        success "Timelines verified: $TIMELINE_COUNT timeline(s) in sketch"
+    else
+        fail "Expected 2 timelines, found $TIMELINE_COUNT"
     fi
 
     # Stop Timesketch

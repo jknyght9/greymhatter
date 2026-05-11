@@ -183,28 +183,25 @@
   until: ts_pull.rc == 0
   failed_when: false
 
-- name: Create Timesketch first-boot setup script
+- name: Create Timesketch user setup script
   ansible.builtin.copy:
     dest: /opt/timesketch/setup-user.sh
     mode: "0755"
     content: |
       #!/bin/bash
-      # Creates the default Timesketch user on first start
-      # Run automatically by starttimesketch or manually
+      # Ensures the default Timesketch user exists
+      # Called by starttimesketch after containers are up
       cd /opt/timesketch
-      if docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"; then
-        exit 0
-      fi
-      for i in $(seq 1 24); do
+      for i in $(seq 1 30); do
         if curl -kso /dev/null -w '%{http_code}' https://localhost 2>/dev/null | grep -q '200\|302'; then
-          docker compose --env-file config.env exec -T timesketch-web \
-            tsctl create-user {{ greymhatter_username }} --password '{{ greymhatter_password }}' 2>/dev/null
+          if ! docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"; then
+            docker compose --env-file config.env exec -T timesketch-web \
+              tsctl create-user {{ greymhatter_username }} --password '{{ greymhatter_password }}' 2>/dev/null
+          fi
           exit 0
         fi
         sleep 5
       done
-      echo "Timesketch did not start in time"
-  when: ts_user_check.rc != 0
 
 - name: Install Timesketch importer
   ansible.builtin.pip:
