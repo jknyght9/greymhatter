@@ -1,0 +1,99 @@
+---
+# Yeti threat intelligence platform
+# AMD64 only — this task is guarded by ansible_architecture == "x86_64" in main.yml
+
+- name: Install Yeti
+  block:
+    - name: Check if Yeti is already installed
+      ansible.builtin.stat:
+        path: /opt/yeti-docker/prod/.env
+      register: yeti_installed
+
+    - name: Clone Yeti Docker repository
+      ansible.builtin.git:
+        repo: https://github.com/yeti-platform/yeti-docker
+        dest: /opt/yeti-docker
+        depth: 1
+      when: not yeti_installed.stat.exists
+
+    - name: Change Yeti port to 8888
+      ansible.builtin.replace:
+        path: /opt/yeti-docker/prod/docker-compose.yaml
+        regexp: '"80:80"'
+        replace: '"8888:80"'
+      failed_when: false
+
+    - name: Initialize Yeti
+      ansible.builtin.shell:
+        cmd: bash ./init.sh
+        chdir: /opt/yeti-docker/prod
+        creates: /opt/yeti-docker/prod/.env
+
+    - name: Generate Yeti auth secret key if missing
+      ansible.builtin.shell:
+        cmd: grep -q YETI_AUTH_SECRET_KEY .env || echo "YETI_AUTH_SECRET_KEY=$(openssl rand -hex 32)" >> .env
+        chdir: /opt/yeti-docker/prod
+      changed_when: true
+
+    - name: Remove unpublished Yeti services (bloomcheck, agents)
+      ansible.builtin.shell:
+        cmd: >-
+          sed -i '/^  bloomcheck:/,/^  [a-z]/{/^  [a-z][a-z]*:/!d}' /opt/yeti-docker/prod/docker-compose.yaml;
+          sed -i '/^  bloomcheck:/d' /opt/yeti-docker/prod/docker-compose.yaml;
+          sed -i '/^  agents:/,/^  [a-z]/{/^  [a-z][a-z]*:/!d}' /opt/yeti-docker/prod/docker-compose.yaml;
+          sed -i '/^  agents:/d' /opt/yeti-docker/prod/docker-compose.yaml;
+          sed -i '/yeti-agents-data:/d' /opt/yeti-docker/prod/docker-compose.yaml
+      changed_when: true
+      failed_when: false
+
+    - name: Check if Yeti user already exists
+      ansible.builtin.shell:
+        cmd: docker compose run --rm api list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"
+        chdir: /opt/yeti-docker/prod
+      register: yeti_user_check
+      changed_when: false
+      failed_when: false
+
+    - name: Create Yeti user
+      ansible.builtin.shell:
+        cmd: >-
+          docker compose run --rm api create-user
+          {{ greymhatter_username }} {{ greymhatter_password }}
+        chdir: /opt/yeti-docker/prod
+      register: yeti_user_output
+      when: yeti_user_check.rc != 0
+      failed_when: false
+
+    - name: Extract Yeti API key
+      ansible.builtin.set_fact:
+        yeti_api_key: "{{ yeti_user_output.stdout | regex_search('API key: (.+)', '\\1') | first }}"
+      when:
+        - yeti_user_output is not skipped
+        - yeti_user_output.stdout is defined
+        - "'API key' in yeti_user_output.stdout"
+      failed_when: false
+
+    - name: Check if Timesketch config exists
+      ansible.builtin.stat:
+        path: /opt/timesketch/etc/timesketch/timesketch.conf
+      register: ts_conf
+
+    - name: Configure Timesketch with Yeti API
+      ansible.builtin.blockinfile:
+        path: /opt/timesketch/etc/timesketch/timesketch.conf
+        marker: "# {mark} YETI CONFIGURATION"
+        block: |
+          YETI_API_ROOT = 'https://yeti-api:8000'
+          YETI_API_KEY = '{{ yeti_api_key | default("") }}'
+      when:
+        - yeti_api_key is defined
+        - ts_conf.stat.exists
+      failed_when: false
+
+    # Stop Yeti (manual start via fish function)
+    - name: Stop Yeti (starts manually via startyeti)
+      ansible.builtin.shell:
+        cmd: docker compose down
+        chdir: /opt/yeti-docker/prod
+      changed_when: false
+      failed_when: false
