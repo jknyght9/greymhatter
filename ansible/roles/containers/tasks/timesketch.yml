@@ -181,9 +181,15 @@
     chdir: /opt/timesketch
   changed_when: true
 
-- name: Wait for database initialization
-  ansible.builtin.pause:
-    seconds: 15
+- name: Wait for database schema initialization
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env exec -T postgres psql -U timesketch -d timesketch -c "\dt" 2>/dev/null | grep -q "user"
+    chdir: /opt/timesketch
+  register: ts_schema
+  retries: 30
+  delay: 5
+  until: ts_schema.rc == 0
+  failed_when: false
 
 - name: Restart timesketch-web (workers race on first schema creation)
   ansible.builtin.shell:
