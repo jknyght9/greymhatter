@@ -350,9 +350,8 @@ print(len(sketch.get('timelines',[])))
         fi
     fi
 
-    # Stop Timesketch
-    info "Stopping Timesketch..."
-    docker compose --env-file config.env down 2>/dev/null
+    # Leave Timesketch running for manual verification
+    info "Timesketch left running at https://localhost"
 }
 
 # =============================================================================
