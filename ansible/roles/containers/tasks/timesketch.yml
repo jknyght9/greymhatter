@@ -163,8 +163,36 @@
   when: dfiq_dir.stat.exists
   failed_when: false
 
-# --- Initial setup (only on first install) ---
-- name: Check if Timesketch user already exists
+# --- Initial setup ---
+- name: Pull Timesketch container images
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env pull
+    chdir: /opt/timesketch
+  when: ansible_architecture != "aarch64"
+  retries: 3
+  delay: 10
+  register: ts_pull
+  until: ts_pull.rc == 0
+  failed_when: false
+
+- name: Start Timesketch
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env up -d --pull never
+    chdir: /opt/timesketch
+  changed_when: true
+
+- name: Wait for Timesketch to be ready
+  ansible.builtin.uri:
+    url: https://localhost/login
+    validate_certs: false
+    status_code: [200, 302]
+  register: ts_ready
+  retries: 30
+  delay: 10
+  until: ts_ready.status in [200, 302]
+  failed_when: false
+
+- name: Check if Timesketch user exists
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"
     chdir: /opt/timesketch
@@ -172,36 +200,14 @@
   changed_when: false
   failed_when: false
 
-- name: Pull Timesketch container images
+- name: Create Timesketch user
   ansible.builtin.shell:
-    cmd: docker compose --env-file config.env pull
+    cmd: >-
+      docker compose --env-file config.env exec -T timesketch-web
+      tsctl create-user {{ greymhatter_username }}
+      --password '{{ greymhatter_password }}'
     chdir: /opt/timesketch
-  when: ts_user_check.rc != 0 and ansible_architecture != "aarch64"
-  retries: 3
-  delay: 10
-  register: ts_pull
-  until: ts_pull.rc == 0
-  failed_when: false
-
-- name: Create Timesketch user setup script
-  ansible.builtin.copy:
-    dest: /opt/timesketch/setup-user.sh
-    mode: "0755"
-    content: |
-      #!/bin/bash
-      # Ensures the default Timesketch user exists
-      # Called by starttimesketch after containers are up
-      cd /opt/timesketch
-      for i in $(seq 1 30); do
-        if curl -kso /dev/null -w '%{http_code}' https://localhost 2>/dev/null | grep -q '200\|302'; then
-          if ! docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"; then
-            docker compose --env-file config.env exec -T timesketch-web \
-              tsctl create-user {{ greymhatter_username }} --password '{{ greymhatter_password }}' 2>/dev/null
-          fi
-          exit 0
-        fi
-        sleep 5
-      done
+  when: ts_user_check.rc != 0
 
 - name: Install Timesketch importer
   ansible.builtin.pip:
@@ -209,11 +215,9 @@
     executable: pip3
   failed_when: false
 
-# --- Stop Timesketch (manual start via fish function) ---
 - name: Stop Timesketch (starts manually via starttimesketch)
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env down
     chdir: /opt/timesketch
-  when: ts_user_check.rc != 0
   changed_when: true
   failed_when: false

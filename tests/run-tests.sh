@@ -220,12 +220,6 @@ function test3() {
     fi
     success "Timesketch is running"
 
-    # Ensure hatter user exists
-    if ! docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "hatter"; then
-        info "Creating Timesketch user..."
-        docker compose --env-file config.env exec -T timesketch-web tsctl create-user hatter --password 'H@tt3r123!' 2>/dev/null
-    fi
-
     # Mount E01 and extract EVTX for hayabusa
     info "--- Mounting E01 ---"
     EWF_MOUNT="/mnt/ewf"

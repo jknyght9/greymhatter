@@ -230,10 +230,6 @@ end
 function starttimesketch
   _service_dir /opt/timesketch; or return 1
   docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env up -d --pull never
-  # Create default user on first start if needed
-  if test -f /opt/timesketch/setup-user.sh
-    sudo bash /opt/timesketch/setup-user.sh &
-  end
 end
 
 function startyeti
