@@ -109,8 +109,9 @@ source "proxmox-clone" "greymhatter" {
   vm_id       = 0 # auto-assign
 
   # Hardware (inherit from template, but can override)
-  cores  = var.vm_cpus
-  memory = var.vm_memory
+  cores    = var.vm_cpus
+  memory   = var.vm_memory
+  cpu_type = "host"
 
   # SSH
   ssh_username            = "root"
