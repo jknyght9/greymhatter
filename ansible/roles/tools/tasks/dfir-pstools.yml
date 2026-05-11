@@ -1,0 +1,34 @@
+---
+# dfir-pstools — PowerShell DFIR utilities (timestamp conversion, hash lookups, etc.)
+# https://gitlab.com/jknyght9/dfir-pstools
+# Requires PowerShell 7+ (installed via powershell.yml)
+
+- name: Check if dfir-pstools is installed
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/dfir-pstools/DFIR-PSTools.psd1"
+  register: pstools_check
+
+- name: Install dfir-pstools
+  when: not pstools_check.stat.exists
+  block:
+    - name: Clone dfir-pstools
+      ansible.builtin.git:
+        repo: https://gitlab.com/jknyght9/dfir-pstools.git
+        dest: "{{ tools_dir }}/dfir-pstools"
+        depth: 1
+
+    - name: Create PowerShell modules directory
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/share/powershell/Modules"
+        state: directory
+        owner: "{{ greymhatter_username }}"
+        group: "{{ greymhatter_username }}"
+        mode: "0755"
+
+    - name: Symlink dfir-pstools to PowerShell modules
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/dfir-pstools"
+        dest: "{{ user_home }}/.local/share/powershell/Modules/DFIR-PSTools"
+        state: link
+        owner: "{{ greymhatter_username }}"
+        group: "{{ greymhatter_username }}"

@@ -1,0 +1,41 @@
+---
+- name: Check if SpiderFoot is installed
+  ansible.builtin.stat:
+    path: /opt/spiderfoot/compose.yml
+  register: spiderfoot_installed
+
+- name: Install SpiderFoot
+  when: not spiderfoot_installed.stat.exists
+  block:
+    - name: Clone SpiderFoot
+      ansible.builtin.git:
+        repo: https://github.com/smicallef/spiderfoot.git
+        dest: /opt/spiderfoot
+        depth: 1
+        force: true
+
+    - name: Patch SpiderFoot Dockerfile (Alpine 3.12/3.13 are EOL)
+      ansible.builtin.copy:
+        src: Dockerfile.spiderfoot
+        dest: /opt/spiderfoot/Dockerfile
+        mode: "0644"
+
+    - name: Check if SpiderFoot Docker image exists
+      ansible.builtin.command:
+        cmd: docker images -q spiderfoot
+      register: sf_image
+      changed_when: false
+
+    - name: Build SpiderFoot Docker image
+      ansible.builtin.command:
+        cmd: docker build -t spiderfoot .
+        chdir: /opt/spiderfoot
+      when: sf_image.stdout == ""
+      async: 600
+      poll: 30
+
+    - name: Copy SpiderFoot compose file
+      ansible.builtin.copy:
+        src: spiderfoot/compose.yml
+        dest: /opt/spiderfoot/compose.yml
+        mode: "0644"

@@ -1,0 +1,114 @@
+---
+# Docker-based compilation of tools from source
+# Builds sleuthkit, bulk_extractor, libbde, libfvde inside a container
+# then extracts the binaries to the host. Keeps the host clean.
+
+- name: Check if compiled tools already exist
+  ansible.builtin.command: which fls
+  register: compiled_tools_check
+  changed_when: false
+  failed_when: false
+
+- name: Build tools from source in Docker
+  when: compiled_tools_check.rc != 0
+  block:
+    - name: Copy Dockerfile.builder to build location
+      ansible.builtin.copy:
+        src: "{{ greymhatter_repo_path }}/ansible/roles/tools/files/Dockerfile.builder"
+        dest: /tmp/Dockerfile.builder
+        mode: "0644"
+
+    - name: Build tools container (this takes several minutes)
+      ansible.builtin.command:
+        cmd: docker build -f /tmp/Dockerfile.builder -t greymhatter-builder /tmp
+      changed_when: true
+      async: 600
+      poll: 30
+
+    - name: Create temporary container for binary extraction
+      ansible.builtin.command:
+        cmd: docker create --name greymhatter-builder-extract greymhatter-builder
+      changed_when: true
+
+    - name: Extract compiled binaries
+      ansible.builtin.command:
+        cmd: docker cp greymhatter-builder-extract:/output/ /tmp/tool-binaries/
+      changed_when: true
+
+    # --- Install each tool's binaries ---
+
+    - name: Install libvmdk binaries and libraries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/libvmdk/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Install libvhdi binaries and libraries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/libvhdi/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Install Sleuthkit binaries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/sleuthkit/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Install bulk_extractor binaries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/bulk_extractor/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Install libbde binaries and libraries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/libbde/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Install libfvde binaries and libraries
+      ansible.builtin.shell:
+        cmd: cp -r /tmp/tool-binaries/libfvde/usr/local/* /usr/local/
+      changed_when: true
+
+    - name: Update shared library cache
+      ansible.builtin.command: ldconfig
+      changed_when: true
+
+    # --- Cleanup ---
+
+    - name: Remove builder container
+      ansible.builtin.command:
+        cmd: docker rm greymhatter-builder-extract
+      changed_when: true
+      failed_when: false
+
+    - name: Remove builder image
+      ansible.builtin.command:
+        cmd: docker rmi greymhatter-builder
+      changed_when: true
+      failed_when: false
+
+    - name: Clean up build artifacts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/Dockerfile.builder
+        - /tmp/tool-binaries
+
+    # --- Verify ---
+
+    - name: Verify Sleuthkit
+      ansible.builtin.command: fls -V
+      changed_when: false
+
+    - name: Verify bulk_extractor
+      ansible.builtin.command: bulk_extractor -V
+      changed_when: false
+
+    - name: Verify bdemount
+      ansible.builtin.command: bdemount --help
+      changed_when: false
+      failed_when: false
+
+    - name: Verify fvdemount
+      ansible.builtin.command: fvdemount --help
+      changed_when: false
+      failed_when: false

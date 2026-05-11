@@ -1,0 +1,18 @@
+# GreymHatter Development Services
+#
+# These are NOT the services installed on the DFIR VM.
+# These are dev tools for documentation.
+#
+# Usage:
+#   docker compose up mkdocs
+
+services:
+  mkdocs:
+    image: squidfunk/mkdocs-material
+    container_name: mkdocs
+    working_dir: /docs
+    volumes:
+      - ./docs:/docs
+    ports:
+      - 8000:8000
+    command: serve -a 0.0.0.0:8000

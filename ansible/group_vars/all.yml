@@ -1,0 +1,43 @@
+---
+# GreymHatter Configuration
+# All variables centralized here for easy version management and reproducible builds.
+
+# System
+greymhatter_username: hatter
+greymhatter_password: "H@tt3r123!"
+greymhatter_hostname: greymhatter
+
+# Repository path (set by Packer or manually when running against localhost)
+greymhatter_repo_path: "{{ playbook_dir }}/.."
+
+# Tool versions — pinned 2026-05-07 for reproducible builds
+# To update: change version here and re-run playbook
+hayabusa_version: "3.9.0"
+capa_version: "9.4.0"
+floss_version: "3.1.1"
+vt_cli_version: "1.3.0"
+yq_version: "4.53.2"
+sleuthkit_version: "4.15.0"
+volatility3_branch: stable
+ctop_version: "0.7.7"
+eza_version: "0.23.4"
+
+# Fonts and themes
+hack_font_version: "3.1.1"
+colloid_icon_tag: "2024-10-18"
+
+# Optional credentials (pass via --extra-vars or ansible-vault)
+maxmind_account_id: ""
+maxmind_license_key: ""
+
+# Course materials (set to a git repo URL to clone course content)
+courses_repo: ""
+
+# Docker
+docker_network_name: greymhatter
+
+# Paths on target system
+tools_dir: /opt/tools
+share_dir: /opt/share
+user_home: "/home/{{ greymhatter_username }}"
+user_local_bin: "{{ user_home }}/.local/bin"

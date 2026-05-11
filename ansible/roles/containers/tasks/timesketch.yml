@@ -1,0 +1,222 @@
+---
+- name: Check if Timesketch is already installed
+  ansible.builtin.stat:
+    path: /opt/timesketch/docker-compose.yml
+  register: timesketch_installed
+
+- name: Install Timesketch
+  when: not timesketch_installed.stat.exists
+  block:
+    - name: Download Timesketch deployment script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+        dest: /tmp/deploy_timesketch.sh
+        mode: "0755"
+
+    - name: Run Timesketch deployment script
+      ansible.builtin.shell:
+        cmd: bash /tmp/deploy_timesketch.sh
+        chdir: /opt
+      failed_when: false
+
+    - name: Verify Timesketch was installed
+      ansible.builtin.stat:
+        path: /opt/timesketch/docker-compose.yml
+      register: ts_verify
+      failed_when: not ts_verify.stat.exists
+
+    - name: Clean up deployment script
+      ansible.builtin.file:
+        path: /tmp/deploy_timesketch.sh
+        state: absent
+
+- name: Copy Timesketch overrides
+  ansible.builtin.copy:
+    src: "timesketch/{{ item }}"
+    dest: "/opt/timesketch/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-compose.override.yml
+    - nginx.conf
+  failed_when: false
+
+- name: Copy Timesketch configuration files
+  ansible.builtin.copy:
+    src: "timesketch/{{ item }}"
+    dest: "/opt/timesketch/etc/timesketch/{{ item }}"
+    mode: "0644"
+  loop:
+    - tags.yaml
+    - regex_features.yaml
+  failed_when: false
+
+- name: Copy timesketchrc to user home
+  ansible.builtin.copy:
+    src: timesketch/timesketchrc
+    dest: "/home/{{ greymhatter_username }}/.timesketchrc"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+  failed_when: false
+
+# --- SSL certificates ---
+- name: Create SSL directories
+  ansible.builtin.file:
+    path: "/opt/timesketch/ssl/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - certs
+    - private
+
+- name: Generate self-signed SSL certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -x509 -nodes -days 3650 -newkey rsa:2048
+      -keyout /opt/timesketch/ssl/private/nginx-selfsigned.key
+      -out /opt/timesketch/ssl/certs/nginx-selfsigned.crt
+      -subj "/CN=localhost"
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+    creates: /opt/timesketch/ssl/certs/nginx-selfsigned.crt
+
+# --- MaxMind integration ---
+- name: Check if MaxMind database exists
+  ansible.builtin.stat:
+    path: /opt/maxmind-geoipupdate/geoip_data/GeoLite2-City.mmdb
+  register: maxmind_db
+
+- name: Configure Timesketch MaxMind path
+  ansible.builtin.lineinfile:
+    path: /opt/timesketch/etc/timesketch/timesketch.conf
+    regexp: "^MAXMIND_DB_PATH"
+    line: "MAXMIND_DB_PATH = '/opt/maxmind/GeoLite2-City.mmdb'"
+  when: maxmind_db.stat.exists
+  failed_when: false
+
+# --- ARM64: build Timesketch image from source ---
+# The official OSDFIR image is amd64-only; build natively on ARM64
+- name: Build Timesketch Docker image for ARM64
+  when: ansible_architecture == "aarch64"
+  block:
+    - name: Check if ARM64 Timesketch image exists
+      ansible.builtin.shell:
+        cmd: docker images -q greymhatter/timesketch:arm64
+      register: ts_arm64_image
+      changed_when: false
+
+    - name: Create Timesketch build directory
+      ansible.builtin.file:
+        path: /tmp/timesketch-build
+        state: directory
+        mode: "0755"
+      when: ts_arm64_image.stdout == ""
+
+    - name: Download Timesketch Dockerfile
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/google/timesketch/master/docker/release/build/Dockerfile-latest
+        dest: /tmp/timesketch-build/Dockerfile
+        mode: "0644"
+      when: ts_arm64_image.stdout == ""
+
+    - name: Download Timesketch entrypoint
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/google/timesketch/master/docker/release/build/docker-entrypoint.sh
+        dest: /tmp/timesketch-build/docker-entrypoint.sh
+        mode: "0755"
+      when: ts_arm64_image.stdout == ""
+
+    - name: Build Timesketch ARM64 image
+      ansible.builtin.command:
+        cmd: docker build -t greymhatter/timesketch:arm64 /tmp/timesketch-build/
+      when: ts_arm64_image.stdout == ""
+      changed_when: true
+      async: 600
+      poll: 30
+
+    - name: Get Timesketch version from config.env
+      ansible.builtin.shell:
+        cmd: grep TIMESKETCH_VERSION /opt/timesketch/config.env | cut -d= -f2
+      register: ts_version
+      changed_when: false
+
+    - name: Tag ARM64 image to match compose reference
+      ansible.builtin.command:
+        cmd: "docker tag greymhatter/timesketch:arm64 us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:{{ ts_version.stdout }}"
+      changed_when: true
+
+    - name: Clean up build directory
+      ansible.builtin.file:
+        path: /tmp/timesketch-build
+        state: absent
+
+# --- DFIQ integration ---
+- name: Check if DFIQ is installed
+  ansible.builtin.stat:
+    path: /opt/dfiq
+  register: dfiq_dir
+
+- name: Configure Timesketch DFIQ
+  ansible.builtin.lineinfile:
+    path: /opt/timesketch/etc/timesketch/timesketch.conf
+    regexp: "^DFIQ_ENABLED"
+    line: "DFIQ_ENABLED = True"
+  when: dfiq_dir.stat.exists
+  failed_when: false
+
+# --- Initial setup (only on first install) ---
+- name: Check if Timesketch user already exists
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"
+    chdir: /opt/timesketch
+  register: ts_user_check
+  changed_when: false
+  failed_when: false
+
+- name: Pull Timesketch container images
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env pull
+    chdir: /opt/timesketch
+  when: ts_user_check.rc != 0 and ansible_architecture != "aarch64"
+  retries: 3
+  delay: 10
+  register: ts_pull
+  until: ts_pull.rc == 0
+  failed_when: false
+
+- name: Create Timesketch first-boot setup script
+  ansible.builtin.copy:
+    dest: /opt/timesketch/setup-user.sh
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # Creates the default Timesketch user on first start
+      # Run automatically by starttimesketch or manually
+      cd /opt/timesketch
+      if docker compose --env-file config.env exec -T timesketch-web tsctl list-users 2>/dev/null | grep -q "{{ greymhatter_username }}"; then
+        exit 0
+      fi
+      for i in $(seq 1 24); do
+        if curl -kso /dev/null -w '%{http_code}' https://localhost 2>/dev/null | grep -q '200\|302'; then
+          docker compose --env-file config.env exec -T timesketch-web \
+            tsctl create-user {{ greymhatter_username }} --password '{{ greymhatter_password }}' 2>/dev/null
+          exit 0
+        fi
+        sleep 5
+      done
+      echo "Timesketch did not start in time"
+  when: ts_user_check.rc != 0
+
+- name: Install Timesketch importer
+  ansible.builtin.pip:
+    name: timesketch-import-client
+    executable: pip3
+  failed_when: false
+
+# --- Stop Timesketch (manual start via fish function) ---
+- name: Stop Timesketch (starts manually via starttimesketch)
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env down
+    chdir: /opt/timesketch
+  when: ts_user_check.rc != 0
+  changed_when: true
+  failed_when: false

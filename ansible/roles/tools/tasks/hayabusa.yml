@@ -1,0 +1,62 @@
+---
+- name: Check if hayabusa is installed
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/hayabusa/hayabusa"
+  register: hayabusa_installed
+
+- name: Install Hayabusa
+  when: not hayabusa_installed.stat.exists
+  block:
+    - name: Get Hayabusa release info
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/Yamato-Security/hayabusa/releases/tags/v{{ hayabusa_version }}"
+        return_content: true
+      register: hayabusa_release
+
+    - name: Set Hayabusa download URL
+      ansible.builtin.set_fact:
+        hayabusa_url: >-
+          {{ hayabusa_release.json.assets
+            | selectattr('name', 'match', '.*all-platforms.*')
+            | map(attribute='browser_download_url')
+            | first }}
+
+    - name: Create hayabusa directory
+      ansible.builtin.file:
+        path: "{{ tools_dir }}/hayabusa"
+        state: directory
+        mode: "0755"
+
+    - name: Download and extract Hayabusa
+      ansible.builtin.unarchive:
+        src: "{{ hayabusa_url }}"
+        dest: "{{ tools_dir }}/hayabusa"
+        remote_src: true
+
+    - name: Find hayabusa binary for architecture
+      ansible.builtin.find:
+        paths: "{{ tools_dir }}/hayabusa"
+        patterns: "hayabusa-*{{ 'musl' if ansible_architecture == 'x86_64' else 'gnu' }}*"
+        recurse: true
+      register: hayabusa_binary
+
+    - name: Rename hayabusa binary
+      ansible.builtin.copy:
+        src: "{{ hayabusa_binary.files[0].path }}"
+        dest: "{{ tools_dir }}/hayabusa/hayabusa"
+        mode: "0755"
+        remote_src: true
+      when: hayabusa_binary.files | length > 0
+
+    - name: Symlink hayabusa to user bin
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/hayabusa/hayabusa"
+        dest: "{{ user_local_bin }}/hayabusa"
+        state: link
+        owner: "{{ greymhatter_username }}"
+
+    - name: Update Hayabusa rules
+      ansible.builtin.command:
+        cmd: "{{ tools_dir }}/hayabusa/hayabusa update-rules"
+        chdir: "{{ tools_dir }}/hayabusa"
+      changed_when: true

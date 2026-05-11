@@ -1,0 +1,23 @@
+# Volatility 2 container — provides vol2 on systems without Python 2
+# Evidence files are mounted via /evidence and /opt/share volumes
+
+FROM python:2.7-slim
+
+# Buster is EOL — point to archive repos
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.debian.org|http://archive.debian.org|g' /etc/apt/sources.list && \
+    sed -i '/buster-updates/d' /etc/apt/sources.list
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libc6-dev git zlib1g-dev libjpeg-dev && \
+    pip install --upgrade pip && \
+    pip install \
+    pycryptodome \
+    distorm3 \
+    Pillow && \
+    pip install git+https://github.com/volatilityfoundation/volatility.git && \
+    apt-get purge -y gcc libc6-dev git && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["vol.py"]

@@ -1,0 +1,12 @@
+---
+# Sleuthkit is compiled from source via Docker builder (see docker-build.yml)
+# This file is kept for reference only.
+# On ARM64, the dnf package can be used as a fallback if Docker build fails.
+
+- name: Install Sleuthkit from dnf (ARM64 fallback)
+  ansible.builtin.dnf:
+    name: sleuthkit
+    state: present
+  when:
+    - ansible_architecture == "aarch64"
+    - sleuthkit_fallback | default(false) | bool

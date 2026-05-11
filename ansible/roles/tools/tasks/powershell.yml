@@ -1,0 +1,20 @@
+---
+- name: Import Microsoft RPM key
+  ansible.builtin.rpm_key:
+    key: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Add Microsoft PowerShell repo
+  ansible.builtin.yum_repository:
+    name: packages-microsoft-com-prod
+    description: Microsoft packages
+    baseurl: https://packages.microsoft.com/rhel/9/prod/
+    gpgcheck: true
+    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+    enabled: true
+
+- name: Install PowerShell
+  ansible.builtin.dnf:
+    name: powershell
+    state: present
+  failed_when: false

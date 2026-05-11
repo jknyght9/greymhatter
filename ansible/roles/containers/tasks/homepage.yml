@@ -1,0 +1,20 @@
+---
+- name: Create Homepage directory
+  ansible.builtin.file:
+    path: /opt/homepage
+    state: directory
+    mode: "0755"
+
+- name: Copy Homepage files
+  ansible.builtin.copy:
+    src: homepage/
+    dest: /opt/homepage/
+    mode: preserve
+    directory_mode: "0755"
+  register: homepage_files
+
+- name: Start Homepage
+  ansible.builtin.shell:
+    cmd: docker compose up -d
+    chdir: /opt/homepage
+  changed_when: true

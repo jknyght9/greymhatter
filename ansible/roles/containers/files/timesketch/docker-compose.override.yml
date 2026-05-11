@@ -1,0 +1,38 @@
+networks:
+  default:
+    name: yeti_network
+
+services:
+  nginx:
+    depends_on:
+      - timesketch-web
+    restart: no
+    volumes:
+      - /opt/timesketch/ssl/:/ssl/
+      - /opt/timesketch/nginx.conf:/etc/nginx/nginx.conf:ro
+  opensearch:
+    restart: no
+  postgres:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timesketch"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    restart: no
+  redis:
+    restart: no
+  timesketch-web:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
+  timesketch-worker:
+    restart: no
+    volumes:
+      - ${TIMESKETCH_CONFIG_PATH}:/etc/timesketch/
+      - ${TIMESKETCH_UPLOAD_PATH}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
+      - /opt/share/:/share/
+      - /opt/maxmind-geoipupdate/geoip_data:/opt/maxmind
+      - /opt/dfiq/dfiq/data/:/etc/timesketch/dfiq

@@ -1,0 +1,116 @@
+conky.config = {
+    update_interval = 1,
+    cpu_avg_samples = 2,
+    net_avg_samples = 2,
+    double_buffer = true,
+    no_buffers = true,
+    text_buffer_size = 32768,
+    imlib_cache_size = 0,
+
+    own_window = true,
+    own_window_type = 'desktop',
+    own_window_argb_visual = true,
+    own_window_transparent = false,
+    own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+    own_window_colour = '#000000',
+    own_window_argb_value = 0,
+
+    alignment = 'top_right',
+    gap_x = 10,
+    gap_y = 10,
+    minimum_width = 300,
+    maximum_width = 300,
+
+    border_inner_margin = 16,
+    border_outer_margin = 0,
+    draw_shades = false,
+    draw_outline = false,
+    draw_borders = false,
+    draw_graph_borders = false,
+
+    use_xft = true,
+    font = 'JetBrains Mono:size=9',
+    xftalpha = 1.0,
+    override_utf8_locale = true,
+    uppercase = false,
+
+    -- Nord palette
+    default_color = '#434c5e',
+    color0 = '#182631',  -- section headers (darkest, stands out)
+    color1 = '#2e3440',  -- date/time
+    color2 = '#434c5e',  -- body text
+    color3 = '#d8dee9',  -- separators
+    color4 = '#5e81ac',  -- bars/accents
+};
+
+conky.text = [[
+${color1}${font JetBrains Mono:size=11}${time %B %d %Y}
+${time %A}${font}
+
+${font JetBrains Mono:size=20}Local ${time %H:%M:%S}
+UTC   ${utime %H:%M:%S}${font}${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}System${font}${color}
+${color2}Kernel ${alignr}${kernel}
+Uptime ${alignr}${uptime_short}${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}CPU${font} ${color2}${alignr}${cpu cpu0}%${color}
+${color4}${cpubar cpu0 5}${color}
+${cpugraph cpu0 30,300 5e81ac 88c0d0}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}Processes${font}${color}
+${color2}${top name 1} ${alignr}${top cpu 1}%
+${top name 2} ${alignr}${top cpu 2}%
+${top name 3} ${alignr}${top cpu 3}%
+${top name 4} ${alignr}${top cpu 4}%
+${top name 5} ${alignr}${top cpu 5}%${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}RAM${font} ${color2}${alignr}${mem} / ${memmax}${color}
+${color4}${membar 5}${color}
+${color2}${top_mem name 1} ${alignr}${top_mem mem_res 1}
+${top_mem name 2} ${alignr}${top_mem mem_res 2}
+${top_mem name 3} ${alignr}${top_mem mem_res 3}${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}Storage${font}${color}
+${color2}/ ${alignr}${fs_used /} / ${fs_size /} (${fs_used_perc /}%)${color}
+${fs_bar 5 /}
+${color2}/opt/share ${alignr}${exec du -sh /opt/share 2>/dev/null | cut -f1}${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}Services${font}${color}
+${color2}Courses ${alignr}${exec docker ps -f name=courses -q 2>/dev/null | grep -q . && echo Up || echo --}
+CyberChef ${alignr}${exec docker ps -f name=cyberchef -q 2>/dev/null | grep -q . && echo Up || echo --}
+Homepage ${alignr}${exec docker ps -f name=homepage -q 2>/dev/null | grep -q . && echo Up || echo --}
+SpiderFoot ${alignr}${exec docker ps -f name=spiderfoot -q 2>/dev/null | grep -q . && echo Up || echo --}
+Timesketch ${alignr}${exec docker ps -f name=timesketch-web -q 2>/dev/null | grep -q . && echo Up || echo --}
+Yeti ${alignr}${exec docker ps -f name=prod-api -q 2>/dev/null | grep -q . && echo Up || echo --}${color}
+
+${color3}${hr 1}${color}
+${color0}${font JetBrains Mono:Bold:size=9}Network${font}${color}
+${if_up eth0}
+${color0}eth0 ${color2}${alignr}${addr eth0}${color}
+${color2}Down ${downspeed eth0}/s ${alignr}Up ${upspeed eth0}/s${color}
+${downspeedgraph eth0 20,143 5e81ac 88c0d0} ${alignr}${upspeedgraph eth0 20,143 5e81ac 88c0d0}
+${color2}Total ${totaldown eth0} dn ${alignr}${totalup eth0} up${color}
+${endif}${if_up eth1}
+${color0}eth1 ${color2}${alignr}${addr eth1}${color}
+${color2}Down ${downspeed eth1}/s ${alignr}Up ${upspeed eth1}/s${color}
+${downspeedgraph eth1 20,143 5e81ac 88c0d0} ${alignr}${upspeedgraph eth1 20,143 5e81ac 88c0d0}
+${color2}Total ${totaldown eth1} dn ${alignr}${totalup eth1} up${color}
+${endif}${if_up eth2}
+${color0}eth2 ${color2}${alignr}${addr eth2}${color}
+${color2}Down ${downspeed eth2}/s ${alignr}Up ${upspeed eth2}/s${color}
+${downspeedgraph eth2 20,143 5e81ac 88c0d0} ${alignr}${upspeedgraph eth2 20,143 5e81ac 88c0d0}
+${color2}Total ${totaldown eth2} dn ${alignr}${totalup eth2} up${color}
+${endif}${if_up eth3}
+${color0}eth3 ${color2}${alignr}${addr eth3}${color}
+${color2}Down ${downspeed eth3}/s ${alignr}Up ${upspeed eth3}/s${color}
+${downspeedgraph eth3 20,143 5e81ac 88c0d0} ${alignr}${upspeedgraph eth3 20,143 5e81ac 88c0d0}
+${color2}Total ${totaldown eth3} dn ${alignr}${totalup eth3} up${color}
+${endif}
+]];

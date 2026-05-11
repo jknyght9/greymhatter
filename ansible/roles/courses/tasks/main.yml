@@ -1,0 +1,80 @@
+---
+# roles/courses - MkDocs course material delivery via Docker container
+# If courses_repo is set, clone it. Otherwise create placeholder content.
+
+- name: Check if courses are already set up
+  ansible.builtin.stat:
+    path: /opt/courses/compose.yml
+  register: courses_installed
+
+- name: Clone course content from repository
+  ansible.builtin.git:
+    repo: "{{ courses_repo }}"
+    dest: /opt/courses
+    depth: 1
+  when:
+    - courses_repo | length > 0
+    - not courses_installed.stat.exists
+
+- name: Set up placeholder courses
+  when:
+    - courses_repo | length == 0
+    - not courses_installed.stat.exists
+  block:
+    - name: Create courses directory
+      ansible.builtin.file:
+        path: /opt/courses/docs
+        state: directory
+        mode: "0755"
+        recurse: true
+
+    - name: Create placeholder course index
+      ansible.builtin.copy:
+        dest: /opt/courses/mkdocs.yml
+        mode: "0644"
+        content: |
+          site_name: GreymHatter Course Materials
+          theme:
+            name: material
+            palette:
+              scheme: slate
+              primary: blue grey
+              accent: cyan
+          nav:
+            - Home: index.md
+
+    - name: Create placeholder index page
+      ansible.builtin.copy:
+        dest: /opt/courses/docs/index.md
+        mode: "0644"
+        content: |
+          # Course Materials
+
+          Welcome to GreymHatter. Course materials will be loaded here.
+
+          Run `course-update` in your terminal to pull the latest content.
+
+- name: Create courses Docker Compose file
+  ansible.builtin.copy:
+    dest: /opt/courses/compose.yml
+    mode: "0644"
+    force: false
+    content: |
+      services:
+        mkdocs:
+          image: squidfunk/mkdocs-material
+          container_name: courses
+          restart: unless-stopped
+          working_dir: /docs
+          volumes:
+            - ./:/docs
+          ports:
+            - "8000:8000"
+          command: serve -a 0.0.0.0:8000
+  register: courses_compose
+
+- name: Start courses container
+  ansible.builtin.shell:
+    cmd: docker compose up -d
+    chdir: /opt/courses
+  changed_when: true

@@ -1,0 +1,41 @@
+---
+# clamav-hashbuilder — builds Autopsy hashsets from ClamAV signatures
+# https://github.com/jknyght9/clamav-hashbuilder
+# Runs continuously, updating every 24 hours (HASHBUILDER_FREQUENCY)
+# Manual refresh: update-hashsets (fish helper)
+# Output: /opt/hashsets
+
+- name: Check if clamav-hashbuilder is installed
+  ansible.builtin.stat:
+    path: /opt/clamav-hashbuilder/compose.yml
+  register: hashbuilder_check
+
+- name: Install clamav-hashbuilder
+  when: not hashbuilder_check.stat.exists
+  block:
+    - name: Create hashsets directory
+      ansible.builtin.file:
+        path: /opt/hashsets
+        state: directory
+        owner: "{{ greymhatter_username }}"
+        group: "{{ greymhatter_username }}"
+        mode: "0755"
+
+    - name: Clone clamav-hashbuilder
+      ansible.builtin.git:
+        repo: https://github.com/jknyght9/clamav-hashbuilder.git
+        dest: /opt/clamav-hashbuilder
+        depth: 1
+
+    - name: Symlink hashsets directory into repo
+      ansible.builtin.file:
+        src: /opt/hashsets
+        dest: /opt/clamav-hashbuilder/hashsets
+        state: link
+
+    - name: Build and start clamav-hashbuilder
+      ansible.builtin.shell:
+        cmd: docker compose build && docker compose up -d
+        chdir: /opt/clamav-hashbuilder
+      changed_when: true
+      failed_when: false

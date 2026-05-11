@@ -1,0 +1,233 @@
+---
+# roles/base - OS configuration, package installation, third-party binaries
+# Replaces: setup.sh updatingOS(), configuringOS(), installRequiredSoftware(), install3dPartySources()
+
+- name: Optimize DNF configuration
+  ansible.builtin.copy:
+    dest: /etc/dnf/dnf.conf
+    content: |
+      [main]
+      gpgcheck=True
+      installonly_limit=3
+      clean_requirements_on_remove=True
+      best=False
+      skip_if_unavailable=True
+      fastestmirror=1
+      max_parallel_downloads=10
+      deltarpm=true
+    mode: "0644"
+
+- name: Stop PackageKit to prevent conflicts
+  ansible.builtin.systemd:
+    name: packagekit
+    state: stopped
+  failed_when: false
+
+- name: Clean DNF cache
+  ansible.builtin.command: dnf clean all
+  changed_when: true
+
+- name: Update all packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+  tags: [update]
+
+- name: Remove unnecessary packages
+  ansible.builtin.dnf:
+    autoremove: true
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ greymhatter_hostname }}"
+
+- name: Configure /etc/hosts
+  ansible.builtin.copy:
+    dest: /etc/hosts
+    content: |
+      127.0.0.1 {{ greymhatter_hostname }}.local {{ greymhatter_hostname }} localhost
+      ::1 localhost ip6-localhost ip6-loopback
+      ff02::1 ip6-allnodes
+      ff02::2 ip6-allrouters
+    mode: "0644"
+
+- name: Check SELinux status
+  ansible.builtin.command:
+    cmd: getenforce
+  register: selinux_status
+  changed_when: false
+  failed_when: false
+
+- name: Set SELinux to permissive
+  ansible.builtin.command:
+    cmd: setenforce 0
+  when: selinux_status.stdout == "Enforcing"
+  failed_when: false
+
+- name: Set SELinux to permissive permanently
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=permissive'
+
+- name: Set vm.max_map_count for OpenSearch
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-opensearch.conf
+    content: "vm.max_map_count=262144\n"
+    mode: "0644"
+
+- name: Apply sysctl settings
+  ansible.builtin.command:
+    cmd: sysctl -p /etc/sysctl.d/99-opensearch.conf
+  changed_when: true
+
+- name: Enable SSH service
+  ansible.builtin.systemd:
+    name: sshd
+    enabled: true
+    state: started
+
+# --- Firewall ---
+# Default policy: deny all inbound except explicitly allowed services.
+# Docker containers bypass firewalld via iptables, so container ports
+# are network-accessible regardless. These rules document what's expected.
+
+- name: Enable firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Remove unnecessary default services
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --remove-service={{ item }}"
+  loop:
+    - cockpit
+    - dhcpv6-client
+  changed_when: true
+  failed_when: false
+
+- name: Allow required services
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --add-service={{ item }}"
+  loop:
+    - ssh
+    - samba
+    - https
+  changed_when: true
+  failed_when: false
+
+- name: Allow required ports
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --add-port={{ item }}"
+  loop:
+    - 3000/tcp    # Homepage dashboard
+    - 5001/tcp    # SpiderFoot
+    - 8000/tcp    # Course materials (mkdocs)
+    - 8080/tcp    # CyberChef
+    - 8888/tcp    # Yeti
+    - 3389/tcp    # xRDP
+    - 5900/tcp    # VNC
+  changed_when: true
+  failed_when: false
+
+- name: Reload firewall
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload
+  changed_when: true
+
+- name: Install base packages
+  ansible.builtin.dnf:
+    name:
+      - afflib
+      - bat
+      - btop
+      - clamav
+      - cloud-utils-growpart
+      - conky
+      - curl
+      - dbus-x11
+      - duf
+      - ewftools
+      - firefox
+      - fish
+      - gcc
+      - gcc-c++
+      - gdisk
+      - make
+      - git
+      - imhex
+      - jq
+      - fastfetch
+      - neovim
+      - ntfs-3g
+      - openssl
+      - python3
+      - python3-pip
+      - ripgrep
+      - sassc
+      - tcpdump
+      - tmux
+      - unzip
+      - wireshark
+      - xxd
+    state: present
+    install_weak_deps: false
+
+# --- Third-party binaries ---
+
+- name: Install ctop (container monitoring)
+  ansible.builtin.get_url:
+    url: "https://github.com/bcicen/ctop/releases/download/v{{ ctop_version }}/ctop-{{ ctop_version }}-linux-{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+    dest: /usr/local/bin/ctop
+    mode: "0755"
+    force: false
+
+- name: Install Starship shell prompt
+  ansible.builtin.shell:
+    cmd: curl -sS https://starship.rs/install.sh | sh -s -- -f
+    creates: /usr/local/bin/starship
+
+- name: Install eza (ls replacement)
+  block:
+    - name: Download eza binary
+      ansible.builtin.unarchive:
+        src: "https://github.com/eza-community/eza/releases/download/v{{ eza_version }}/eza_{{ ansible_architecture }}-unknown-linux-{{ 'musl' if ansible_architecture == 'x86_64' else 'gnu' }}.tar.gz"
+        dest: /usr/local/bin/
+        remote_src: true
+        creates: /usr/local/bin/eza
+
+    - name: Set eza permissions
+      ansible.builtin.file:
+        path: /usr/local/bin/eza
+        owner: root
+        group: root
+        mode: "0755"
+
+- name: Install yq
+  ansible.builtin.get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+    dest: /usr/local/bin/yq
+    mode: "0755"
+    force: false
+
+# Ghostty terminal — available via COPR (scottames/ghostty)
+- name: Check if Ghostty is installed
+  ansible.builtin.command: which ghostty
+  register: ghostty_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Ghostty
+  when: ghostty_check.rc != 0
+  block:
+    - name: Enable Ghostty COPR repo
+      ansible.builtin.command:
+        cmd: dnf copr enable -y scottames/ghostty
+      changed_when: true
+
+    - name: Install Ghostty from COPR
+      ansible.builtin.dnf:
+        name: ghostty
+        state: present

@@ -1,0 +1,63 @@
+---
+- name: Check if floss is installed
+  ansible.builtin.command: which floss
+  register: floss_check
+  changed_when: false
+  failed_when: false
+
+# AMD64: download pre-built standalone binary
+- name: Install FLOSS binary (AMD64)
+  when:
+    - floss_check.rc != 0
+    - ansible_architecture == "x86_64"
+  block:
+    - name: Get FLOSS release info
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/mandiant/flare-floss/releases/tags/v{{ floss_version }}"
+        return_content: true
+      register: floss_release
+
+    - name: Set FLOSS download URL
+      ansible.builtin.set_fact:
+        floss_url: >-
+          {{ floss_release.json.assets
+            | selectattr('name', 'match', '.*linux.*')
+            | map(attribute='browser_download_url')
+            | first }}
+
+    - name: Download and extract FLOSS
+      ansible.builtin.unarchive:
+        src: "{{ floss_url }}"
+        dest: "{{ tools_dir }}"
+        remote_src: true
+
+    - name: Set floss permissions
+      ansible.builtin.file:
+        path: "{{ tools_dir }}/floss"
+        mode: "0755"
+
+    - name: Symlink floss to user bin
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/floss"
+        dest: "{{ user_local_bin }}/floss"
+        state: link
+        owner: "{{ greymhatter_username }}"
+
+# ARM64: pip install (pure Python, no standalone binary available)
+- name: Install FLOSS build dependencies (ARM64)
+  ansible.builtin.dnf:
+    name:
+      - python3-devel
+      - gcc-c++
+    state: present
+  when:
+    - floss_check.rc != 0
+    - ansible_architecture == "aarch64"
+
+- name: Install FLOSS via pip (ARM64)
+  ansible.builtin.pip:
+    name: flare-floss
+    executable: pip3
+  when:
+    - floss_check.rc != 0
+    - ansible_architecture == "aarch64"

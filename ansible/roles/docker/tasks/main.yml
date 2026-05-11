@@ -1,0 +1,81 @@
+---
+# roles/docker - Docker CE installation and configuration
+# Replaces: setup.sh installDocker()
+
+- name: Remove old Docker packages
+  ansible.builtin.dnf:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+      - containerd.io
+    state: absent
+  failed_when: false
+
+- name: Install Docker via get.docker.com
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://get.docker.com | sh
+    creates: /usr/bin/docker
+
+- name: Create Docker config directory
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+
+- name: Configure Docker daemon
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+    mode: "0644"
+  notify: Restart Docker
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Verify Docker is running
+  ansible.builtin.command: docker --version
+  changed_when: false
+  register: docker_version
+
+- name: Display Docker version
+  ansible.builtin.debug:
+    msg: "{{ docker_version.stdout }}"
+
+- name: Verify Docker Compose is available
+  ansible.builtin.command: docker compose version
+  changed_when: false
+  register: compose_version
+
+- name: Display Docker Compose version
+  ansible.builtin.debug:
+    msg: "{{ compose_version.stdout }}"
+
+- name: Check if Docker network exists
+  ansible.builtin.command:
+    cmd: "docker network inspect {{ docker_network_name }}"
+  register: network_check
+  changed_when: false
+  failed_when: false
+
+- name: Create shared Docker network
+  ansible.builtin.command:
+    cmd: "docker network create {{ docker_network_name }}"
+  when: network_check.rc != 0

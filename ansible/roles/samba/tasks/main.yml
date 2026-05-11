@@ -1,0 +1,109 @@
+---
+# roles/samba - SMB/Samba network share
+# Replaces: install-smbshare.sh
+
+- name: Create share directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    mode: "0775"
+  loop:
+    - "{{ share_dir }}"
+    - "{{ share_dir }}/kape"
+    - "{{ share_dir }}/hayabusa"
+    - "{{ share_dir }}/images"
+    - "{{ share_dir }}/plaso"
+
+- name: Install Samba
+  ansible.builtin.dnf:
+    name:
+      - samba
+      - samba-common
+    state: present
+
+- name: Enable Samba services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - smb
+    - nmb
+
+- name: Check if Samba firewall rule exists
+  ansible.builtin.command:
+    cmd: firewall-cmd --query-service=samba --permanent
+  register: fw_samba
+  changed_when: false
+  failed_when: false
+
+- name: Open firewall for Samba
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --add-service=samba
+  when: fw_samba.rc != 0
+  failed_when: false
+  notify: Restart Samba
+
+- name: Reload firewall
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload
+  when: fw_samba.rc != 0
+  failed_when: false
+
+- name: Create samba group
+  ansible.builtin.group:
+    name: samba
+    state: present
+
+- name: Add user to samba group
+  ansible.builtin.user:
+    name: "{{ greymhatter_username }}"
+    groups: samba
+    append: true
+
+- name: Set SELinux context for share directory
+  ansible.builtin.command:
+    cmd: "chcon -t samba_share_t {{ share_dir }} -R"
+  changed_when: true
+  failed_when: false
+
+- name: Set SELinux fcontext for share directory
+  ansible.builtin.command:
+    cmd: "semanage fcontext -a -t samba_share_t '{{ share_dir }}(/.*)?'"
+  changed_when: false
+  failed_when: false
+
+- name: Check if Samba user exists
+  ansible.builtin.command:
+    cmd: "pdbedit -L -u {{ greymhatter_username }}"
+  register: smb_user_check
+  changed_when: false
+  failed_when: false
+
+- name: Set Samba password
+  ansible.builtin.shell:
+    cmd: "printf '{{ greymhatter_password }}\n{{ greymhatter_password }}\n' | smbpasswd -s -a {{ greymhatter_username }}"
+  when: smb_user_check.rc != 0
+  no_log: true
+
+- name: Configure Samba share
+  ansible.builtin.copy:
+    dest: /etc/samba/smb.conf
+    mode: "0644"
+    content: |
+      [global]
+      workgroup = WORKGROUP
+      server string = GreymHatter
+      security = user
+      map to guest = Bad User
+
+      [share]
+      path = {{ share_dir }}
+      browseable = yes
+      writable = yes
+      valid users = @samba
+      force group = samba
+      create mask = 0775
+      directory mask = 0775
+  notify: Restart Samba

@@ -1,0 +1,19 @@
+---
+- name: Create CyberChef directory
+  ansible.builtin.file:
+    path: /opt/cyberchef
+    state: directory
+    mode: "0755"
+
+- name: Copy CyberChef compose file
+  ansible.builtin.copy:
+    src: cyberchef/compose.yml
+    dest: /opt/cyberchef/compose.yml
+    mode: "0644"
+  register: cyberchef_compose
+
+- name: Start CyberChef
+  ansible.builtin.shell:
+    cmd: docker compose up -d
+    chdir: /opt/cyberchef
+  changed_when: true

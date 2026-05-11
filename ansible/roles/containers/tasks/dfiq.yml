@@ -1,0 +1,12 @@
+---
+- name: Check if DFIQ is installed
+  ansible.builtin.stat:
+    path: /opt/dfiq
+  register: dfiq_installed
+
+- name: Clone DFIQ repository
+  ansible.builtin.git:
+    repo: https://github.com/google/dfiq.git
+    dest: /opt/dfiq
+    depth: 1
+  when: not dfiq_installed.stat.exists

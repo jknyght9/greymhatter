@@ -1,0 +1,158 @@
+---
+# roles/user - User creation, dotfiles, shell configuration
+# Replaces: setup.sh createUser()
+
+# --- Prerequisite lookups ---
+
+- name: Get fish shell path
+  ansible.builtin.command: which fish
+  register: fish_path
+  changed_when: false
+
+- name: Create encrypted password
+  ansible.builtin.command:
+    cmd: "openssl passwd -6 {{ greymhatter_password }}"
+  register: encrypted_password
+  changed_when: false
+  no_log: true
+
+# --- User creation ---
+
+- name: Create user {{ greymhatter_username }}
+  ansible.builtin.user:
+    name: "{{ greymhatter_username }}"
+    password: "{{ encrypted_password.stdout }}"
+    shell: "{{ fish_path.stdout }}"
+    groups:
+      - wheel
+      - docker
+    append: true
+    create_home: true
+
+- name: Get user UID
+  ansible.builtin.command:
+    cmd: "id -u {{ greymhatter_username }}"
+  register: user_uid
+  changed_when: false
+
+# --- Directory setup ---
+
+- name: Create user directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+  loop:
+    - "{{ user_home }}/Pictures"
+    - "{{ user_home }}/.config"
+    - "{{ user_home }}/.local/bin"
+    - "{{ user_home }}/.local/share/applications"
+
+# --- Dotfiles ---
+
+- name: Copy config files
+  ansible.builtin.copy:
+    src: config/
+    dest: "{{ user_home }}/.config/"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: preserve
+    directory_mode: "0755"
+
+- name: Copy .local files
+  ansible.builtin.copy:
+    src: local/
+    dest: "{{ user_home }}/.local/"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: preserve
+    directory_mode: "0755"
+
+- name: Set dashboard desktop launcher executable
+  ansible.builtin.file:
+    path: "{{ user_home }}/.local/share/applications/dashboard.desktop"
+    mode: "0755"
+  failed_when: false
+
+# --- Background and avatar ---
+
+- name: Copy desktop background
+  ansible.builtin.copy:
+    src: "{{ greymhatter_repo_path }}/media/v2/backgrounds/greymhatter-background-4k.png"
+    dest: "{{ user_home }}/Pictures/background.png"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+  failed_when: false
+
+  # User avatar is configured in the desktop role via AccountsService
+
+# --- Conky ---
+
+- name: Copy conky config
+  ansible.builtin.copy:
+    src: conky/conkyrc
+    dest: "{{ user_home }}/.conkyrc"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+  failed_when: false
+
+# --- Tmux plugins ---
+
+- name: Clone tmux plugin manager
+  ansible.builtin.git:
+    repo: https://github.com/tmux-plugins/tpm
+    dest: "{{ user_home }}/.config/tmux/plugins/tpm"
+    depth: 1
+  become_user: "{{ greymhatter_username }}"
+  failed_when: false
+
+# --- XDG user directories ---
+
+- name: Run xdg-user-dirs-update for user
+  ansible.builtin.command:
+    cmd: xdg-user-dirs-update
+  become_user: "{{ greymhatter_username }}"
+  environment:
+    HOME: "{{ user_home }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ user_uid.stdout }}"
+  changed_when: false
+  failed_when: false
+
+# --- Conky systemd user service ---
+
+- name: Enable user lingering (allows user services to start at boot)
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ greymhatter_username }}"
+  changed_when: true
+  failed_when: false
+
+- name: Create default.target.wants directory
+  ansible.builtin.file:
+    path: "{{ user_home }}/.config/systemd/user/default.target.wants"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Enable conky user service via symlink
+  ansible.builtin.file:
+    src: "{{ user_home }}/.config/systemd/user/conky.service"
+    dest: "{{ user_home }}/.config/systemd/user/default.target.wants/conky.service"
+    state: link
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+  failed_when: false
+
+# --- Set ownership ---
+
+- name: Set ownership on user home
+  ansible.builtin.file:
+    path: "{{ user_home }}"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    recurse: true
+  changed_when: false

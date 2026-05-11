@@ -1,0 +1,30 @@
+---
+- name: Check if yara-python is installed
+  ansible.builtin.command: pip3 show yara-python
+  register: yara_check
+  changed_when: false
+  failed_when: false
+
+- name: Install YARA Python
+  when: yara_check.rc != 0
+  block:
+    - name: Install YARA build dependencies
+      ansible.builtin.dnf:
+        name:
+          - python3-devel
+          - gcc
+          - automake
+          - libtool
+          - pkg-config
+          - openssl-devel
+        state: present
+
+    - name: Install yara-python from pip
+      ansible.builtin.pip:
+        name: yara-python
+        executable: pip3
+
+    - name: Clean up yara-python source
+      ansible.builtin.file:
+        path: /tmp/yara-python
+        state: absent

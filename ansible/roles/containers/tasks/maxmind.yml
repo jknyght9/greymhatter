@@ -1,0 +1,27 @@
+---
+- name: Check if MaxMind is already installed
+  ansible.builtin.stat:
+    path: /opt/maxmind-geoipupdate/.env
+  register: maxmind_installed
+
+- name: Install MaxMind
+  when: not maxmind_installed.stat.exists
+  block:
+    - name: Clone MaxMind GeoIP updater
+      ansible.builtin.git:
+        repo: https://github.com/jknyght9/maxmind-geoipupdate.git
+        dest: /opt/maxmind-geoipupdate
+        depth: 1
+
+    - name: Configure MaxMind credentials
+      ansible.builtin.copy:
+        dest: /opt/maxmind-geoipupdate/.env
+        content: |
+          GEOIPUPDATE_ACCOUNT_ID={{ maxmind_account_id }}
+          GEOIPUPDATE_LICENSE_KEY={{ maxmind_license_key }}
+        mode: "0600"
+
+    - name: Start MaxMind GeoIP updater
+      ansible.builtin.shell:
+        cmd: docker compose up -d
+        chdir: /opt/maxmind-geoipupdate

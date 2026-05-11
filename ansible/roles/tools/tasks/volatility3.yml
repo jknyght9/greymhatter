@@ -1,0 +1,93 @@
+---
+- name: Check if volatility3 is installed
+  ansible.builtin.command: pip3 show volatility3
+  register: vol3_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Volatility 3
+  when: vol3_check.rc != 0
+  block:
+    - name: Install Volatility 3 Python dependencies
+      ansible.builtin.dnf:
+        name:
+          - python3-devel
+          - python3-pip
+          - gcc
+        state: present
+
+    - name: Install Python packages for Volatility 3
+      ansible.builtin.pip:
+        name:
+          - wheel
+          - pefile
+          - pycryptodome
+        executable: pip3
+
+    - name: Clone Volatility 3
+      ansible.builtin.git:
+        repo: https://github.com/volatilityfoundation/volatility3
+        dest: /tmp/volatility3
+        version: "{{ volatility3_branch }}"
+        recursive: true
+        depth: 1
+      become_user: "{{ greymhatter_username }}"
+
+    - name: Install Volatility 3
+      ansible.builtin.pip:
+        name: /tmp/volatility3
+        executable: pip3
+
+    # --- Symbol tables ---
+    - name: Get Volatility 3 site-packages path
+      ansible.builtin.shell:
+        cmd: python3 -c "import volatility3; import os; print(os.path.dirname(volatility3.__file__))"
+      register: vol3_path
+      changed_when: false
+
+    - name: Create symbols directory
+      ansible.builtin.file:
+        path: "{{ vol3_path.stdout }}/symbols"
+        state: directory
+        mode: "0755"
+
+    - name: Download Windows symbol tables
+      ansible.builtin.get_url:
+        url: https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
+        dest: "{{ vol3_path.stdout }}/symbols/windows.zip"
+        mode: "0644"
+
+    - name: Download Linux symbol tables
+      ansible.builtin.get_url:
+        url: https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
+        dest: "{{ vol3_path.stdout }}/symbols/linux.zip"
+        mode: "0644"
+
+    - name: Download Mac symbol tables
+      ansible.builtin.get_url:
+        url: https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
+        dest: "{{ vol3_path.stdout }}/symbols/mac.zip"
+        mode: "0644"
+
+    # Pre-build symbol cache for the hatter user (avoids minutes-long delay on first run)
+    - name: Create vol3 cache directory for user
+      ansible.builtin.file:
+        path: "/home/{{ greymhatter_username }}/.cache/volatility3"
+        state: directory
+        owner: "{{ greymhatter_username }}"
+        group: "{{ greymhatter_username }}"
+        mode: "0755"
+
+    - name: Pre-build Volatility 3 symbol cache
+      ansible.builtin.shell:
+        cmd: vol -f /dev/null windows.info 2>/dev/null || true
+      become_user: "{{ greymhatter_username }}"
+      environment:
+        HOME: "/home/{{ greymhatter_username }}"
+      changed_when: true
+      failed_when: false
+
+    - name: Clean up Volatility 3 source
+      ansible.builtin.file:
+        path: /tmp/volatility3
+        state: absent

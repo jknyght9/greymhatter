@@ -1,0 +1,29 @@
+---
+# roles/containers - Docker service deployment
+# Replaces: install-containers.sh and individual install scripts
+
+- name: Install DFIQ
+  ansible.builtin.include_tasks: dfiq.yml
+
+- name: Install MaxMind GeoIP
+  ansible.builtin.include_tasks: maxmind.yml
+  when: maxmind_account_id | length > 0
+
+- name: Install Timesketch
+  ansible.builtin.include_tasks: timesketch.yml
+
+- name: Install Yeti
+  ansible.builtin.include_tasks: yeti.yml
+  when: ansible_architecture == "x86_64"
+
+- name: Install SpiderFoot
+  ansible.builtin.include_tasks: spiderfoot.yml
+
+- name: Install CyberChef
+  ansible.builtin.include_tasks: cyberchef.yml
+
+- name: Install Homepage
+  ansible.builtin.include_tasks: homepage.yml
+
+- name: Install clamav-hashbuilder
+  ansible.builtin.include_tasks: clamav-hashbuilder.yml

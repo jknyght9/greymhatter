@@ -1,1 +1,36 @@
 .DS_Store
+
+# Claude Code project files
+.claude/
+
+# Crypto (project SSH keys)
+crypto/
+
+# Build output
+output/
+packer/output/
+packer/packer-outputs/
+packer/*.auto.pkrvars.hcl
+packer/.config/
+packer/fusion/ks.cfg
+*.ova
+*.vmdk
+*.vmx
+*.vmxf
+*.nvram
+*.vmsd
+*.lck
+
+# Ansible
+*.retry
+
+# Test images (large files)
+tests/*.zip
+tests/*.img
+tests/*.vmem
+tests/*.raw
+tests/*.E01
+tests/*.e01
+
+# MkDocs
+docs/site/

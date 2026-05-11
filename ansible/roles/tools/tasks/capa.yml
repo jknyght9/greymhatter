@@ -1,0 +1,41 @@
+---
+- name: Check if capa is installed
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/capa"
+  register: capa_installed
+
+- name: Install capa
+  when: not capa_installed.stat.exists
+  block:
+    - name: Get capa release info
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/mandiant/capa/releases/tags/v{{ capa_version }}"
+        return_content: true
+      register: capa_release
+
+    - name: Set capa download URL
+      ansible.builtin.set_fact:
+        capa_url: >-
+          {{ capa_release.json.assets
+            | selectattr('name', 'match', '.*linux' ~ ('-arm64' if ansible_architecture == 'aarch64' else '') ~ '.zip$')
+            | rejectattr('name', 'match', '.*py3.*')
+            | map(attribute='browser_download_url')
+            | first }}
+
+    - name: Download and extract capa
+      ansible.builtin.unarchive:
+        src: "{{ capa_url }}"
+        dest: "{{ tools_dir }}"
+        remote_src: true
+
+    - name: Set capa permissions
+      ansible.builtin.file:
+        path: "{{ tools_dir }}/capa"
+        mode: "0755"
+
+    - name: Symlink capa to user bin
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/capa"
+        dest: "{{ user_local_bin }}/capa"
+        state: link
+        owner: "{{ greymhatter_username }}"

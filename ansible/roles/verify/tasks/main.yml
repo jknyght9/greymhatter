@@ -1,0 +1,170 @@
+---
+# roles/verify - Post-install verification and manifest generation
+
+- name: Create manifest directory
+  ansible.builtin.file:
+    path: /opt/greymhatter
+    state: directory
+    mode: "0755"
+
+# --- Check CLI tools ---
+- name: Verify CLI tools exist
+  ansible.builtin.command:
+    cmd: "which {{ item.cmd }}"
+  loop:
+    - { name: "hayabusa", cmd: "/opt/tools/hayabusa/hayabusa" }
+    - { name: "capa", cmd: "/opt/tools/capa" }
+    - { name: "sleuthkit (fls)", cmd: "fls" }
+    - { name: "volatility3", cmd: "vol" }
+    - { name: "yq", cmd: "yq" }
+    - { name: "bat", cmd: "bat" }
+    - { name: "eza", cmd: "eza" }
+    - { name: "fish", cmd: "fish" }
+    - { name: "tmux", cmd: "tmux" }
+    - { name: "neovim", cmd: "nvim" }
+    - { name: "starship", cmd: "starship" }
+    - { name: "ctop", cmd: "ctop" }
+    - { name: "hexdump", cmd: "hexdump" }
+    - { name: "xxd", cmd: "xxd" }
+    - { name: "docker", cmd: "docker" }
+  register: tool_checks
+  changed_when: false
+  failed_when: false
+
+# --- Check architecture-specific tools ---
+- name: Verify x86_64-only tools
+  ansible.builtin.command:
+    cmd: "which {{ item.cmd }}"
+  loop:
+    - { name: "floss", cmd: "floss" }
+    - { name: "volatility2", cmd: "vol2" }
+    - { name: "bulk_extractor", cmd: "bulk_extractor" }
+  register: x86_tool_checks
+  changed_when: false
+  failed_when: false
+  when: ansible_architecture == "x86_64"
+
+# --- Get tool versions ---
+- name: Collect tool versions
+  ansible.builtin.shell:
+    cmd: "{{ item.cmd }}"
+  loop:
+    - { name: "docker", cmd: "docker --version" }
+    - { name: "docker-compose", cmd: "docker compose version" }
+    - { name: "python3", cmd: "python3 --version" }
+    - { name: "fish", cmd: "fish --version" }
+    - { name: "yq", cmd: "yq --version" }
+  register: version_checks
+  changed_when: false
+  failed_when: false
+
+# --- Check Docker containers ---
+- name: Check Docker containers
+  ansible.builtin.command:
+    cmd: "docker compose ls"
+  register: docker_services
+  changed_when: false
+  failed_when: false
+
+# --- Generate manifest ---
+- name: Generate tools manifest
+  ansible.builtin.copy:
+    dest: /opt/greymhatter/tools-manifest.json
+    mode: "0644"
+    content: |
+      {
+        "build_date": "{{ ansible_date_time.iso8601 }}",
+        "architecture": "{{ ansible_architecture }}",
+        "distribution": "{{ ansible_distribution }} {{ ansible_distribution_version }}",
+        "kernel": "{{ ansible_kernel }}",
+        "tools": {
+          {% for item in tool_checks.results %}
+          "{{ item.item.name }}": "{{ 'installed' if item.rc == 0 else 'missing' }}"{{ ',' if not loop.last else '' }}
+          {% endfor %}
+        },
+        "versions": {
+          {% for item in version_checks.results %}
+          "{{ item.item.name }}": "{{ item.stdout | default('unknown') | regex_replace('\n', ' ') }}"{{ ',' if not loop.last else '' }}
+          {% endfor %}
+        }
+      }
+
+# --- Print summary ---
+- name: Display verification summary
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      GreymHatter Verification Summary
+      ========================================
+      Architecture: {{ ansible_architecture }}
+      Distribution: {{ ansible_distribution }} {{ ansible_distribution_version }}
+
+      Tools:
+      {% for item in tool_checks.results %}
+        {{ '✓' if item.rc == 0 else '✗' }} {{ item.item.name }}
+      {% endfor %}
+
+      Manifest saved to /opt/greymhatter/tools-manifest.json
+      ========================================
+
+# --- ARM64 architecture notes ---
+- name: Generate architecture notes
+  ansible.builtin.copy:
+    dest: /opt/greymhatter/arch-notes.txt
+    mode: "0644"
+    content: |
+      GreymHatter — Architecture: {{ ansible_architecture }}
+      {% if ansible_architecture == 'aarch64' %}
+
+      NOTE: The following tools are unavailable on ARM64 (aarch64):
+
+        - Yeti — requires SSE4.2 and AVX CPU instructions (x86_64 only)
+
+      ARM64 adaptations:
+        - FLOSS runs via pip (Python) instead of standalone binary
+        - Volatility 2 runs inside a Docker container (vol2 command)
+
+      All other tools are fully functional on ARM64.
+      {% else %}
+
+      All tools are available on this architecture.
+      {% endif %}
+
+# --- Container smoke tests ---
+- name: Check Homepage responds
+  ansible.builtin.uri:
+    url: http://localhost:3000
+    status_code: [200, 302]
+  register: homepage_check
+  failed_when: false
+
+- name: Check CyberChef responds
+  ansible.builtin.uri:
+    url: http://localhost:8080
+    status_code: [200, 302]
+  register: cyberchef_check
+  failed_when: false
+
+- name: Check Courses responds
+  ansible.builtin.uri:
+    url: http://localhost:8000
+    status_code: [200, 302]
+  register: courses_check
+  failed_when: false
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: |
+      Container Services:
+        {{ '✓' if homepage_check.status | default(0) in [200, 302] else '✗' }} Homepage (port 3000)
+        {{ '✓' if cyberchef_check.status | default(0) in [200, 302] else '✗' }} CyberChef (port 8080)
+        {{ '✓' if courses_check.status | default(0) in [200, 302] else '✗' }} Courses (port 8000)
+
+# --- Fail if critical tools are missing ---
+- name: Check for critical tool failures
+  ansible.builtin.assert:
+    that:
+      - tool_checks.results | selectattr('item.name', 'equalto', 'docker') | map(attribute='rc') | first == 0
+      - tool_checks.results | selectattr('item.name', 'equalto', 'fish') | map(attribute='rc') | first == 0
+    fail_msg: "Critical tools are missing! Check the verification summary above."
+    success_msg: "All critical tools verified."

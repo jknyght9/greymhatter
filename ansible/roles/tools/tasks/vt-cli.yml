@@ -1,0 +1,74 @@
+---
+- name: Check if vt-cli is installed
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/vt"
+  register: vt_installed
+
+# AMD64: download pre-built binary
+- name: Install VirusTotal CLI (AMD64)
+  when:
+    - not vt_installed.stat.exists
+    - ansible_architecture == "x86_64"
+  block:
+    - name: Get vt-cli release info
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/VirusTotal/vt-cli/releases/tags/{{ vt_cli_version }}"
+        return_content: true
+      register: vt_release
+
+    - name: Set vt-cli download URL
+      ansible.builtin.set_fact:
+        vt_url: >-
+          {{ vt_release.json.assets
+            | selectattr('name', 'match', '.*Linux64.*')
+            | map(attribute='browser_download_url')
+            | first }}
+
+    - name: Download and extract vt-cli
+      ansible.builtin.unarchive:
+        src: "{{ vt_url }}"
+        dest: "{{ tools_dir }}"
+        remote_src: true
+
+    - name: Set vt permissions
+      ansible.builtin.file:
+        path: "{{ tools_dir }}/vt"
+        mode: "0755"
+
+    - name: Symlink vt to user bin
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/vt"
+        dest: "{{ user_local_bin }}/vt"
+        state: link
+        owner: "{{ greymhatter_username }}"
+
+# ARM64: compile from source (no pre-built ARM64 binary available)
+- name: Install VirusTotal CLI from source (ARM64)
+  when:
+    - not vt_installed.stat.exists
+    - ansible_architecture == "aarch64"
+  block:
+    - name: Install Go
+      ansible.builtin.dnf:
+        name: golang
+        state: present
+
+    - name: Build vt-cli from source
+      ansible.builtin.shell:
+        cmd: go install github.com/VirusTotal/vt-cli/vt@latest
+      environment:
+        GOPATH: /tmp/go
+        GOBIN: "{{ tools_dir }}"
+      changed_when: true
+
+    - name: Clean up Go cache
+      ansible.builtin.file:
+        path: /tmp/go
+        state: absent
+
+    - name: Symlink vt to user bin
+      ansible.builtin.file:
+        src: "{{ tools_dir }}/vt"
+        dest: "{{ user_local_bin }}/vt"
+        state: link
+        owner: "{{ greymhatter_username }}"

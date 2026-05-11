@@ -1,0 +1,126 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<channel name="xfce4-panel" version="1.0">
+  <property name="configver" type="int" value="2"/>
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+    <property name="dark-mode" type="bool" value="true"/>
+    <property name="panel-1" type="empty">
+      <property name="position" type="string" value="p=6;x=0;y=0"/>
+      <property name="length" type="double" value="100"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="icon-size" type="uint" value="16"/>
+      <property name="size" type="uint" value="48"/>
+      <property name="plugin-ids" type="array">
+        <value type="int" value="19"/>
+        <value type="int" value="1"/>
+        <value type="int" value="5"/>
+        <value type="int" value="6"/>
+        <value type="int" value="22"/>
+        <value type="int" value="21"/>
+        <value type="int" value="7"/>
+        <value type="int" value="2"/>
+        <value type="int" value="9"/>
+        <value type="int" value="10"/>
+      </property>
+      <property name="enter-opacity" type="uint" value="80"/>
+      <property name="leave-opacity" type="uint" value="80"/>
+      <property name="mode" type="uint" value="2"/>
+      <property name="enable-struts" type="bool" value="true"/>
+      <property name="nrows" type="uint" value="1"/>
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+    <property name="plugin-5" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+      <property name="expand" type="bool" value="true"/>
+    </property>
+    <property name="plugin-6" type="string" value="systray">
+      <property name="square-icons" type="bool" value="true"/>
+      <property name="known-legacy-items" type="array">
+        <value type="string" value="networkmanager applet"/>
+        <value type="string" value="ethernet network connection “wired connection 1” active"/>
+      </property>
+      <property name="icon-size" type="int" value="16"/>
+      <property name="hidden-legacy-items" type="array">
+      </property>
+      <property name="known-items" type="array">
+        <value type="string" value="ulauncher"/>
+      </property>
+    </property>
+    <property name="plugin-7" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-9" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-10" type="string" value="actions">
+      <property name="button-title" type="uint" value="0"/>
+      <property name="appearance" type="uint" value="0"/>
+      <property name="items" type="array">
+        <value type="string" value="-lock-screen"/>
+        <value type="string" value="-switch-user"/>
+        <value type="string" value="-separator"/>
+        <value type="string" value="-suspend"/>
+        <value type="string" value="-hibernate"/>
+        <value type="string" value="-hybrid-sleep"/>
+        <value type="string" value="-separator"/>
+        <value type="string" value="-shutdown"/>
+        <value type="string" value="-restart"/>
+        <value type="string" value="-separator"/>
+        <value type="string" value="+logout"/>
+        <value type="string" value="-logout-dialog"/>
+      </property>
+    </property>
+    <property name="plugin-19" type="string" value="whiskermenu">
+      <property name="view-mode" type="int" value="1"/>
+      <property name="launcher-show-name" type="bool" value="true"/>
+      <property name="button-title" type="string" value="Menu"/>
+      <property name="button-single-row" type="bool" value="true"/>
+      <property name="launcher-show-description" type="bool" value="false"/>
+      <property name="launcher-show-tooltip" type="bool" value="false"/>
+      <property name="category-show-name" type="bool" value="false"/>
+      <property name="launcher-icon-size" type="int" value="2"/>
+      <property name="recent" type="array">
+        <value type="string" value="xfce-wm-settings.desktop"/>
+        <value type="string" value="xfce-settings-manager.desktop"/>
+        <value type="string" value="lightdm-settings.desktop"/>
+        <value type="string" value="ulauncher.desktop"/>
+        <value type="string" value="xfce-session-settings.desktop"/>
+        <value type="string" value="xfce4-file-manager.desktop"/>
+        <value type="string" value="xfce-wmtweaks-settings.desktop"/>
+        <value type="string" value="xfce-workspaces-settings.desktop"/>
+        <value type="string" value="plank.desktop"/>
+        <value type="string" value="xfce4-settings-manager.desktop"/>
+      </property>
+      <property name="profile-shape" type="int" value="0"/>
+      <property name="default-category" type="int" value="2"/>
+      <property name="show-command-settings" type="bool" value="false"/>
+      <property name="show-command-lockscreen" type="bool" value="false"/>
+      <property name="show-command-menueditor" type="bool" value="false"/>
+      <property name="show-command-profile" type="bool" value="false"/>
+      <property name="show-command-logout" type="bool" value="false"/>
+      <property name="menu-height" type="int" value="1080"/>
+      <property name="position-profile-alternate" type="bool" value="true"/>
+      <property name="show-button-icon" type="bool" value="true"/>
+      <property name="show-button-title" type="bool" value="false"/>
+      <property name="button-icon" type="string" value="fedora-logo-sprite"/>
+      <property name="menu-opacity" type="int" value="70"/>
+    </property>
+    <property name="plugin-21" type="string" value="notification-plugin"/>
+    <property name="plugin-22" type="string" value="power-manager-plugin"/>
+    <property name="plugin-1" type="string" value="pager">
+      <property name="rows" type="uint" value="4"/>
+      <property name="miniature-view" type="bool" value="true"/>
+      <property name="wrap-workspaces" type="bool" value="false"/>
+      <property name="workspace-scrolling" type="bool" value="true"/>
+    </property>
+    <property name="plugin-2" type="string" value="clock">
+      <property name="mode" type="uint" value="2"/>
+      <property name="timezone" type="string" value="America/Chicago"/>
+      <property name="digital-date-font" type="string" value="Hack Nerd Font Mono Bold 8"/>
+      <property name="digital-time-font" type="string" value="Hack Nerd Font Mono Bold 8"/>
+      <property name="digital-layout" type="uint" value="3"/>
+    </property>
+  </property>
+</channel>

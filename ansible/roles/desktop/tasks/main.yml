@@ -1,0 +1,468 @@
+---
+# roles/desktop - XFCE desktop, theming, Plank, conky, VNC/RDP
+# Config files captured from working dev VM at 10.1.50.68 on 2026-05-06
+
+# --- XFCE core packages ---
+
+- name: Install XFCE desktop
+  ansible.builtin.dnf:
+    name:
+      - xfce4-session
+      - xfce4-settings
+      - xfce4-panel
+      - xfce4-terminal
+      - xfwm4
+      - xfdesktop
+      - thunar
+      - xfce4-whiskermenu-plugin
+      - xfce4-pulseaudio-plugin
+      - xfce4-screenshooter-plugin
+      - xfce4-notifyd
+      - xfce4-power-manager
+      - mousepad
+      - ristretto
+      - file-roller
+      - network-manager-applet
+      - lightdm
+      - lightdm-gtk
+    state: present
+
+# --- Desktop tools ---
+
+- name: Install Plank dock with themes and docklets
+  ansible.builtin.dnf:
+    name:
+      - plank
+      - plank-docklets
+      - arc-theme-plank
+    state: present
+
+- name: Install ulauncher
+  ansible.builtin.dnf:
+    name: ulauncher
+    state: present
+
+- name: Install slick-greeter
+  ansible.builtin.dnf:
+    name: slick-greeter
+    state: present
+
+- name: Install GTK engines (required by themes)
+  ansible.builtin.dnf:
+    name:
+      - gtk2-engines
+      - gtk-murrine-engine
+    state: present
+
+- name: Install JetBrains Mono font (for conky)
+  ansible.builtin.dnf:
+    name: jetbrains-mono-fonts
+    state: present
+
+- name: Install Inter font
+  ansible.builtin.dnf:
+    name: rsms-inter-fonts
+    state: present
+
+# --- VNC and RDP ---
+
+- name: Install VNC and RDP servers
+  ansible.builtin.dnf:
+    name:
+      - tigervnc-server
+      - xrdp
+      - xorgxrdp
+    state: present
+
+# --- Qogir theme, icons, cursors ---
+
+- name: Check if Qogir GTK theme is installed
+  ansible.builtin.stat:
+    path: /usr/share/themes/Qogir-Dark
+  register: qogir_theme
+
+- name: Install Qogir GTK theme
+  when: not qogir_theme.stat.exists
+  block:
+    - name: Clone Qogir GTK theme
+      ansible.builtin.git:
+        repo: https://github.com/vinceliuice/Qogir-theme
+        dest: /tmp/qogir-theme
+        depth: 1
+
+    - name: Install Qogir GTK theme
+      ansible.builtin.command:
+        cmd: bash install.sh -d /usr/share/themes
+        chdir: /tmp/qogir-theme
+      changed_when: true
+
+    - name: Clean up Qogir theme source
+      ansible.builtin.file:
+        path: /tmp/qogir-theme
+        state: absent
+
+- name: Check if Qogir icons are installed
+  ansible.builtin.stat:
+    path: /usr/share/icons/Qogir-Dark
+  register: qogir_icons
+
+- name: Install Qogir icon theme
+  when: not qogir_icons.stat.exists
+  block:
+    - name: Clone Qogir icon theme
+      ansible.builtin.git:
+        repo: https://github.com/vinceliuice/Qogir-icon-theme
+        dest: /tmp/qogir-icons
+        depth: 1
+
+    - name: Install Qogir icons
+      ansible.builtin.command:
+        cmd: bash install.sh -d /usr/share/icons
+        chdir: /tmp/qogir-icons
+      changed_when: true
+      async: 300
+      poll: 15
+
+    - name: Clean up Qogir icon source
+      ansible.builtin.file:
+        path: /tmp/qogir-icons
+        state: absent
+
+# --- Hack Nerd Fonts ---
+
+- name: Check if Hack Nerd Font is installed
+  ansible.builtin.stat:
+    path: /usr/share/fonts/HackNerdFont-Regular.ttf
+  register: hack_font
+
+- name: Install Hack Nerd Fonts
+  when: not hack_font.stat.exists
+  block:
+    - name: Download Hack Nerd Fonts
+      ansible.builtin.unarchive:
+        src: "https://github.com/ryanoasis/nerd-fonts/releases/download/v{{ hack_font_version }}/Hack.zip"
+        dest: /usr/share/fonts/
+        remote_src: true
+
+    - name: Refresh font cache
+      ansible.builtin.command: fc-cache -fv
+      changed_when: true
+
+# --- Display manager ---
+
+- name: Enable LightDM
+  ansible.builtin.systemd:
+    name: lightdm
+    enabled: true
+  failed_when: false
+
+- name: Set graphical target
+  ansible.builtin.command:
+    cmd: systemctl set-default graphical.target
+  changed_when: true
+
+# --- LightDM + slick-greeter ---
+
+- name: Create LightDM config directory
+  ansible.builtin.file:
+    path: /etc/lightdm/lightdm.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Configure LightDM to use slick-greeter
+  ansible.builtin.copy:
+    dest: /etc/lightdm/lightdm.conf.d/50-greymhatter.conf
+    mode: "0644"
+    content: |
+      [Seat:*]
+      greeter-session=slick-greeter
+
+- name: Configure slick-greeter
+  ansible.builtin.copy:
+    dest: /etc/lightdm/slick-greeter.conf
+    mode: "0644"
+    content: |
+      [Greeter]
+      theme-name=Qogir-Dark
+      icon-theme-name=Qogir-Dark
+      content-align=left
+
+- name: Copy login screen background
+  ansible.builtin.copy:
+    src: "{{ greymhatter_repo_path }}/media/v2/backgrounds/greymhatter-background-4k.png"
+    dest: /usr/share/backgrounds/greymhatter-background.png
+    mode: "0644"
+
+# --- User avatar ---
+
+- name: Create AccountsService icons directory
+  ansible.builtin.file:
+    path: /var/lib/AccountsService/icons
+    state: directory
+    mode: "0755"
+
+- name: Copy logo as user avatar
+  ansible.builtin.copy:
+    src: "{{ greymhatter_repo_path }}/media/v2/logo/greymhatter-logo.png"
+    dest: "/var/lib/AccountsService/icons/{{ greymhatter_username }}"
+    mode: "0644"
+
+- name: Configure AccountsService to use custom icon
+  ansible.builtin.copy:
+    dest: "/var/lib/AccountsService/users/{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      [User]
+      Icon=/var/lib/AccountsService/icons/{{ greymhatter_username }}
+      SystemAccount=false
+
+# --- xrdp ---
+
+- name: Enable xrdp service
+  ansible.builtin.systemd:
+    name: xrdp
+    enabled: true
+    state: started
+  failed_when: false
+
+- name: Configure xrdp to use XFCE
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.xsession"
+    content: "startxfce4"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Configure xrdp session for all users
+  ansible.builtin.copy:
+    dest: /etc/sysconfig/desktop
+    content: |
+      PREFERRED=startxfce4
+      DISPLAYMANAGER=lightdm
+    mode: "0644"
+
+- name: Allow xrdp through SELinux
+  ansible.builtin.command:
+    cmd: setsebool -P xrdp_connect_all_unreserved_ports on
+  changed_when: true
+  failed_when: false
+
+# --- Timezone ---
+
+- name: Set timezone to US Central
+  ansible.builtin.command:
+    cmd: timedatectl set-timezone America/Chicago
+  changed_when: true
+
+# --- Default resolution (1920x1080) ---
+
+- name: Create xorg.conf.d directory
+  ansible.builtin.file:
+    path: /etc/X11/xorg.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Set default resolution to 1920x1080
+  ansible.builtin.copy:
+    dest: /etc/X11/xorg.conf.d/10-resolution.conf
+    mode: "0644"
+    content: |
+      Section "Monitor"
+          Identifier "Virtual-1"
+          Option "PreferredMode" "1920x1080"
+      EndSection
+
+      Section "Screen"
+          Identifier "Screen0"
+          Monitor "Virtual-1"
+          DefaultDepth 24
+          SubSection "Display"
+              Depth 24
+              Modes "1920x1080"
+          EndSubSection
+      EndSection
+
+# --- Desktop wallpaper (fix empty values from captured config) ---
+
+- name: Create XFCE config directory for wallpaper
+  ansible.builtin.file:
+    path: "/home/{{ greymhatter_username }}/.config/xfce4/xfconf/xfce-perchannel-xml"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+    recurse: true
+
+- name: Set desktop wallpaper in XFCE config
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      <?xml version="1.1" encoding="UTF-8"?>
+      <channel name="xfce4-desktop" version="1.0">
+        <property name="backdrop" type="empty">
+          <property name="screen0" type="empty">
+            <property name="monitorVirtual-1" type="empty">
+              <property name="workspace0" type="empty">
+                <property name="last-image" type="string" value="/home/{{ greymhatter_username }}/Pictures/background.png"/>
+                <property name="image-style" type="int" value="5"/>
+              </property>
+            </property>
+            <property name="monitorVirtual1" type="empty">
+              <property name="workspace0" type="empty">
+                <property name="last-image" type="string" value="/home/{{ greymhatter_username }}/Pictures/background.png"/>
+                <property name="image-style" type="int" value="5"/>
+              </property>
+            </property>
+            <property name="monitor0" type="empty">
+              <property name="workspace0" type="empty">
+                <property name="last-image" type="string" value="/home/{{ greymhatter_username }}/Pictures/background.png"/>
+                <property name="image-style" type="int" value="5"/>
+              </property>
+            </property>
+          </property>
+        </property>
+        <property name="desktop-icons" type="empty">
+          <property name="icon-size" type="uint" value="48"/>
+          <property name="style" type="int" value="0"/>
+        </property>
+      </channel>
+
+# --- Slick-greeter wallpaper ---
+
+- name: Configure slick-greeter background
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/slick-greeter.conf
+    regexp: '^background='
+    line: 'background=/usr/share/backgrounds/greymhatter-background.png'
+    insertafter: '^\[Greeter\]'
+
+# --- Plank autostart + missing launchers ---
+
+- name: Create autostart directory
+  ansible.builtin.file:
+    path: "/home/{{ greymhatter_username }}/.config/autostart"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Create Plank autostart entry
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.config/autostart/plank.desktop"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Plank
+      Exec=plank
+      Hidden=false
+      X-XFCE-Autostart-Override=true
+
+- name: Install dconf
+  ansible.builtin.dnf:
+    name: dconf
+    state: present
+
+- name: Create user bin directory for first-login script
+  ansible.builtin.file:
+    path: "/home/{{ greymhatter_username }}/.local/bin"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Create Plank + ulauncher first-login setup script
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.local/bin/greymhatter-first-login.sh"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # GreymHatter first-login setup — configures Plank via dconf, runs once
+
+      # Wait for dbus session to be ready
+      sleep 3
+
+      # Configure Plank dock settings
+      dconf write /net/launchpad/plank/docks/dock1/theme "'Arc'"
+      dconf write /net/launchpad/plank/docks/dock1/icon-size 38
+      dconf write /net/launchpad/plank/docks/dock1/hide-mode "'intelligent'"
+      dconf write /net/launchpad/plank/docks/dock1/position "'bottom'"
+      dconf write /net/launchpad/plank/docks/dock1/alignment "'center'"
+      dconf write /net/launchpad/plank/docks/dock1/tooltips-enabled true
+      dconf write /net/launchpad/plank/docks/dock1/lock-items false
+      dconf write /net/launchpad/plank/docks/dock1/zoom-enabled false
+      dconf write /net/launchpad/plank/docks/dock1/pinned-only false
+      dconf write /net/launchpad/plank/docks/dock1/show-dock-item false
+
+      # Set dock item order
+      dconf write /net/launchpad/plank/docks/dock1/dock-items "['desktop.dockitem', 'thunar.dockitem', 'xfce4-terminal.dockitem', 'com.mitchellh.ghostty.dockitem', 'org.mozilla.firefox.dockitem', 'nvim.dockitem', 'xfce4-settings-manager.dockitem', 'trash.dockitem']"
+
+      # Restart Plank to pick up new settings
+      killall plank 2>/dev/null
+      sleep 1
+      plank &
+
+      # Remove this autostart entry so it only runs once
+      rm -f "$HOME/.config/autostart/greymhatter-first-login.desktop"
+
+- name: Create first-login autostart entry
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.config/autostart/greymhatter-first-login.desktop"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=GreymHatter First Login Setup
+      Exec=/home/{{ greymhatter_username }}/.local/bin/greymhatter-first-login.sh
+      Hidden=false
+      X-XFCE-Autostart-Override=true
+
+- name: Create ulauncher autostart entry
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.config/autostart/ulauncher.desktop"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Ulauncher
+      Exec=ulauncher --hide-window
+      Hidden=false
+      X-XFCE-Autostart-Override=true
+
+- name: Ensure Plank launcher directory exists
+  ansible.builtin.file:
+    path: "/home/{{ greymhatter_username }}/.config/plank/dock1/launchers"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Ensure all Plank launchers are deployed
+  ansible.builtin.copy:
+    dest: "/home/{{ greymhatter_username }}/.config/plank/dock1/launchers/{{ item.name }}"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0644"
+    content: |
+      [PlankDockItemPreferences]
+      Launcher={{ item.launcher }}
+  loop:
+    - { name: "desktop.dockitem", launcher: "docklet://desktop" }
+    - { name: "thunar.dockitem", launcher: "file:///usr/share/applications/thunar.desktop" }
+    - { name: "xfce4-terminal.dockitem", launcher: "file:///usr/share/applications/xfce4-terminal.desktop" }
+    - { name: "com.mitchellh.ghostty.dockitem", launcher: "file:///usr/share/applications/com.mitchellh.ghostty.desktop" }
+    - { name: "org.mozilla.firefox.dockitem", launcher: "file:///usr/share/applications/org.mozilla.firefox.desktop" }
+    - { name: "nvim.dockitem", launcher: "file:///usr/share/applications/nvim.desktop" }
+    - { name: "xfce4-settings-manager.dockitem", launcher: "file:///usr/share/applications/xfce4-settings-manager.desktop" }
+    - { name: "trash.dockitem", launcher: "docklet://trash" }

@@ -1,0 +1,44 @@
+---
+# Volatility 2 runs inside a Docker container (Python 2 is dead on Fedora 42)
+# Students use 'vol2' which is a wrapper script that runs the container
+
+- name: Check if vol2 Docker image exists
+  ansible.builtin.shell:
+    cmd: docker images -q greymhatter/volatility2 | head -1
+  register: vol2_image
+  changed_when: false
+
+- name: Build Volatility 2 Docker image
+  when: vol2_image.stdout | trim == ""
+  block:
+    - name: Copy Volatility 2 Dockerfile
+      ansible.builtin.copy:
+        src: "{{ greymhatter_repo_path }}/ansible/roles/tools/files/Dockerfile.volatility2"
+        dest: /tmp/Dockerfile.volatility2
+        mode: "0644"
+
+    - name: Build Volatility 2 container image
+      ansible.builtin.command:
+        cmd: docker build -f /tmp/Dockerfile.volatility2 -t greymhatter/volatility2 /tmp
+      changed_when: true
+      async: 600
+      poll: 30
+
+    - name: Clean up Dockerfile
+      ansible.builtin.file:
+        path: /tmp/Dockerfile.volatility2
+        state: absent
+
+- name: Create vol2 wrapper script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/vol2
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # Volatility 2 wrapper — runs inside Docker container
+      # Mount current directory and /opt/share as evidence paths
+      docker run --rm -it \
+        -v "$(pwd):/evidence:ro" \
+        -v "/opt/share:/opt/share:ro" \
+        -w /evidence \
+        greymhatter/volatility2 "$@"

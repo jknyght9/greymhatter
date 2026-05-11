@@ -1,0 +1,24 @@
+---
+- name: Install encryption and disk tools
+  ansible.builtin.dnf:
+    name:
+      - cryptsetup
+      - dislocker
+      - exfatprogs
+      - foremost
+      - hashcat
+      - scalpel
+    state: present
+    install_weak_deps: false
+
+- name: Enable VeraCrypt COPR repo
+  ansible.builtin.command:
+    cmd: dnf copr enable -y architektapx/veracrypt
+  changed_when: true
+  failed_when: false
+
+- name: Install VeraCrypt
+  ansible.builtin.dnf:
+    name: veracrypt
+    state: present
+  failed_when: false
