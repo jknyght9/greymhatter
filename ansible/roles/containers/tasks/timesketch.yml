@@ -181,6 +181,16 @@
     chdir: /opt/timesketch
   changed_when: true
 
+- name: Wait for database initialization
+  ansible.builtin.pause:
+    seconds: 15
+
+- name: Restart timesketch-web (workers race on first schema creation)
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env restart timesketch-web
+    chdir: /opt/timesketch
+  changed_when: true
+
 - name: Wait for Timesketch to be ready
   ansible.builtin.uri:
     url: https://localhost/login
