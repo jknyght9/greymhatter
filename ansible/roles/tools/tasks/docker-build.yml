@@ -22,7 +22,7 @@
       ansible.builtin.command:
         cmd: docker build -f /tmp/Dockerfile.builder -t greymhatter-builder /tmp
       changed_when: true
-      async: 600
+      async: 1800
       poll: 30
 
     - name: Create temporary container for binary extraction

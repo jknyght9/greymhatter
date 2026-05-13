@@ -21,7 +21,7 @@
       ansible.builtin.command:
         cmd: docker build -f /tmp/Dockerfile.volatility2 -t greymhatter/volatility2 /tmp
       changed_when: true
-      async: 600
+      async: 1200
       poll: 30
 
     - name: Clean up Dockerfile
