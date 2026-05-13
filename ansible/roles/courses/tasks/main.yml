@@ -64,7 +64,7 @@
         mkdocs:
           image: squidfunk/mkdocs-material
           container_name: courses
-          restart: unless-stopped
+          restart: always
           working_dir: /docs
           volumes:
             - ./:/docs

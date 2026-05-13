@@ -58,6 +58,11 @@
         remote_src: true
       when: not pwsh_check.stat.exists
 
+    - name: Ensure pwsh is executable
+      ansible.builtin.file:
+        path: /opt/microsoft/powershell/7/pwsh
+        mode: "0755"
+
     - name: Symlink pwsh to PATH
       ansible.builtin.file:
         src: /opt/microsoft/powershell/7/pwsh

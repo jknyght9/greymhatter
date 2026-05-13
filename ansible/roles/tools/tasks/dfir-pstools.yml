@@ -30,5 +30,4 @@
         src: "{{ tools_dir }}/dfir-pstools"
         dest: "{{ user_home }}/.local/share/powershell/Modules/DFIR-PSTools"
         state: link
-        owner: "{{ greymhatter_username }}"
-        group: "{{ greymhatter_username }}"
+        force: true
