@@ -11,16 +11,31 @@
     state: present
     install_weak_deps: false
 
-- name: Enable VeraCrypt COPR repo
+- name: Check if VeraCrypt is installed
   ansible.builtin.command:
-    cmd: dnf copr enable -y architektapx/veracrypt
-  changed_when: true
+    cmd: veracrypt --text --version
+  register: veracrypt_check
+  changed_when: false
   failed_when: false
-  register: veracrypt_copr
 
-- name: Install VeraCrypt
+- name: Install VeraCrypt (AMD64 — from veracrypt.fr RPM)
   ansible.builtin.dnf:
-    name: veracrypt
+    name: https://launchpad.net/veracrypt/trunk/1.26.24/+download/veracrypt-console-1.26.24-Fedora-40-x86_64.rpm
     state: present
-  when: veracrypt_copr.rc == 0
-  failed_when: false
+    disable_gpg_check: true
+  when: veracrypt_check.rc != 0 and ansible_architecture == "x86_64"
+
+- name: Install VeraCrypt (ARM64 — from COPR)
+  when: veracrypt_check.rc != 0 and ansible_architecture == "aarch64"
+  block:
+    - name: Enable VeraCrypt COPR repo
+      ansible.builtin.command:
+        cmd: dnf copr enable -y architektapx/veracrypt
+      changed_when: true
+      failed_when: false
+
+    - name: Install VeraCrypt from COPR
+      ansible.builtin.dnf:
+        name: veracrypt
+        state: present
+      failed_when: false

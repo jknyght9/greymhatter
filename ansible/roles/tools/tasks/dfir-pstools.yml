@@ -17,6 +17,12 @@
         dest: "{{ tools_dir }}/dfir-pstools"
         depth: 1
 
+    - name: Make dfir-pstools readable
+      ansible.builtin.file:
+        path: "{{ tools_dir }}/dfir-pstools"
+        mode: "0755"
+        recurse: true
+
     - name: Create PowerShell modules directory
       ansible.builtin.file:
         path: "{{ user_home }}/.local/share/powershell/Modules"
