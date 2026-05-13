@@ -79,11 +79,13 @@ pwsh -c '$PSVersionTable'           # PowerShell 7+
 pwsh -c 'Import-Module DFIR-PSTools; Get-Module DFIR-PSTools'
 ```
 
-### ClamAV
+### ClamAV & Hashsets
 
 ```bash
 clamscan --version                   # ClamAV scanner
-ls /opt/tools/clamav-hashbuilder/    # hashbuilder installed
+ls /opt/clamav-hashbuilder/          # hashbuilder installed
+ls /opt/hashsets/                    # hashset output directory
+update-hashsets                      # restart hashbuilder to refresh
 ```
 
 ## Fish Shell Helper Functions
@@ -141,6 +143,7 @@ disk-expand status                   # show disk/LV/filesystem sizes
 greymhatter-update                   # pull repo + run Ansible
 course-update                        # update course materials
 netioc 8.8.8.8                       # WHOIS lookup via Cymru
+update-hashsets                      # refresh ClamAV hashsets
 ```
 
 ## Container Services
@@ -148,7 +151,7 @@ netioc 8.8.8.8                       # WHOIS lookup via Cymru
 ### Auto-start (verify running after boot)
 
 ```bash
-docker ps | grep -E "homepage|cyberchef|courses"
+docker ps                            # should show homepage, cyberchef, courses, clamav-hashbuilder
 curl -so /dev/null -w '%{http_code}' http://localhost:3000    # Homepage: 200
 curl -so /dev/null -w '%{http_code}' http://localhost:8080    # CyberChef: 200
 curl -so /dev/null -w '%{http_code}' http://localhost:8000    # Courses: 200
@@ -161,6 +164,11 @@ curl -so /dev/null -w '%{http_code}' http://localhost:8000    # Courses: 200
 starttimesketch
 curl -kso /dev/null -w '%{http_code}' https://localhost       # 200 or 302
 # Login at https://localhost with hatter / H@tt3r123!
+# Verify: create sketch, import timeline, view events
+stoptimesketch
+# Restart and verify user persists
+starttimesketch
+# Login should work without recreating user
 stoptimesketch
 
 # SpiderFoot
@@ -172,6 +180,17 @@ stopspiderfoot
 startyeti
 curl -kso /dev/null -w '%{http_code}' https://localhost:8888  # 200 or 302
 stopyeti
+```
+
+## Samba Share
+
+```bash
+# Verify service is running
+sudo systemctl status smb
+
+# From Windows: \\<VM_IP>\share
+# From Linux:   sudo mount -t cifs //<VM_IP>/share /mnt -o username=hatter
+# From macOS:   Finder → Cmd+K → smb://<VM_IP>/share
 ```
 
 ## Network & Security
@@ -202,6 +221,9 @@ timedatectl | grep "Time zone"                # America/Chicago
 disk-expand status                            # /dev/fedora/root, XFS
 df -Th /                                      # xfs filesystem
 
+# sysctl (required for OpenSearch)
+sysctl vm.max_map_count                       # 262144
+
 # Docker
 docker --version
 docker compose version
@@ -223,6 +245,7 @@ Open Firefox and check each service:
 - FLOSS binary download (ARM64 uses pip)
 - vt-cli binary download (ARM64 compiles from Go source)
 - Yeti (requires SSE4.2/AVX instructions)
+- CPU type must be `host` (not `kvm64`) for OpenSearch x86-64-v2
 
 ### ARM64
 - Timesketch image built from source during provisioning
