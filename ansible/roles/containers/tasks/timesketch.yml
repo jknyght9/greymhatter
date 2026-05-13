@@ -164,7 +164,7 @@
   failed_when: false
 
 # --- Initial setup ---
-- name: Pull Timesketch container images
+- name: Pull Timesketch container images (AMD64)
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env pull
     chdir: /opt/timesketch
@@ -173,6 +173,17 @@
   delay: 10
   register: ts_pull
   until: ts_pull.rc == 0
+  failed_when: false
+
+- name: Pull supporting container images (ARM64)
+  ansible.builtin.shell:
+    cmd: docker compose --env-file config.env pull postgres redis opensearch nginx
+    chdir: /opt/timesketch
+  when: ansible_architecture == "aarch64"
+  retries: 3
+  delay: 10
+  register: ts_pull_arm
+  until: ts_pull_arm.rc == 0
   failed_when: false
 
 - name: Start Timesketch
