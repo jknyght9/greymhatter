@@ -11,18 +11,16 @@
     state: present
     install_weak_deps: false
 
-- name: Check if VeraCrypt COPR repo is enabled
-  ansible.builtin.stat:
-    path: /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:architektapx:veracrypt.repo
-  register: veracrypt_repo
-
 - name: Enable VeraCrypt COPR repo
   ansible.builtin.command:
     cmd: dnf copr enable -y architektapx/veracrypt
-  when: not veracrypt_repo.stat.exists
   changed_when: true
+  failed_when: false
+  register: veracrypt_copr
 
 - name: Install VeraCrypt
   ansible.builtin.dnf:
     name: veracrypt
     state: present
+  when: veracrypt_copr.rc == 0
+  failed_when: false
