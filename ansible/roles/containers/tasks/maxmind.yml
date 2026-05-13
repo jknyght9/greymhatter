@@ -1,27 +1,37 @@
 ---
+# MaxMind GeoIP — always installed, credentials optional
+# Students configure their own account in /opt/maxmind-geoipupdate/.env
+
 - name: Check if MaxMind is already installed
   ansible.builtin.stat:
-    path: /opt/maxmind-geoipupdate/.env
+    path: /opt/maxmind-geoipupdate/docker-compose.yml
   register: maxmind_installed
 
-- name: Install MaxMind
+- name: Clone MaxMind GeoIP updater
+  ansible.builtin.git:
+    repo: https://github.com/jknyght9/maxmind-geoipupdate.git
+    dest: /opt/maxmind-geoipupdate
+    depth: 1
   when: not maxmind_installed.stat.exists
-  block:
-    - name: Clone MaxMind GeoIP updater
-      ansible.builtin.git:
-        repo: https://github.com/jknyght9/maxmind-geoipupdate.git
-        dest: /opt/maxmind-geoipupdate
-        depth: 1
 
-    - name: Configure MaxMind credentials
-      ansible.builtin.copy:
-        dest: /opt/maxmind-geoipupdate/.env
-        content: |
-          GEOIPUPDATE_ACCOUNT_ID={{ maxmind_account_id }}
-          GEOIPUPDATE_LICENSE_KEY={{ maxmind_license_key }}
-        mode: "0600"
+- name: Create GeoIP data directory
+  ansible.builtin.file:
+    path: /opt/maxmind-geoipupdate/geoip_data
+    state: directory
+    mode: "0755"
 
-    - name: Start MaxMind GeoIP updater
-      ansible.builtin.shell:
-        cmd: docker compose up -d
-        chdir: /opt/maxmind-geoipupdate
+- name: Configure MaxMind credentials
+  ansible.builtin.copy:
+    dest: /opt/maxmind-geoipupdate/.env
+    content: |
+      GEOIPUPDATE_ACCOUNT_ID={{ maxmind_account_id }}
+      GEOIPUPDATE_LICENSE_KEY={{ maxmind_license_key }}
+    mode: "0600"
+  when: maxmind_account_id | length > 0
+
+- name: Start MaxMind GeoIP updater
+  ansible.builtin.shell:
+    cmd: docker compose up -d
+    chdir: /opt/maxmind-geoipupdate
+  when: maxmind_account_id | length > 0
+  failed_when: false

@@ -163,7 +163,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter'",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key}'",
     ]
   }
 

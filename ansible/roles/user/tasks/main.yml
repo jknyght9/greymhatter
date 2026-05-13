@@ -110,6 +110,14 @@
   become_user: "{{ greymhatter_username }}"
   failed_when: false
 
+- name: Install tmux plugins
+  ansible.builtin.shell:
+    cmd: "{{ user_home }}/.config/tmux/plugins/tpm/bin/install_plugins"
+  become_user: "{{ greymhatter_username }}"
+  environment:
+    TMUX_PLUGIN_MANAGER_PATH: "{{ user_home }}/.config/tmux/plugins"
+  failed_when: false
+
 # --- XDG user directories ---
 
 - name: Run xdg-user-dirs-update for user

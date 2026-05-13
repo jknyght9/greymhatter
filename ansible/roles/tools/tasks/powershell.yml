@@ -1,20 +1,70 @@
 ---
-- name: Import Microsoft RPM key
-  ansible.builtin.rpm_key:
-    key: https://packages.microsoft.com/keys/microsoft.asc
-    state: present
+# PowerShell 7 — RPM on AMD64, tarball on ARM64
 
-- name: Add Microsoft PowerShell repo
-  ansible.builtin.yum_repository:
-    name: packages-microsoft-com-prod
-    description: Microsoft packages
-    baseurl: https://packages.microsoft.com/rhel/9/prod/
-    gpgcheck: true
-    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
-    enabled: true
+- name: Install PowerShell (AMD64 via RPM)
+  when: ansible_architecture == "x86_64"
+  block:
+    - name: Import Microsoft RPM key
+      ansible.builtin.rpm_key:
+        key: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
 
-- name: Install PowerShell
-  ansible.builtin.dnf:
-    name: powershell
-    state: present
-  failed_when: false
+    - name: Add Microsoft PowerShell repo
+      ansible.builtin.yum_repository:
+        name: packages-microsoft-com-prod
+        description: Microsoft packages
+        baseurl: https://packages.microsoft.com/rhel/9/prod/
+        gpgcheck: true
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+        enabled: true
+
+    - name: Install PowerShell
+      ansible.builtin.dnf:
+        name: powershell
+        state: present
+
+- name: Install PowerShell (ARM64 via tarball)
+  when: ansible_architecture == "aarch64"
+  block:
+    - name: Check if PowerShell is installed
+      ansible.builtin.stat:
+        path: /opt/microsoft/powershell/7/pwsh
+      register: pwsh_check
+
+    - name: Get latest PowerShell release
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/PowerShell/PowerShell/releases/latest
+        return_content: true
+      register: pwsh_release
+      when: not pwsh_check.stat.exists
+
+    - name: Download PowerShell ARM64 tarball
+      ansible.builtin.get_url:
+        url: "{{ pwsh_release.json.assets | selectattr('name', 'match', '.*linux-arm64.*tar.gz$') | rejectattr('name', 'match', '.*fxdependent.*') | map(attribute='browser_download_url') | first }}"
+        dest: /tmp/powershell-arm64.tar.gz
+      when: not pwsh_check.stat.exists
+
+    - name: Create PowerShell directory
+      ansible.builtin.file:
+        path: /opt/microsoft/powershell/7
+        state: directory
+        mode: "0755"
+      when: not pwsh_check.stat.exists
+
+    - name: Extract PowerShell
+      ansible.builtin.unarchive:
+        src: /tmp/powershell-arm64.tar.gz
+        dest: /opt/microsoft/powershell/7
+        remote_src: true
+      when: not pwsh_check.stat.exists
+
+    - name: Symlink pwsh to PATH
+      ansible.builtin.file:
+        src: /opt/microsoft/powershell/7/pwsh
+        dest: /usr/local/bin/pwsh
+        state: link
+
+    - name: Clean up tarball
+      ansible.builtin.file:
+        path: /tmp/powershell-arm64.tar.gz
+        state: absent

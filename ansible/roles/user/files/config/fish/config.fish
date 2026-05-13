@@ -96,8 +96,13 @@ function log2timeline
     return 0
   end
   if not _container_running timesketch-worker
-    printf "Timesketch is not running. Start it with: starttimesketch\n"
-    return 1
+    printf "Timesketch is not running. Starting...\n"
+    starttimesketch
+    sleep 10
+    if not _container_running timesketch-worker
+      printf "Failed to start Timesketch\n"
+      return 1
+    end
   end
   if test (pwd) = "/opt/share"
     sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
@@ -113,8 +118,13 @@ function log2timeline-triage
     return 0
   end
   if not _container_running timesketch-worker
-    printf "Timesketch is not running. Start it with: starttimesketch\n"
-    return 1
+    printf "Timesketch is not running. Starting...\n"
+    starttimesketch
+    sleep 10
+    if not _container_running timesketch-worker
+      printf "Failed to start Timesketch\n"
+      return 1
+    end
   end
   if test (pwd) = "/opt/share"
     sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2]
@@ -130,8 +140,13 @@ function log2timeline-targeted
     return 0
   end
   if not _container_running timesketch-worker
-    printf "Timesketch is not running. Start it with: starttimesketch\n"
-    return 1
+    printf "Timesketch is not running. Starting...\n"
+    starttimesketch
+    sleep 10
+    if not _container_running timesketch-worker
+      printf "Failed to start Timesketch\n"
+      return 1
+    end
   end
   if test (pwd) = "/opt/share"
     sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers=$argv[3] --partitions "all"
@@ -147,8 +162,13 @@ function log2timeline-full
     return 0
   end
   if not _container_running timesketch-worker
-    printf "Timesketch is not running. Start it with: starttimesketch\n"
-    return 1
+    printf "Timesketch is not running. Starting...\n"
+    starttimesketch
+    sleep 10
+    if not _container_running timesketch-worker
+      printf "Failed to start Timesketch\n"
+      return 1
+    end
   end
   if test (pwd) = "/opt/share"
     sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --partitions "all" --vss_stores "all"
@@ -210,8 +230,13 @@ function psort
     return 0
   end
   if not _container_running timesketch-worker
-    printf "Timesketch is not running. Start it with: starttimesketch\n"
-    return 1
+    printf "Timesketch is not running. Starting...\n"
+    starttimesketch
+    sleep 10
+    if not _container_running timesketch-worker
+      printf "Failed to start Timesketch\n"
+      return 1
+    end
   end
   if test (pwd) = "/opt/share"
     sudo docker exec -i timesketch-worker psort.py -o l2tcsv -w /share/plaso/$argv[1] /share/plaso/$argv[2]
@@ -378,7 +403,7 @@ function disk-expand
   set -l pv_size (sudo pvs --noheadings -o pv_size --units g -S vg_name=fedora 2>/dev/null | string trim)
   set -l pv_free (sudo pvs --noheadings -o pv_free --units g -S vg_name=fedora 2>/dev/null | string trim)
   set -l lv_size (sudo lvs --noheadings -o lv_size --units g fedora/root 2>/dev/null | string trim)
-  set -l fs_info (df -h / --output=size,used,avail,pcent | tail -1 | string trim)
+  set -l fs_info (command df -h / --output=size,used,avail,pcent | tail -1 | string trim)
 
   switch $argv[1]
     case status
