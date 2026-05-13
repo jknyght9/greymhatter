@@ -4,7 +4,7 @@
 
 - name: Check if MaxMind is already installed
   ansible.builtin.stat:
-    path: /opt/maxmind-geoipupdate/docker-compose.yml
+    path: /opt/maxmind-geoipupdate/compose.yml
   register: maxmind_installed
 
 - name: Clone MaxMind GeoIP updater

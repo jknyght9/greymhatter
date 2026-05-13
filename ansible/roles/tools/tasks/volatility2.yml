@@ -4,12 +4,16 @@
 
 - name: Check if vol2 Docker image exists
   ansible.builtin.shell:
-    cmd: docker images -q greymhatter/volatility2 | head -1
+    cmd: docker images -q greymhatter/volatility2 2>/dev/null | head -1 || true
   register: vol2_image
   changed_when: false
 
+- name: Debug vol2 image check
+  ansible.builtin.debug:
+    msg: "vol2_image stdout='{{ vol2_image.stdout }}' len={{ vol2_image.stdout | length }}"
+
 - name: Build Volatility 2 Docker image
-  when: vol2_image.stdout | trim == ""
+  when: vol2_image.stdout | length == 0
   block:
     - name: Copy Volatility 2 Dockerfile
       ansible.builtin.copy:

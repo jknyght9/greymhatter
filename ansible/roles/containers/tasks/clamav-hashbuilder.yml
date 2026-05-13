@@ -33,9 +33,20 @@
         dest: /opt/clamav-hashbuilder/hashsets
         state: link
 
-    - name: Build and start clamav-hashbuilder
+    - name: Build clamav-hashbuilder image
       ansible.builtin.shell:
-        cmd: docker compose build && docker compose up -d
+        cmd: docker compose build
         chdir: /opt/clamav-hashbuilder
       changed_when: true
+      retries: 3
+      delay: 10
+      register: hashbuilder_build
+      until: hashbuilder_build.rc == 0
       failed_when: false
+
+    - name: Start clamav-hashbuilder
+      ansible.builtin.shell:
+        cmd: docker compose up -d
+        chdir: /opt/clamav-hashbuilder
+      when: hashbuilder_build.rc == 0
+      changed_when: true
