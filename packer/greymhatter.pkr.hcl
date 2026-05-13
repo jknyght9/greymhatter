@@ -32,7 +32,7 @@ source "proxmox-iso" "fedora-base" {
   insecure_skip_tls_verify = true
 
   # VM settings
-  vm_name = "${var.vm_name}-base"
+  vm_name = "greymhatter-f${var.fedora_version}-amd64-base"
   vm_id   = var.base_vm_id
 
   # Hardware
@@ -105,7 +105,7 @@ source "proxmox-clone" "greymhatter" {
 
   # Clone from base template
   clone_vm_id = var.base_vm_id
-  vm_name     = "${var.vm_name}-dev"
+  vm_name     = "greymhatter-f${var.fedora_version}-amd64-${formatdate("YYYYMMDD", timestamp())}"
   vm_id       = 0 # auto-assign
 
   # Hardware (inherit from template, but can override)

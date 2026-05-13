@@ -61,9 +61,9 @@ build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
 export-arm64: ## Stage 3: Fusion VM → OVA for distribution
-	$(OVFTOOL) output/fusion-arm64/greymhatter-arm64.vmx output/greymhatter-arm64.ova
+	$(OVFTOOL) output/fusion-arm64/greymhatter-f42-arm64.vmx output/greymhatter-f42-arm64.ova
 	@echo ""
-	@echo "  OVA exported: output/greymhatter-arm64.ova"
+	@echo "  OVA exported: output/greymhatter-f42-arm64.ova"
 	@echo ""
 
 # =============================================================================

@@ -66,7 +66,7 @@ packer {
 # ===========================================================================
 
 source "vmware-iso" "fedora-arm64-base" {
-  vm_name          = "greymhatter-arm64-base"
+  vm_name          = "greymhatter-f42-arm64-base"
   guest_os_type    = "arm-fedora-64"
   version          = "20"
 
@@ -108,8 +108,8 @@ source "vmware-iso" "fedora-arm64-base" {
 # ===========================================================================
 
 source "vmware-vmx" "greymhatter-arm64" {
-  vm_name          = "greymhatter-arm64"
-  source_path      = "${path.root}/../../output/fusion-arm64-base/greymhatter-arm64-base.vmx"
+  vm_name          = "greymhatter-f42-arm64"
+  source_path      = "${path.root}/../../output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx"
 
   output_directory = "${path.root}/../../output/fusion-arm64"
 
