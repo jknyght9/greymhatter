@@ -41,6 +41,17 @@ variable "headless" {
   default = false
 }
 
+variable "maxmind_account_id" {
+  type    = string
+  default = ""
+}
+
+variable "maxmind_license_key" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
 packer {
   required_plugins {
     vmware = {
