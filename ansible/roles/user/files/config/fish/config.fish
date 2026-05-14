@@ -249,7 +249,7 @@ end
 
 function startspiderfoot
   _service_dir /opt/spiderfoot; or return 1
-  docker compose -f /opt/spiderfoot/compose.yml up -d
+  cd /opt/spiderfoot && docker compose up -d
 end
 
 function starttimesketch
@@ -259,12 +259,12 @@ end
 
 function startyeti
   _service_dir /opt/yeti-docker/prod; or return 1
-  docker compose -f /opt/yeti-docker/prod/docker-compose.yaml up -d
+  cd /opt/yeti-docker/prod && docker compose up -d
 end
 
 function stopspiderfoot
   _service_dir /opt/spiderfoot; or return 1
-  docker compose -f /opt/spiderfoot/compose.yml down
+  cd /opt/spiderfoot && docker compose down
 end
 
 function stoptimesketch
@@ -274,7 +274,7 @@ end
 
 function stopyeti
   _service_dir /opt/yeti-docker/prod; or return 1
-  docker compose -f /opt/yeti-docker/prod/docker-compose.yaml down
+  cd /opt/yeti-docker/prod && docker compose down
 end
 
 # --- Timesketch Helpers ---
