@@ -17,12 +17,6 @@
         dest: "{{ tools_dir }}/dfir-pstools"
         depth: 1
 
-    - name: Make dfir-pstools readable
-      ansible.builtin.file:
-        path: "{{ tools_dir }}/dfir-pstools"
-        mode: "0755"
-        recurse: true
-
     - name: Create PowerShell modules directory
       ansible.builtin.file:
         path: "{{ user_home }}/.local/share/powershell/Modules"
@@ -30,15 +24,6 @@
         owner: "{{ greymhatter_username }}"
         group: "{{ greymhatter_username }}"
         mode: "0755"
-
-    - name: Fix case-sensitivity for Linux (Public→public, Private→private)
-      ansible.builtin.file:
-        src: "{{ tools_dir }}/dfir-pstools/{{ item.src }}"
-        dest: "{{ tools_dir }}/dfir-pstools/{{ item.dest }}"
-        state: link
-      loop:
-        - { src: "Public", dest: "public" }
-        - { src: "Private", dest: "private" }
 
     - name: Symlink dfir-pstools to PowerShell modules
       ansible.builtin.file:
