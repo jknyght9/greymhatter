@@ -16,22 +16,11 @@
         depth: 1
       when: not yeti_installed.stat.exists
 
-    - name: Change Yeti frontend port to 8888
-      ansible.builtin.replace:
-        path: /opt/yeti-docker/prod/docker-compose.yaml
-        regexp: '- 80:80'
-        replace: '- 8888:80'
-
-    - name: Disable unpublished Yeti services (bloomcheck, agents)
-      ansible.builtin.copy:
-        dest: /opt/yeti-docker/prod/docker-compose.override.yaml
+    - name: Deploy Yeti compose file from template
+      ansible.builtin.template:
+        src: yeti-compose.yaml.j2
+        dest: /opt/yeti-docker/prod/docker-compose.yaml
         mode: "0644"
-        content: |
-          services:
-            bloomcheck:
-              profiles: ["disabled"]
-            agents:
-              profiles: ["disabled"]
 
     - name: Initialize Yeti
       ansible.builtin.shell:

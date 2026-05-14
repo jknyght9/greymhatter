@@ -36,6 +36,9 @@ courses_repo: ""
 # Docker
 docker_network_name: greymhatter
 
+# Container service ports
+yeti_port: 8888
+
 # Paths on target system
 tools_dir: /opt/tools
 share_dir: /opt/share

@@ -79,18 +79,28 @@
       -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
     creates: /opt/timesketch/ssl/certs/nginx-selfsigned.crt
 
-# --- MaxMind integration ---
+# --- Integrations (MaxMind, DFIQ) ---
 - name: Check if MaxMind database exists
   ansible.builtin.stat:
     path: /opt/maxmind-geoipupdate/geoip_data/GeoLite2-City.mmdb
   register: maxmind_db
 
-- name: Configure Timesketch MaxMind path
-  ansible.builtin.lineinfile:
+- name: Check if DFIQ is installed
+  ansible.builtin.stat:
+    path: /opt/dfiq
+  register: dfiq_dir
+
+- name: Configure Timesketch integrations
+  ansible.builtin.blockinfile:
     path: /opt/timesketch/etc/timesketch/timesketch.conf
-    regexp: "^MAXMIND_DB_PATH"
-    line: "MAXMIND_DB_PATH = '/opt/maxmind/GeoLite2-City.mmdb'"
-  when: maxmind_db.stat.exists
+    marker: "# {mark} GREYMHATTER CONFIGURATION"
+    block: |
+      {% if maxmind_db.stat.exists | default(false) %}
+      MAXMIND_DB_PATH = '/opt/maxmind/GeoLite2-City.mmdb'
+      {% endif %}
+      {% if dfiq_dir.stat.exists | default(false) %}
+      DFIQ_ENABLED = True
+      {% endif %}
   failed_when: false
 
 # --- ARM64: build Timesketch image from source ---
@@ -149,19 +159,6 @@
         path: /tmp/timesketch-build
         state: absent
 
-# --- DFIQ integration ---
-- name: Check if DFIQ is installed
-  ansible.builtin.stat:
-    path: /opt/dfiq
-  register: dfiq_dir
-
-- name: Configure Timesketch DFIQ
-  ansible.builtin.lineinfile:
-    path: /opt/timesketch/etc/timesketch/timesketch.conf
-    regexp: "^DFIQ_ENABLED"
-    line: "DFIQ_ENABLED = True"
-  when: dfiq_dir.stat.exists
-  failed_when: false
 
 # --- Initial setup ---
 - name: Pull Timesketch container images (AMD64)
