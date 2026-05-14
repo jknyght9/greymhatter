@@ -16,12 +16,22 @@
         depth: 1
       when: not yeti_installed.stat.exists
 
-    - name: Change Yeti port to 8888
+    - name: Change Yeti frontend port to 8888
       ansible.builtin.replace:
         path: /opt/yeti-docker/prod/docker-compose.yaml
-        regexp: '"80:80"'
-        replace: '"8888:80"'
-      failed_when: false
+        regexp: '- 80:80'
+        replace: '- 8888:80'
+
+    - name: Disable unpublished Yeti services (bloomcheck, agents)
+      ansible.builtin.copy:
+        dest: /opt/yeti-docker/prod/docker-compose.override.yaml
+        mode: "0644"
+        content: |
+          services:
+            bloomcheck:
+              profiles: ["disabled"]
+            agents:
+              profiles: ["disabled"]
 
     - name: Initialize Yeti
       ansible.builtin.shell:
@@ -34,17 +44,6 @@
         cmd: grep -q YETI_AUTH_SECRET_KEY .env || echo "YETI_AUTH_SECRET_KEY=$(openssl rand -hex 32)" >> .env
         chdir: /opt/yeti-docker/prod
       changed_when: true
-
-    - name: Remove unpublished Yeti services (bloomcheck, agents)
-      ansible.builtin.shell:
-        cmd: >-
-          sed -i '/^  bloomcheck:/,/^  [a-z]/{/^  [a-z][a-z]*:/!d}' /opt/yeti-docker/prod/docker-compose.yaml;
-          sed -i '/^  bloomcheck:/d' /opt/yeti-docker/prod/docker-compose.yaml;
-          sed -i '/^  agents:/,/^  [a-z]/{/^  [a-z][a-z]*:/!d}' /opt/yeti-docker/prod/docker-compose.yaml;
-          sed -i '/^  agents:/d' /opt/yeti-docker/prod/docker-compose.yaml;
-          sed -i '/yeti-agents-data:/d' /opt/yeti-docker/prod/docker-compose.yaml
-      changed_when: true
-      failed_when: false
 
     - name: Check if Yeti user already exists
       ansible.builtin.shell:
