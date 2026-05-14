@@ -254,7 +254,7 @@ end
 
 function starttimesketch
   _service_dir /opt/timesketch; or return 1
-  docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env up -d --pull never
+  cd /opt/timesketch && docker compose --env-file config.env up -d --pull never
 end
 
 function startyeti
@@ -269,7 +269,7 @@ end
 
 function stoptimesketch
   _service_dir /opt/timesketch; or return 1
-  docker compose -f /opt/timesketch/docker-compose.yml --env-file /opt/timesketch/config.env down
+  cd /opt/timesketch && docker compose --env-file config.env down
 end
 
 function stopyeti
