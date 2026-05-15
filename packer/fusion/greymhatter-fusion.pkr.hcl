@@ -189,6 +189,8 @@ build {
 
       "truncate -s 0 /etc/machine-id",
 
+      "systemctl stop docker docker.socket containerd || true",
+      "sync",
       "fstrim -av || true",
       "dd if=/dev/zero of=/EMPTY bs=1M 2>/dev/null || true",
       "rm -f /EMPTY",

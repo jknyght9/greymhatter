@@ -38,7 +38,8 @@
           "max-size": "10m",
           "max-file": "3"
         },
-        "storage-driver": "overlay2"
+        "storage-driver": "overlay2",
+        "dns": ["1.1.1.1", "8.8.8.8"]
       }
     mode: "0644"
   notify: Restart Docker

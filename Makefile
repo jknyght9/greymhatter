@@ -56,8 +56,12 @@ base-arm64: ## Stage 1: ISO → Fusion base VM (run once)
 	rm -f packer/fusion/ks.cfg
 
 build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
+	@MAXMIND_ID=$$(grep '^maxmind_account_id' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	MAXMIND_KEY=$$(grep '^maxmind_license_key' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	cd packer/fusion && packer init greymhatter-fusion.pkr.hcl && \
 	packer build -var 'headless=false' \
+		-var "maxmind_account_id=$$MAXMIND_ID" \
+		-var "maxmind_license_key=$$MAXMIND_KEY" \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
 export-arm64: ## Stage 3: Fusion VM → OVA for distribution

@@ -236,6 +236,10 @@ build {
       "# Clear machine-id for template cloning",
       "truncate -s 0 /etc/machine-id",
 
+      "# Stop Docker before disk operations to prevent storage corruption",
+      "systemctl stop docker docker.socket containerd || true",
+      "sync",
+
       "# Zero free space for compression",
       "fstrim -av || true",
       "dd if=/dev/zero of=/EMPTY bs=1M 2>/dev/null || true",
