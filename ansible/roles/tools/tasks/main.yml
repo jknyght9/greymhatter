@@ -56,9 +56,6 @@
   ansible.builtin.include_tasks: encryption.yml
 
 # --- Python-based tools ---
-- name: Install Volatility 2
-  ansible.builtin.include_tasks: volatility2.yml
-
 - name: Install Volatility 3
   ansible.builtin.include_tasks: volatility3.yml
 

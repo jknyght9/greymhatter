@@ -8,16 +8,12 @@
   register: vol2_image
   changed_when: false
 
-- name: Debug vol2 image check
-  ansible.builtin.debug:
-    msg: "vol2_image stdout='{{ vol2_image.stdout }}' len={{ vol2_image.stdout | length }}"
-
 - name: Build Volatility 2 Docker image
   when: vol2_image.stdout | length == 0
   block:
     - name: Copy Volatility 2 Dockerfile
       ansible.builtin.copy:
-        src: "{{ greymhatter_repo_path }}/ansible/roles/tools/files/Dockerfile.volatility2"
+        src: Dockerfile.volatility2
         dest: /tmp/Dockerfile.volatility2
         mode: "0644"
 

@@ -26,3 +26,6 @@
 
 - name: Install clamav-hashbuilder
   ansible.builtin.include_tasks: clamav-hashbuilder.yml
+
+- name: Install Volatility 2 (Docker container)
+  ansible.builtin.include_tasks: volatility2.yml

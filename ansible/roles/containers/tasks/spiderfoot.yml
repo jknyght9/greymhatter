@@ -1,11 +1,12 @@
 ---
-- name: Check if SpiderFoot is installed
-  ansible.builtin.stat:
-    path: /opt/spiderfoot/compose.yml
-  register: spiderfoot_installed
+- name: Check if SpiderFoot image exists
+  ansible.builtin.command:
+    cmd: docker images -q spiderfoot
+  register: sf_image
+  changed_when: false
 
 - name: Install SpiderFoot
-  when: not spiderfoot_installed.stat.exists
+  when: sf_image.stdout == ""
   block:
     - name: Clone SpiderFoot
       ansible.builtin.git:
@@ -20,20 +21,16 @@
         dest: /opt/spiderfoot/Dockerfile
         mode: "0644"
 
-    - name: Check if SpiderFoot Docker image exists
-      ansible.builtin.command:
-        cmd: docker images -q spiderfoot
-      register: sf_image
-      changed_when: false
-
     - name: Build SpiderFoot Docker image
       ansible.builtin.command:
         cmd: docker build -t spiderfoot .
         chdir: /opt/spiderfoot
-      when: sf_image.stdout == ""
+      register: sf_build
+      retries: 3
+      delay: 10
+      until: sf_build.rc == 0
       async: 1200
       poll: 30
-      failed_when: false
 
     - name: Copy SpiderFoot compose file
       ansible.builtin.copy:
