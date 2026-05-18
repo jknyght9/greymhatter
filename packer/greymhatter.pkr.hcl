@@ -233,17 +233,31 @@ build {
       "sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config",
       "passwd -d root",
 
-      "echo '=== Stopping Docker before disk operations ==='",
+      "mkdir -p /var/log/greymhatter",
+      "DIAG=/var/log/greymhatter/cleanup-diagnostics.log",
+
+      "echo '=== [1] Docker state BEFORE cleanup ===' | tee -a $DIAG",
+      "echo 'images:' >> $DIAG; docker images --format '{{.Repository}}:{{.Tag}}' 2>&1 | tee -a $DIAG",
+      "echo 'imagedb_count:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
+      "echo 'layerdb_count:' $(ls /var/lib/docker/image/overlay2/layerdb/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
+      "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-before.json",
+
+      "echo '=== [2] Stopping Docker ===' | tee -a $DIAG",
       "systemctl stop docker docker.socket containerd",
-      "sleep 5",
+      "sleep 10",
       "sync",
+      "echo 'imagedb_count after stop:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
+      "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-after-stop.json",
 
-      "echo '=== Running fstrim ==='",
-      "fstrim -av || true",
+      "echo '=== [3] Running fstrim ===' | tee -a $DIAG",
+      "fstrim -av 2>&1 | tee -a $DIAG || true",
       "sync",
+      "echo 'imagedb_count after fstrim:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
+      "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-after-fstrim.json",
 
-      "echo '=== Truncating machine-id (last step) ==='",
-      "truncate -s 0 /etc/machine-id"
+      "echo '=== [4] Truncating machine-id (last) ===' | tee -a $DIAG",
+      "truncate -s 0 /etc/machine-id",
+      "sync"
     ]
   }
 }
