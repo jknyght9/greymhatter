@@ -143,6 +143,13 @@ expected_docker_images:
     source: containers/yeti.yml
     action: pull
 
+  # Courses (mkdocs)
+  - repo: squidfunk/mkdocs-material
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: courses/main.yml
+    action: pull
+
 # ---------------------------------------------------------------------------
 # Containers that must be running (Up) when provisioning completes.
 # Verify asserts these are present and not in unhealthy/restarting state.
@@ -163,6 +170,12 @@ expected_running_containers:
   - name: clamav-hashbuilder
     compose_dir: /opt/clamav-hashbuilder
     # No HTTP endpoint — verify checks container State only
+
+  - name: courses
+    compose_dir: /opt/courses
+    readiness:
+      url: http://localhost:8000
+      status_codes: [200, 301, 302]
 
 # ---------------------------------------------------------------------------
 # Containers verify must START, deep-check, and STOP. These prove the service
@@ -377,6 +390,18 @@ expected_binaries:
     probe: "docker compose version"
     arch: [x86_64, aarch64]
     source: docker
+
+  - cmd: hexdump
+    probe: "hexdump -V 2>&1 | head -1"
+    arch: [x86_64, aarch64]
+    source: base
+    # util-linux package; -V prints version on most distros
+
+  - cmd: xxd
+    probe: "xxd -v"
+    arch: [x86_64, aarch64]
+    source: base
+    # vim-common package
 
 # ---------------------------------------------------------------------------
 # Filesystem paths that must exist with expected attributes.

@@ -1,0 +1,78 @@
+---
+# verify/docker_startable.yml — proves startable services actually work.
+#
+# For each entry in expected_startable_containers: brings the stack up,
+# waits for HTTP readiness, runs a deep check (e.g. `psql \dt` to confirm
+# DB schema), then brings it back down to restore quiescent state.
+#
+# Skipped when verify_deep=false (fast iteration on a dev VM).
+#
+# Cleanup runs via `always` block so services don't stay up if asserts fail.
+
+- name: Build architecture-filtered startable list
+  ansible.builtin.set_fact:
+    verify_arch_startable: >-
+      {{ expected_startable_containers
+         | selectattr('arch', 'contains', ansible_architecture)
+         | list }}
+
+- name: Verify each startable service end-to-end
+  block:
+    - name: Bring up startable service
+      ansible.builtin.shell:
+        cmd: "{{ item.up_cmd }}"
+        chdir: "{{ item.chdir }}"
+      changed_when: true
+      loop: "{{ verify_arch_startable }}"
+      loop_control:
+        label: "{{ item.service }}"
+
+    - name: Wait for startable service HTTP readiness
+      ansible.builtin.uri:
+        url: "{{ item.readiness.url }}"
+        status_code: "{{ item.readiness.status_codes }}"
+        validate_certs: "{{ item.readiness.validate_certs | default(true) }}"
+        timeout: 10
+      register: verify_startable_http
+      retries: "{{ item.readiness.retries | default(20) }}"
+      delay: "{{ item.readiness.delay | default(10) }}"
+      until: verify_startable_http.status in item.readiness.status_codes
+      loop: "{{ verify_arch_startable }}"
+      loop_control:
+        label: "{{ item.service }} → {{ item.readiness.url }}"
+
+    - name: Run deep check (proves data layer is healthy, not just nginx)
+      ansible.builtin.shell:
+        cmd: "{{ item.deep_check.cmd }}"
+        chdir: "{{ item.chdir }}"
+      register: verify_startable_deep
+      changed_when: false
+      loop: "{{ verify_arch_startable | selectattr('deep_check', 'defined') | list }}"
+      loop_control:
+        label: "{{ item.service }} deep check"
+
+    - name: Assert deep check output contains required string
+      ansible.builtin.assert:
+        that:
+          - item.item.deep_check.stdout_must_contain in item.stdout
+        fail_msg: |
+          Deep check FAILED for {{ item.item.service }}.
+          Command: {{ item.item.deep_check.cmd }}
+          Expected stdout to contain: {{ item.item.deep_check.stdout_must_contain }}
+          Got:
+          {{ item.stdout | truncate(800) }}
+        success_msg: "OK deep check: {{ item.item.service }}"
+      loop: "{{ verify_startable_deep.results }}"
+      loop_control:
+        label: "{{ item.item.service }}"
+
+  always:
+    - name: Bring startable services back down (restore quiescent state)
+      ansible.builtin.shell:
+        cmd: "{{ item.down_cmd }}"
+        chdir: "{{ item.chdir }}"
+      register: verify_startable_down
+      changed_when: true
+      loop: "{{ verify_arch_startable }}"
+      loop_control:
+        label: "{{ item.service }}"

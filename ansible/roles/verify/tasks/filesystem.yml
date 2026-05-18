@@ -1,0 +1,80 @@
+---
+# verify/filesystem.yml — asserts expected paths exist with right attributes.
+#
+# Catches "task moved to wrong role" gaps (e.g. vol2 binary missing because
+# the task lived in tools/ but ran on aarch64 where it's gated off).
+
+- name: Stat each expected path
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  register: verify_path_stats
+  loop: "{{ expected_paths }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Assert each expected path is correct
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - >-
+        item.item.type == 'directory' and item.stat.isdir
+        or item.item.type == 'file' and item.stat.isreg
+        or item.item.type == 'link' and item.stat.islnk
+      - item.item.owner is not defined or item.stat.pw_name == item.item.owner
+    fail_msg: |
+      Path check FAILED: {{ item.item.path }}
+      Expected: type={{ item.item.type }}{{ ', owner=' ~ item.item.owner if item.item.owner is defined else '' }}
+      Actual: exists={{ item.stat.exists }}, isdir={{ item.stat.isdir | default(false) }}, isreg={{ item.stat.isreg | default(false) }}, islnk={{ item.stat.islnk | default(false) }}, owner={{ item.stat.pw_name | default('?') }}
+    success_msg: "OK path: {{ item.item.path }}"
+  loop: "{{ verify_path_stats.results }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+
+- name: Verify writable_by_owner paths
+  ansible.builtin.command:
+    cmd: "sudo -u {{ item.owner }} test -w {{ item.path }}"
+  register: verify_writable
+  changed_when: false
+  loop: "{{ expected_paths | selectattr('writable_by_owner', 'defined') | selectattr('writable_by_owner') | list }}"
+  loop_control:
+    label: "{{ item.path }} writable by {{ item.owner }}"
+
+# Architecture-conditional paths (x86_64-only)
+- name: Stat x86_64-only paths
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  register: verify_x86_path_stats
+  loop: "{{ expected_paths_x86_64 | default([]) }}"
+  when: ansible_architecture == "x86_64"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Assert x86_64-only paths exist
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Missing x86_64 path: {{ item.item.path }}"
+  loop: "{{ verify_x86_path_stats.results | default([]) }}"
+  when: ansible_architecture == "x86_64"
+  loop_control:
+    label: "{{ item.item.path }}"
+
+# MaxMind-conditional paths (only when credentials supplied)
+- name: Stat MaxMind paths
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  register: verify_maxmind_path_stats
+  loop: "{{ expected_paths_when_maxmind | default([]) }}"
+  when: maxmind_account_id | default('') | length > 0
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Assert MaxMind paths exist (when credentials supplied)
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Missing MaxMind path: {{ item.item.path }}"
+  loop: "{{ verify_maxmind_path_stats.results | default([]) }}"
+  when: maxmind_account_id | default('') | length > 0
+  loop_control:
+    label: "{{ item.item.path }}"

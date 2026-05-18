@@ -1,0 +1,63 @@
+---
+# verify/manifest_emit.yml — writes verification result + arch notes.
+#
+# Reached only if every preceding assert passed, so assertions_passed=true
+# is meaningful.
+
+- name: Write verification manifest JSON
+  ansible.builtin.copy:
+    dest: /opt/greymhatter/verify-manifest.json
+    mode: "0644"
+    content: |
+      {
+        "verify_run_at": "{{ ansible_date_time.iso8601 }}",
+        "architecture": "{{ ansible_architecture }}",
+        "distribution": "{{ ansible_distribution }} {{ ansible_distribution_version }}",
+        "kernel": "{{ ansible_kernel }}",
+        "manifest_version": {{ manifest_version }},
+        "images_expected": {{ verify_arch_images | length }},
+        "images_present": {{ verify_docker_image_list.stdout_lines | length }},
+        "running_containers_expected": {{ expected_running_containers | length }},
+        "startable_containers_verified": {{ verify_arch_startable | default([]) | length }},
+        "deep_check_run": {{ (verify_deep | default(true) | bool) | lower }},
+        "binaries_verified": {{ verify_arch_binaries | length }},
+        "paths_verified": {{ expected_paths | length }},
+        "services_verified": {{ expected_systemd_services | length }},
+        "assertions_passed": true
+      }
+
+- name: Write architecture notes
+  ansible.builtin.copy:
+    dest: /opt/greymhatter/arch-notes.txt
+    mode: "0644"
+    content: |
+      GreymHatter — Architecture: {{ ansible_architecture }}
+      Build verified: {{ ansible_date_time.iso8601 }}
+
+      {% if ansible_architecture == 'aarch64' %}
+      ARM64 (aarch64) adaptations:
+        - Yeti unavailable (requires x86_64 SSE4.2/AVX)
+        - FLOSS via pip (no standalone binary)
+        - Volatility 2 unavailable (Python 2.7 not built for ARM)
+        - vt-cli compiled from source via Go
+        - Timesketch image built from source (greymhatter/timesketch:arm64)
+      {% else %}
+      All tools available on x86_64.
+      {% endif %}
+
+- name: Display verification summary
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      GreymHatter Verification PASSED
+      ========================================
+      Architecture: {{ ansible_architecture }}
+      Images:       {{ verify_arch_images | length }} expected, all present
+      Running:      {{ expected_running_containers | length }} containers Up
+      Startable:    {{ verify_arch_startable | default([]) | length }} services {{ 'proved healthy' if (verify_deep | default(true) | bool) else 'SKIPPED (verify_deep=false)' }}
+      Binaries:     {{ verify_arch_binaries | length }} probes passed
+      Paths:        {{ expected_paths | length }} paths validated
+      Services:     {{ expected_systemd_services | length }} systemd units active
+
+      Manifest: /opt/greymhatter/verify-manifest.json
+      ========================================

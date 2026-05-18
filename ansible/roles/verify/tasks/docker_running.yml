@@ -1,0 +1,62 @@
+---
+# verify/docker_running.yml — asserts expected_running_containers are Up.
+
+- name: Get list of running containers
+  ansible.builtin.command: docker ps --format '{% raw %}{{.Names}}{% endraw %}'
+  register: verify_running_names
+  changed_when: false
+
+- name: Assert each expected container is running
+  ansible.builtin.assert:
+    that:
+      - verify_running_names.stdout_lines | select('search', item.name) | list | length > 0
+    fail_msg: |
+      Container '{{ item.name }}' is NOT running.
+      Compose dir: {{ item.compose_dir }}
+      Currently running:
+      {{ verify_running_names.stdout }}
+    success_msg: "OK running: {{ item.name }}"
+  loop: "{{ expected_running_containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# For each running container, inspect health/state — fails if unhealthy or restarting.
+- name: Inspect container state
+  ansible.builtin.shell:
+    cmd: >-
+      docker inspect --format '{% raw %}{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}{% endraw %}'
+      $(docker ps --filter "name={{ item.name }}" --format '{% raw %}{{.Names}}{% endraw %}' | head -1)
+  register: verify_container_state
+  changed_when: false
+  loop: "{{ expected_running_containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Assert no running container is unhealthy or restarting
+  ansible.builtin.assert:
+    that:
+      - "'unhealthy' not in item.stdout"
+      - "'restarting' not in item.stdout"
+      - "item.stdout.startswith('running')"
+    fail_msg: |
+      Container '{{ item.item.name }}' is in bad state: {{ item.stdout }}
+      Expected: running|<healthy or none>
+    success_msg: "OK state: {{ item.item.name }} → {{ item.stdout }}"
+  loop: "{{ verify_container_state.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+# HTTP readiness for containers that declare it.
+- name: Probe HTTP readiness of running containers
+  ansible.builtin.uri:
+    url: "{{ item.readiness.url }}"
+    status_code: "{{ item.readiness.status_codes }}"
+    validate_certs: "{{ item.readiness.validate_certs | default(true) }}"
+    timeout: 10
+  register: verify_running_http
+  retries: 6
+  delay: 5
+  until: verify_running_http.status in item.readiness.status_codes
+  loop: "{{ expected_running_containers | selectattr('readiness', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }} → {{ item.readiness.url }}"

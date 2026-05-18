@@ -1,0 +1,25 @@
+---
+# verify/services.yml — asserts systemd units are in expected state.
+
+- name: Query systemd state for expected services
+  ansible.builtin.systemd:
+    name: "{{ item.name }}"
+  register: verify_systemd_state
+  loop: "{{ expected_systemd_services }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Assert systemd services are in expected state
+  ansible.builtin.assert:
+    that:
+      - item.status.ActiveState == 'active' if item.item.state == 'started' else item.status.ActiveState != 'active'
+      - (item.item.enabled is not defined) or
+        (item.status.UnitFileState in ['enabled', 'enabled-runtime', 'static', 'alias'] if item.item.enabled else true)
+    fail_msg: |
+      Service '{{ item.item.name }}' state mismatch.
+      Expected: state={{ item.item.state }}, enabled={{ item.item.enabled | default('any') }}
+      Actual: ActiveState={{ item.status.ActiveState }}, UnitFileState={{ item.status.UnitFileState | default('?') }}
+    success_msg: "OK service: {{ item.item.name }} → {{ item.status.ActiveState }}"
+  loop: "{{ verify_systemd_state.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
