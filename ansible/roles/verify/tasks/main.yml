@@ -3,7 +3,7 @@
 
 - name: Create manifest directory
   ansible.builtin.file:
-    path: /opt/greymhatter
+    path: /var/lib/greymhatter
     state: directory
     mode: "0755"
 
@@ -69,7 +69,7 @@
 # --- Generate manifest ---
 - name: Generate tools manifest
   ansible.builtin.copy:
-    dest: /opt/greymhatter/tools-manifest.json
+    dest: /var/lib/greymhatter/tools-manifest.json
     mode: "0644"
     content: |
       {
@@ -104,13 +104,13 @@
         {{ '✓' if item.rc == 0 else '✗' }} {{ item.item.name }}
       {% endfor %}
 
-      Manifest saved to /opt/greymhatter/tools-manifest.json
+      Manifest saved to /var/lib/greymhatter/tools-manifest.json
       ========================================
 
 # --- ARM64 architecture notes ---
 - name: Generate architecture notes
   ansible.builtin.copy:
-    dest: /opt/greymhatter/arch-notes.txt
+    dest: /var/lib/greymhatter/arch-notes.txt
     mode: "0644"
     content: |
       GreymHatter — Architecture: {{ ansible_architecture }}
