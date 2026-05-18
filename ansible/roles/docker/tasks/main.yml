@@ -17,18 +17,13 @@
     state: absent
   failed_when: false
 
-- name: Install Docker via get.docker.com
-  ansible.builtin.shell:
-    cmd: curl -fsSL https://get.docker.com | sh
-    creates: /usr/bin/docker
-
 - name: Create Docker config directory
   ansible.builtin.file:
     path: /etc/docker
     state: directory
     mode: "0755"
 
-- name: Configure Docker daemon
+- name: Configure Docker daemon (before installation so it's in place at first start)
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
     content: |
@@ -42,9 +37,13 @@
         "dns": ["1.1.1.1", "8.8.8.8"]
       }
     mode: "0644"
-  notify: Restart Docker
 
-- name: Enable and start Docker
+- name: Install Docker via get.docker.com
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://get.docker.com | sh
+    creates: /usr/bin/docker
+
+- name: Enable and start Docker (with daemon.json already in place)
   ansible.builtin.systemd:
     name: docker
     enabled: true
