@@ -217,7 +217,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags samba,verify",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba,verify",
     ]
   }
 
