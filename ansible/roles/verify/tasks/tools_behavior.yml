@@ -16,6 +16,10 @@
     cmd: "{{ item.probe }}"
   register: verify_binary_probes
   changed_when: false
+  # failed_when: false is intentional here — we want to RUN every probe
+  # and gather all rc/stderr before failing. The follow-up assert
+  # ("Assert every probe exited 0") catches non-zero rc with a clear
+  # per-binary fail_msg. This is NOT a masked failure.
   failed_when: false
   loop: "{{ verify_arch_binaries }}"
   loop_control:
