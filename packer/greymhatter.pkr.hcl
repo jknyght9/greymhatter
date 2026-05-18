@@ -240,10 +240,6 @@ build {
 
       "echo '=== Running fstrim ==='",
       "fstrim -av || true",
-
-      "echo '=== Zeroing free space ==='",
-      "dd if=/dev/zero of=/EMPTY bs=1M status=none || true",
-      "rm -f /EMPTY",
       "sync",
 
       "echo '=== Truncating machine-id (last step) ==='",
