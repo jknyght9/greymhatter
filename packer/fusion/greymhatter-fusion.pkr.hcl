@@ -187,14 +187,21 @@ build {
       "sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config",
       "passwd -d root",
 
-      "truncate -s 0 /etc/machine-id",
-
-      "systemctl stop docker docker.socket containerd || true",
+      "echo '=== Stopping Docker before disk operations ==='",
+      "systemctl stop docker docker.socket containerd",
+      "sleep 5",
       "sync",
+
+      "echo '=== Running fstrim ==='",
       "fstrim -av || true",
-      "dd if=/dev/zero of=/EMPTY bs=1M 2>/dev/null || true",
+
+      "echo '=== Zeroing free space ==='",
+      "dd if=/dev/zero of=/EMPTY bs=1M status=none || true",
       "rm -f /EMPTY",
-      "sync"
+      "sync",
+
+      "echo '=== Truncating machine-id (last step) ==='",
+      "truncate -s 0 /etc/machine-id"
     ]
   }
 }
