@@ -66,9 +66,9 @@ packer {
 # ===========================================================================
 
 source "vmware-iso" "fedora-arm64-base" {
-  vm_name          = "greymhatter-f42-arm64-base"
-  guest_os_type    = "arm-fedora-64"
-  version          = "20"
+  vm_name       = "greymhatter-f42-arm64-base"
+  guest_os_type = "arm-fedora-64"
+  version       = "20"
 
   iso_url      = var.iso_url_arm64
   iso_checksum = var.iso_checksum_arm64
@@ -108,8 +108,8 @@ source "vmware-iso" "fedora-arm64-base" {
 # ===========================================================================
 
 source "vmware-vmx" "greymhatter-arm64" {
-  vm_name          = "greymhatter-f42-arm64"
-  source_path      = "${path.root}/../../output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx"
+  vm_name     = "greymhatter-f42-arm64"
+  source_path = "${path.root}/../../output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx"
 
   output_directory = "${path.root}/../../output/fusion-arm64"
 
@@ -209,7 +209,17 @@ build {
       "echo 'imagedb_count after fstrim:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
       "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-after-fstrim.json",
 
-      "echo '=== [4] Truncating machine-id (last) ===' | tee -a $DIAG",
+      "echo '=== [4] Post-cleanup image-count GATE ===' | tee -a $DIAG",
+      "systemctl start docker",
+      "sleep 5",
+      "IMAGE_COUNT=$(docker images --format '{{.Repository}}' | grep -v '^<none>$' | sort -u | wc -l)",
+      "echo \"Image count after fstrim: $IMAGE_COUNT\" | tee -a $DIAG",
+      "if [ \"$IMAGE_COUNT\" -lt 7 ]; then echo 'FATAL: image count below threshold after cleanup; aborting build' | tee -a $DIAG; exit 1; fi",
+      "systemctl stop docker docker.socket containerd",
+      "sleep 5",
+      "sync",
+
+      "echo '=== [5] Truncating machine-id (last) ===' | tee -a $DIAG",
       "truncate -s 0 /etc/machine-id",
       "sync"
     ]

@@ -217,7 +217,20 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba,verify",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba",
+    ]
+  }
+
+  # --- Verify (build-aborting gate) ---
+  # Runs after all roles. Manifest-driven assertions: any failure aborts the
+  # build before cleanup, so we never seal a template with missing images,
+  # broken services, or schema-less databases. No expect_disconnect: verify
+  # must NOT disconnect SSH, and a failure here is fatal by design.
+  provisioner "shell" {
+    pause_before = "30s"
+    inline = [
+      "cd /tmp/greymhatter",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags verify -v",
     ]
   }
 
@@ -255,7 +268,17 @@ build {
       "echo 'imagedb_count after fstrim:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
       "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-after-fstrim.json",
 
-      "echo '=== [4] Truncating machine-id (last) ===' | tee -a $DIAG",
+      "echo '=== [4] Post-cleanup image-count GATE ===' | tee -a $DIAG",
+      "systemctl start docker",
+      "sleep 5",
+      "IMAGE_COUNT=$(docker images --format '{{.Repository}}' | grep -v '^<none>$' | sort -u | wc -l)",
+      "echo \"Image count after fstrim: $IMAGE_COUNT\" | tee -a $DIAG",
+      "if [ \"$IMAGE_COUNT\" -lt 7 ]; then echo 'FATAL: image count below threshold after cleanup; aborting build' | tee -a $DIAG; exit 1; fi",
+      "systemctl stop docker docker.socket containerd",
+      "sleep 5",
+      "sync",
+
+      "echo '=== [5] Truncating machine-id (last) ===' | tee -a $DIAG",
       "truncate -s 0 /etc/machine-id",
       "sync"
     ]
