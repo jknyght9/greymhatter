@@ -147,6 +147,51 @@ test-manual: ## Run tests with verbose output for manual verification (usage: ma
 TEST ?= all
 
 # =============================================================================
+# Verify — manifest-driven assertions against a deployed VM
+# =============================================================================
+
+verify: ## Run verify role only (fast, skips deep checks). Usage: make verify DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make verify DEV_VM_IP=<ip>"; \
+		echo "  Skips docker_startable deep checks for inner-loop speed."; \
+		echo "  Use 'make verify-deep' for full end-to-end verification."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading ansible/ to $(DEV_VM_IP)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
+	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
+	@echo "==> Running verify role (verify_deep=false)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=false"'
+
+verify-deep: ## Run verify with full startable-service deep checks. Usage: make verify-deep DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make verify-deep DEV_VM_IP=<ip>"; \
+		echo "  Brings up Timesketch/Yeti/SpiderFoot, probes them, takes them down."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading ansible/ to $(DEV_VM_IP)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
+	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
+	@echo "==> Running verify role (verify_deep=true)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=true"'
+
+smoke: ## Run test0 container smoke test only (<60s). Usage: make smoke DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make smoke DEV_VM_IP=<ip>"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading test script..."
+	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/tmp/run-tests.sh
+	@echo "==> Running test0..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /tmp/run-tests.sh --test0'
+
+# =============================================================================
 # Documentation
 # =============================================================================
 
