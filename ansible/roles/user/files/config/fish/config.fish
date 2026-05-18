@@ -474,6 +474,10 @@ end
 
 starship init fish | source
 
+if type -q atuin
+  atuin init fish | source
+end
+
 # --- Fastfetch ---
 if not set -q SSH_CONNECTION
   if type -q fastfetch

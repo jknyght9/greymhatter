@@ -141,9 +141,11 @@
   ansible.builtin.dnf:
     name:
       - afflib
+      - atuin
       - bat
       - btop
       - clamav
+      - clamav-freshclam
       - cloud-utils-growpart
       - conky
       - curl
@@ -174,6 +176,18 @@
       - xxd
     state: present
     install_weak_deps: false
+
+- name: Remove Example line from freshclam.conf (blocks daemon until removed)
+  ansible.builtin.lineinfile:
+    path: /etc/freshclam.conf
+    regexp: '^Example$'
+    state: absent
+
+- name: Enable and start clamav-freshclam
+  ansible.builtin.systemd:
+    name: clamav-freshclam.service
+    enabled: true
+    state: started
 
 # --- Third-party binaries ---
 
