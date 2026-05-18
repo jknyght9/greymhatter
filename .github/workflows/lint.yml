@@ -1,0 +1,93 @@
+name: Lint and validate
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install ansible-lint
+        run: pip install ansible-core ansible-lint
+      - name: Run ansible-lint
+        run: ansible-lint ansible/playbook.yml --profile production
+        working-directory: ${{ github.workspace }}
+
+  ansible-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install ansible-core
+      - name: Syntax check
+        run: ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --syntax-check
+
+  packer-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-packer@main
+      - name: Init plugins (Proxmox template)
+        run: packer init packer/greymhatter.pkr.hcl
+      - name: Validate Proxmox template
+        run: |
+          packer validate \
+            -var 'proxmox_url=https://example.invalid:8006/api2/json' \
+            -var 'proxmox_node=stub' \
+            -var 'proxmox_username=stub' \
+            -var 'proxmox_token=stub' \
+            -var 'proxmox_storage_pool=stub' \
+            -var 'proxmox_iso_storage=stub' \
+            -var 'proxmox_bridge=vmbr0' \
+            -var 'iso_file_amd64=stub' \
+            -var 'ssh_password=stub' \
+            packer/greymhatter.pkr.hcl
+      - name: Init plugins (Fusion template)
+        run: packer init packer/fusion/greymhatter-fusion.pkr.hcl
+      - name: Validate Fusion template
+        run: packer validate packer/fusion/greymhatter-fusion.pkr.hcl
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint shell scripts
+        run: |
+          set -e
+          find tests scripts -type f -name '*.sh' -print0 | \
+            xargs -0 -r shellcheck --severity=warning
+
+  # Regression guard: block PRs that ADD new failure-masking patterns.
+  # Grandfathers the existing 64+43 instances — counts only increase from new diff.
+  masking-regression:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for new failure-masking patterns
+        run: |
+          set -e
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          # Find ADDED lines (start with '+', exclude '+++') matching forbidden patterns
+          ADDED=$(git diff "$BASE".."$HEAD" -- 'ansible/**/*.yml' | \
+                  grep -E '^\+[^+]' | \
+                  grep -E '(failed_when:\s*false|^\+\s*changed_when:\s*true\s*$)' || true)
+          if [ -n "$ADDED" ]; then
+            echo "::error::New failure-masking patterns introduced. Each masked failure must include a follow-up assertion or use a narrower 'failed_when: result.rc not in [...]' condition."
+            echo "$ADDED"
+            exit 1
+          fi
+          echo "No new masking patterns introduced."

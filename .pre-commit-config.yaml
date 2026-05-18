@@ -1,0 +1,41 @@
+---
+# Pre-commit hooks for GreymHatter.
+# Install once: pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# Hooks mirror the CI checks in .github/workflows/lint.yml so issues surface
+# locally before pushing.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--allow-multiple-documents']
+        exclude: '^ansible/roles/.*/templates/.*\.j2$'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=512']
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ['-c', '.yamllint.yml']
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.7.0
+    hooks:
+      - id: ansible-lint
+        files: '^ansible/.*\.(yml|yaml)$'
+        args: ['--profile=production']
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: ['--severity=warning']
+        files: '^(tests|scripts)/.*\.sh$'

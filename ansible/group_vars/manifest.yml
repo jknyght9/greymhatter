@@ -1,0 +1,471 @@
+---
+# manifest.yml — Single source of truth for the GreymHatter expected end-state.
+#
+# Consumed by ansible/roles/verify to assert that every image, container,
+# binary, path, and service is present after provisioning. Adding a new tool
+# or container means adding an entry here so verify automatically checks it.
+#
+# Schema:
+#   expected_docker_images:
+#     - repo:    image repository (e.g. ghcr.io/gethomepage/homepage)
+#       tag:     specific tag to match (omit OR set tag_any: true if version is dynamic)
+#       arch:    list of architectures where this image must be present
+#       source:  the task file responsible for creating it
+#       action:  "pull" or "build" (informational)
+#
+#   expected_running_containers:
+#     - name:        docker ps name (or substring) that must be Up
+#       compose_dir: location of compose.yml
+#       readiness:   optional HTTP readiness probe
+#
+#   expected_startable_containers:
+#     - service:    label for logs/errors
+#       arch:       architectures where this service is supported
+#       chdir:      directory to `cd` into before compose up/down
+#       up_cmd:     command to start (full string)
+#       down_cmd:   command to stop (full string)
+#       readiness:  HTTP probe with retries
+#       deep_check: optional shell command that must produce expected stdout
+#
+#   expected_binaries:
+#     - path:   absolute path on disk
+#       probe:  shell command that must exit 0
+#       arch:   list of architectures where this binary must exist
+#       source: the task file responsible
+#
+#   expected_paths:
+#     - path:   absolute path
+#       type:   file | directory | link
+#       owner:  expected owner (optional)
+#       writable_by_owner: bool (optional, runs `sudo -u <owner> test -w`)
+#
+#   expected_systemd_services:
+#     - name:    unit name
+#       state:   active | inactive
+#       enabled: bool
+
+manifest_version: 1
+
+# ---------------------------------------------------------------------------
+# Docker images that must be on disk after provisioning completes.
+# ---------------------------------------------------------------------------
+expected_docker_images:
+  # Always-running containers (pulled by compose up -d)
+  - repo: ghcr.io/gethomepage/homepage
+    tag: latest
+    arch: [x86_64, aarch64]
+    source: containers/homepage.yml
+    action: pull
+
+  - repo: ghcr.io/gchq/cyberchef
+    tag: latest
+    arch: [x86_64, aarch64]
+    source: containers/cyberchef.yml
+    action: pull
+
+  # SpiderFoot is built from source and stopped at end of provisioning,
+  # but the image must remain on disk.
+  - repo: spiderfoot
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/spiderfoot.yml
+    action: build
+
+  # clamav-hashbuilder is built from a cloned repo
+  - repo: clamav-hashbuilder
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/clamav-hashbuilder.yml
+    action: build
+
+  # Volatility 2 (x86_64 only — Python 2.7 base not built for ARM)
+  - repo: greymhatter/volatility2
+    tag_any: true
+    arch: [x86_64]
+    source: containers/volatility2.yml
+    action: build
+
+  # Timesketch ARM64 built from source (registry image is amd64-only)
+  - repo: greymhatter/timesketch
+    tag: arm64
+    arch: [aarch64]
+    source: containers/timesketch.yml
+    action: build
+
+  # Timesketch suite (pulled by `docker compose pull` in timesketch.yml).
+  # AMD64 uses the OSDFIR registry image; ARM64 uses the locally-built one above.
+  - repo: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch
+    tag_any: true
+    arch: [x86_64]
+    source: containers/timesketch.yml
+    action: pull
+
+  - repo: postgres
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/timesketch.yml
+    action: pull
+
+  - repo: redis
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/timesketch.yml
+    action: pull
+
+  - repo: opensearchproject/opensearch
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/timesketch.yml
+    action: pull
+
+  - repo: nginx
+    tag_any: true
+    arch: [x86_64, aarch64]
+    source: containers/timesketch.yml
+    action: pull
+
+  # Yeti suite — x86_64 only, pulled by `docker compose pull` in yeti.yml
+  - repo: yetiplatform/yeti
+    tag_any: true
+    arch: [x86_64]
+    source: containers/yeti.yml
+    action: pull
+
+  - repo: yetiplatform/yeti-frontend
+    tag_any: true
+    arch: [x86_64]
+    source: containers/yeti.yml
+    action: pull
+
+  - repo: arangodb
+    tag_any: true
+    arch: [x86_64]
+    source: containers/yeti.yml
+    action: pull
+
+# ---------------------------------------------------------------------------
+# Containers that must be running (Up) when provisioning completes.
+# Verify asserts these are present and not in unhealthy/restarting state.
+# ---------------------------------------------------------------------------
+expected_running_containers:
+  - name: homepage
+    compose_dir: /opt/homepage
+    readiness:
+      url: http://localhost:3000
+      status_codes: [200, 301, 302]
+
+  - name: cyberchef
+    compose_dir: /opt/cyberchef
+    readiness:
+      url: http://localhost:8080
+      status_codes: [200]
+
+  - name: clamav-hashbuilder
+    compose_dir: /opt/clamav-hashbuilder
+    # No HTTP endpoint — verify checks container State only
+
+# ---------------------------------------------------------------------------
+# Containers verify must START, deep-check, and STOP. These prove the service
+# actually works end-to-end (catches "nginx returns 200 but DB has no tables").
+# Deliberately not running at end of provisioning to save resources.
+# ---------------------------------------------------------------------------
+expected_startable_containers:
+  - service: timesketch
+    arch: [x86_64, aarch64]
+    chdir: /opt/timesketch
+    up_cmd: "docker compose --env-file config.env up -d --pull never"
+    down_cmd: "docker compose --env-file config.env down"
+    readiness:
+      url: https://localhost/login
+      validate_certs: false
+      status_codes: [200, 302]
+      retries: 30
+      delay: 10
+    deep_check:
+      # The Postgres-no-tables bug fix: confirm schema actually populated
+      cmd: 'docker compose --env-file config.env exec -T postgres psql -U timesketch -d timesketch -c "\dt"'
+      stdout_must_contain: "sketch"
+
+  - service: spiderfoot
+    arch: [x86_64, aarch64]
+    chdir: /opt/spiderfoot
+    up_cmd: "docker compose up -d"
+    down_cmd: "docker compose down"
+    readiness:
+      url: http://localhost:5001
+      status_codes: [200, 302]
+      retries: 15
+      delay: 5
+
+  - service: yeti
+    arch: [x86_64]
+    chdir: /opt/yeti-docker/prod
+    up_cmd: "docker compose up -d"
+    down_cmd: "docker compose down"
+    readiness:
+      url: "http://localhost:{{ yeti_port | default('8888') }}"
+      status_codes: [200, 302]
+      retries: 20
+      delay: 15
+
+# ---------------------------------------------------------------------------
+# Binaries that must run successfully (exit 0 on probe).
+# Replaces the bare `which` checks — catches missing shared libraries and
+# broken interpreter shebangs in addition to missing files.
+# ---------------------------------------------------------------------------
+expected_binaries:
+  # DFIR core tools (downloaded releases, symlinked to ~/.local/bin)
+  - path: /opt/tools/hayabusa/hayabusa
+    probe: "/opt/tools/hayabusa/hayabusa --help"
+    arch: [x86_64, aarch64]
+    source: tools/hayabusa.yml
+
+  - path: /opt/tools/capa
+    probe: "/opt/tools/capa --version"
+    arch: [x86_64, aarch64]
+    source: tools/capa.yml
+
+  - path: /opt/tools/floss
+    probe: "/opt/tools/floss --help"
+    arch: [x86_64]
+    source: tools/floss.yml
+    # ARM64 installs via pip; verify checks `floss --help` via PATH on aarch64
+
+  - path: /opt/tools/vt
+    probe: "/opt/tools/vt --version"
+    arch: [x86_64]
+    source: tools/vt-cli.yml
+    # ARM64 compiles via `go install` — binary ends up in $GOPATH/bin
+
+  # Volatility wrappers
+  - cmd: vol
+    probe: "vol --help"
+    arch: [x86_64, aarch64]
+    source: tools/volatility3.yml
+
+  - path: /usr/local/bin/vol2
+    probe: "test -x /usr/local/bin/vol2"
+    arch: [x86_64]
+    source: containers/volatility2.yml
+
+  # Sleuthkit (compiled via Docker builder)
+  - path: /usr/local/bin/fls
+    probe: "fls -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  - path: /usr/local/bin/ffind
+    probe: "ffind -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  - path: /usr/local/bin/istat
+    probe: "istat -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  - path: /usr/local/bin/mmls
+    probe: "mmls -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  - path: /usr/local/bin/bulk_extractor
+    probe: "bulk_extractor -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  # Encryption mount tools
+  - path: /usr/local/bin/bdemount
+    probe: "bdemount -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  - path: /usr/local/bin/fvdemount
+    probe: "fvdemount -V"
+    arch: [x86_64, aarch64]
+    source: tools/docker-build.yml
+
+  # System packages from dnf / encryption role
+  - cmd: cryptsetup
+    probe: "cryptsetup --version"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: dislocker
+    probe: "dislocker -V"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: veracrypt
+    probe: "veracrypt --text --version"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: foremost
+    probe: "foremost -V"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: scalpel
+    probe: "scalpel -V"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: hashcat
+    probe: "hashcat --version"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: yara
+    probe: "yara --version"
+    arch: [x86_64, aarch64]
+    source: tools/yara.yml
+
+  # PowerShell
+  - cmd: pwsh
+    probe: "pwsh -NoProfile -Command '$PSVersionTable.PSVersion.Major'"
+    arch: [x86_64, aarch64]
+    source: tools/powershell.yml
+
+  # User-experience tools (preserve existing verify coverage)
+  - cmd: fish
+    probe: "fish --version"
+    arch: [x86_64, aarch64]
+    source: user
+
+  - cmd: starship
+    probe: "starship --version"
+    arch: [x86_64, aarch64]
+    source: user
+
+  - cmd: tmux
+    probe: "tmux -V"
+    arch: [x86_64, aarch64]
+    source: user
+
+  - cmd: nvim
+    probe: "nvim --version"
+    arch: [x86_64, aarch64]
+    source: user
+
+  - cmd: yq
+    probe: "yq --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: bat
+    probe: "bat --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: eza
+    probe: "eza --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: ctop
+    probe: "ctop -v"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: docker
+    probe: "docker --version"
+    arch: [x86_64, aarch64]
+    source: docker
+
+  - cmd: "docker compose"
+    probe: "docker compose version"
+    arch: [x86_64, aarch64]
+    source: docker
+
+# ---------------------------------------------------------------------------
+# Filesystem paths that must exist with expected attributes.
+# Catches the "task moved to wrong role" gap and missing config files.
+# ---------------------------------------------------------------------------
+expected_paths:
+  # Tool & evidence working directories
+  - path: /opt/tools
+    type: directory
+  - path: /opt/share
+    type: directory
+  - path: /opt/hashsets
+    type: directory
+    owner: "{{ greymhatter_username }}"
+    writable_by_owner: true
+
+  # Service install directories
+  - path: /opt/homepage/compose.yml
+    type: file
+  - path: /opt/cyberchef/compose.yml
+    type: file
+  - path: /opt/spiderfoot/compose.yml
+    type: file
+  - path: /opt/clamav-hashbuilder/compose.yml
+    type: file
+  - path: /opt/dfiq
+    type: directory
+
+  # Timesketch
+  - path: /opt/timesketch
+    type: directory
+  - path: /opt/timesketch/docker-compose.yml
+    type: file
+  - path: /opt/timesketch/docker-compose.override.yml
+    type: file
+  - path: /opt/timesketch/config.env
+    type: file
+  - path: /opt/timesketch/etc/timesketch/timesketch.conf
+    type: file
+  - path: /opt/timesketch/ssl/certs/nginx-selfsigned.crt
+    type: file
+  - path: /opt/timesketch/ssl/private/nginx-selfsigned.key
+    type: file
+
+  # User-facing files
+  - path: /home/{{ greymhatter_username }}/.timesketchrc
+    type: file
+    owner: "{{ greymhatter_username }}"
+  - path: /home/{{ greymhatter_username }}/.config/fish/config.fish
+    type: file
+    owner: "{{ greymhatter_username }}"
+  - path: /home/{{ greymhatter_username }}/.local/bin/hayabusa
+    type: link
+    owner: "{{ greymhatter_username }}"
+
+# Architecture-conditional paths
+expected_paths_x86_64:
+  - path: /opt/yeti-docker
+    type: directory
+  - path: /opt/yeti-docker/prod/docker-compose.yaml
+    type: file
+  - path: /opt/yeti-docker/prod/.env
+    type: file
+
+# Paths that only exist when MaxMind credentials were supplied
+expected_paths_when_maxmind:
+  - path: /opt/maxmind-geoipupdate
+    type: directory
+  - path: /opt/maxmind-geoipupdate/.env
+    type: file
+  - path: /opt/maxmind-geoipupdate/geoip_data
+    type: directory
+
+# ---------------------------------------------------------------------------
+# Systemd services that must be active and enabled.
+# ---------------------------------------------------------------------------
+expected_systemd_services:
+  - name: docker
+    state: started
+    enabled: true
+  - name: sshd
+    state: started
+    enabled: true
+  - name: smb
+    state: started
+    enabled: true
+  - name: firewalld
+    state: started
+    enabled: true
+  - name: lightdm
+    state: started
+    enabled: true
