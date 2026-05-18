@@ -1,5 +1,5 @@
 ---
-# roles/courses - MkDocs course material delivery via Docker container
+# Courses — MkDocs container serving DFIR teaching content
 # If courses_repo is set, clone it. Otherwise create placeholder content.
 
 - name: Check if courses are already set up
@@ -71,7 +71,6 @@
           ports:
             - "8000:8000"
           command: serve -a 0.0.0.0:8000
-  register: courses_compose
 
 - name: Start courses container
   ansible.builtin.shell:

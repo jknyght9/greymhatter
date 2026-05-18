@@ -29,3 +29,6 @@
 
 - name: Install Volatility 2 (Docker container)
   ansible.builtin.include_tasks: volatility2.yml
+
+- name: Install Courses (MkDocs container)
+  ansible.builtin.include_tasks: courses.yml
