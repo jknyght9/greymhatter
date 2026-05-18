@@ -2,11 +2,18 @@
 # GreymHatter Integration Test Suite
 # Runs on a deployed VM to validate all DFIR tools work correctly.
 #
-# Usage: bash run-tests.sh [--test1] [--test2] [--test3] [--all]
+# Usage: bash run-tests.sh [--test0] [--test1] [--test2] [--test3] [--all]
+#   --test0  Container smoke test (fast, <60s) — asserts expected containers
+#            are running and respond. Use this as the inner-loop sanity check.
 #   --test1  Memory analysis (Volatility 2 & 3)
 #   --test2  Disk analysis (TSK & bulk_extractor)
 #   --test3  Timeline analysis (log2timeline, hayabusa, Timesketch)
-#   --all    Run all tests (default)
+#   --all    Run all tests (default; test0 always runs as preflight)
+#
+# Exit codes:
+#   0  All tests passed
+#   1  Some tests failed
+#   2  Preflight failed (infrastructure broken — tests didn't get a fair run)
 
 set +e  # Don't exit on errors — we handle them with pass/fail
 
@@ -45,6 +52,122 @@ function check_output() {
     else
         fail "$desc — no output"
     fi
+}
+
+# Content-aware assertion: fails if expected string is NOT in stdout/stderr.
+# Use instead of check_output when you can name a specific marker that
+# distinguishes "tool ran correctly" from "tool printed an error".
+function assert_contains() {
+    local desc="$1"; local needle="$2"; shift 2
+    local output
+    output=$("$@" 2>&1) || true
+    if echo "$output" | grep -qF -- "$needle"; then
+        success "$desc"
+    else
+        fail "$desc — expected output to contain '$needle'"
+        echo "$output" | head -20
+    fi
+}
+
+# Content-aware assertion: fails if output has fewer than MIN lines.
+# Use when the tool should produce many rows (process list, partition table,
+# event log entries) — guards against the "tool ran but found nothing" trap.
+function assert_lines_gt() {
+    local desc="$1"; local min="$2"; shift 2
+    local output
+    output=$("$@" 2>&1) || true
+    local lines
+    lines=$(echo "$output" | wc -l)
+    if [ "$lines" -gt "$min" ]; then
+        success "$desc ($lines lines)"
+    else
+        fail "$desc — only $lines lines, expected >$min"
+        echo "$output" | head -20
+    fi
+}
+
+# Preflight: assert the VM is in a valid state for tests to mean anything.
+# Distinguishes "infrastructure broken" (exit 2) from "test logic failed" (exit 1).
+function preflight() {
+    header "Preflight: verifying VM state"
+
+    local missing=0
+
+    # Container infrastructure
+    if ! systemctl is-active --quiet docker; then
+        fail "Docker service not running"
+        missing=1
+    else
+        success "Docker service active"
+    fi
+
+    # Architecture-aware image checks
+    local arch
+    arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        if ! docker images -q greymhatter/volatility2 2>/dev/null | grep -q .; then
+            fail "vol2 image missing — test1 cannot validate vol2"
+            missing=1
+        fi
+    fi
+
+    if ! docker images --format '{{.Repository}}' | grep -qE '^(spiderfoot|clamav-hashbuilder|ghcr.io/gethomepage/homepage|ghcr.io/gchq/cyberchef)' ; then
+        fail "Core container images missing — verify role did not pass"
+        missing=1
+    else
+        success "Core container images present"
+    fi
+
+    # Binaries
+    [ -x /opt/tools/hayabusa/hayabusa ] || { fail "hayabusa missing"; missing=1; }
+    command -v vol >/dev/null            || { fail "vol (volatility3) missing"; missing=1; }
+    command -v fls >/dev/null            || { fail "fls (sleuthkit) missing"; missing=1; }
+    command -v bulk_extractor >/dev/null || { fail "bulk_extractor missing"; missing=1; }
+    command -v ewfmount >/dev/null       || { fail "ewfmount missing"; missing=1; }
+    command -v timesketch_importer >/dev/null || { fail "timesketch_importer missing"; missing=1; }
+
+    # Working dirs
+    [ -d /opt/share ]    || { fail "/opt/share missing"; missing=1; }
+    [ -d /opt/hashsets ] || { fail "/opt/hashsets missing"; missing=1; }
+
+    if [ "$missing" -eq 1 ]; then
+        fail "Preflight failed — VM is not in a valid state for tests"
+        echo -e "${RED}EXIT 2: infrastructure broken${NC}"
+        exit 2
+    fi
+    success "Preflight passed"
+}
+
+# Test 0 — fast container sanity. Asserts the always-running services are
+# Up and HTTP-responsive. Designed to be runnable in <60s.
+function test0() {
+    header "TEST 0: Container smoke test"
+
+    # Always-running containers (must be Up)
+    local container
+    for container in homepage cyberchef clamav-hashbuilder courses; do
+        if docker ps --format '{{.Names}}' | grep -q "$container"; then
+            success "$container container running"
+        else
+            fail "$container container NOT running"
+        fi
+    done
+
+    # HTTP endpoints
+    local url; local desc; local codes
+    while IFS='|' read -r desc url codes; do
+        local status
+        status=$(curl -sko /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null || echo 000)
+        if echo "$codes" | grep -qw "$status"; then
+            success "$desc → HTTP $status"
+        else
+            fail "$desc → HTTP $status (expected $codes)"
+        fi
+    done <<EOF
+Homepage (3000)|http://localhost:3000|200 301 302
+CyberChef (8080)|http://localhost:8080|200
+Courses (8000)|http://localhost:8000|200 301 302
+EOF
 }
 
 function run_verbose() {
@@ -99,10 +222,10 @@ function test1() {
 
     info "Testing with: $ZAPFTIS"
 
-    # Volatility 3
+    # Volatility 3 — content-aware: ran tool AND parsed the image successfully
     info "--- Volatility 3 ---"
-    check_output "vol3: windows.info on 0zapftis" vol -f "$ZAPFTIS" windows.info
-    check_output "vol3: windows.pslist on 0zapftis" vol -f "$ZAPFTIS" windows.pslist
+    assert_contains "vol3: windows.info on 0zapftis" "Kernel Base" vol -f "$ZAPFTIS" windows.info
+    assert_lines_gt "vol3: windows.pslist on 0zapftis" 5 vol -f "$ZAPFTIS" windows.pslist
 
     # Volatility 2 (Docker)
     info "--- Volatility 2 (Docker) ---"
@@ -132,8 +255,8 @@ function test1() {
 
     if [ -n "$DC01_MEM" ]; then
         info "Testing with: $DC01_MEM"
-        check_output "vol3: windows.info on DC01" vol -f "$DC01_MEM" windows.info
-        check_output "vol3: windows.pslist on DC01" vol -f "$DC01_MEM" windows.pslist
+        assert_contains "vol3: windows.info on DC01" "Kernel Base" vol -f "$DC01_MEM" windows.info
+        assert_lines_gt "vol3: windows.pslist on DC01" 10 vol -f "$DC01_MEM" windows.pslist
     else
         warn "DC01 memory image not found, skipping"
     fi
@@ -155,7 +278,7 @@ function test2() {
 
     # Sleuthkit
     info "--- Sleuthkit ---"
-    check_output "mmls: partition table" mmls "$USB_IMG"
+    assert_contains "mmls: partition table" "Partition Table" mmls "$USB_IMG"
 
     # Get first real partition offset (match rows with numeric slot like "004:  000")
     local offset
@@ -308,14 +431,26 @@ function test3() {
 
     if [ -f "$HAYABUSA_OUT" ]; then
         info "Importing hayabusa timeline..."
-        timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
-            --sketch_name "XX-T001" --timeline_name "hayabusa" "$HAYABUSA_OUT" 2>&1 | tail -5 || true
+        if timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
+            --sketch_name "XX-T001" --timeline_name "hayabusa" "$HAYABUSA_OUT" > /tmp/ts-import-hayabusa.log 2>&1; then
+            tail -5 /tmp/ts-import-hayabusa.log
+            success "hayabusa importer exited 0"
+        else
+            fail "hayabusa importer exited non-zero — see /tmp/ts-import-hayabusa.log"
+            tail -10 /tmp/ts-import-hayabusa.log
+        fi
     fi
 
     if [ -f "$PLASO_OUT" ]; then
         info "Importing plaso timeline..."
-        timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
-            --sketch_name "XX-T001" --timeline_name "plaso" "$PLASO_OUT" 2>&1 | tail -5 || true
+        if timesketch_importer --host http://localhost --username hatter --password 'H@tt3r123!' \
+            --sketch_name "XX-T001" --timeline_name "plaso" "$PLASO_OUT" > /tmp/ts-import-plaso.log 2>&1; then
+            tail -5 /tmp/ts-import-plaso.log
+            success "plaso importer exited 0"
+        else
+            fail "plaso importer exited non-zero — see /tmp/ts-import-plaso.log"
+            tail -10 /tmp/ts-import-plaso.log
+        fi
     fi
 
     # Verify timelines exist in Timesketch via API
@@ -358,6 +493,7 @@ print(len(sketch.get('timelines',[])))
 # Main
 # =============================================================================
 
+RUN_TEST0=false
 RUN_TEST1=false
 RUN_TEST2=false
 RUN_TEST3=false
@@ -368,13 +504,18 @@ fi
 
 for arg in "$@"; do
     case "$arg" in
+        --test0)   RUN_TEST0=true ;;
         --test1)   RUN_TEST1=true ;;
         --test2)   RUN_TEST2=true ;;
         --test3)   RUN_TEST3=true ;;
-        --all)     RUN_TEST1=true; RUN_TEST2=true; RUN_TEST3=true ;;
+        --all)     RUN_TEST0=true; RUN_TEST1=true; RUN_TEST2=true; RUN_TEST3=true ;;
         --verbose) VERBOSE=true ;;
     esac
 done
+
+# Preflight runs unconditionally — distinguishes "infrastructure broken"
+# (exit 2) from "tests legitimately failed" (exit 1).
+preflight
 
 # Extract only the images needed for requested tests
 [ "$RUN_TEST1" = "true" ] && extract_image /opt/share/test-data/0zapftis.zip
@@ -384,6 +525,7 @@ done
 
 header "GreymHatter Integration Test Suite"
 
+[ "$RUN_TEST0" = "true" ] && test0
 [ "$RUN_TEST1" = "true" ] && test1
 [ "$RUN_TEST2" = "true" ] && test2
 [ "$RUN_TEST3" = "true" ] && test3
