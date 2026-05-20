@@ -185,6 +185,7 @@
       - tmux
       - unzip
       - wireshark
+      - xdg-user-dirs
       - xxd
     state: present
     install_weak_deps: false
