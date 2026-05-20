@@ -227,9 +227,13 @@
     validate_certs: false
     status_code: [200, 302]
   register: ts_ready
-  retries: 30
+  retries: 60
   delay: 10
   until: ts_ready.status in [200, 302]
+  # 10 min total. After workers-race restart, timesketch-web needs time to
+  # reconnect to postgres/opensearch and start serving. Previously masked
+  # with failed_when:false — a 502 here meant the user-create tasks below
+  # would silently 502 too, and we'd ship an OVA with no hatter user.
 
 - name: Check if Timesketch user exists
   ansible.builtin.shell:
