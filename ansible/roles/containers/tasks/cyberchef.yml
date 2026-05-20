@@ -16,4 +16,13 @@
   ansible.builtin.shell:
     cmd: docker compose up -d
     chdir: /opt/cyberchef
-  changed_when: true
+  register: cyberchef_up
+  changed_when: cyberchef_up.stderr is search('(Created|Started|Recreated|Pulling)')
+
+- name: Verify CyberChef container is running
+  ansible.builtin.command:
+    cmd: docker compose ps --status running --quiet
+    chdir: /opt/cyberchef
+  register: cyberchef_running
+  changed_when: false
+  failed_when: cyberchef_running.stdout | length == 0

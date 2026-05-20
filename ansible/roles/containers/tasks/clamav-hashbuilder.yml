@@ -37,16 +37,23 @@
       ansible.builtin.shell:
         cmd: docker compose build
         chdir: /opt/clamav-hashbuilder
-      changed_when: true
+      register: hashbuilder_build
+      changed_when: hashbuilder_build.rc == 0
       retries: 3
       delay: 10
-      register: hashbuilder_build
       until: hashbuilder_build.rc == 0
-      failed_when: false
 
     - name: Start clamav-hashbuilder
       ansible.builtin.shell:
         cmd: docker compose up -d
         chdir: /opt/clamav-hashbuilder
-      when: hashbuilder_build.rc == 0
-      changed_when: true
+      register: hashbuilder_up
+      changed_when: hashbuilder_up.stderr is search('(Created|Started|Recreated|Pulling)')
+
+    - name: Verify clamav-hashbuilder container is running
+      ansible.builtin.command:
+        cmd: docker compose ps --status running --quiet
+        chdir: /opt/clamav-hashbuilder
+      register: hashbuilder_running
+      changed_when: false
+      failed_when: hashbuilder_running.stdout | length == 0

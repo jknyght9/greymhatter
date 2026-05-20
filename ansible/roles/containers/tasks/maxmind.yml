@@ -34,4 +34,14 @@
     cmd: docker compose up -d
     chdir: /opt/maxmind-geoipupdate
   when: maxmind_account_id | length > 0
-  failed_when: false
+  register: maxmind_up
+  changed_when: maxmind_up.stderr is search('(Created|Started|Recreated|Pulling)')
+
+- name: Verify MaxMind container is running (when credentials supplied)
+  ansible.builtin.command:
+    cmd: docker compose ps --status running --quiet
+    chdir: /opt/maxmind-geoipupdate
+  when: maxmind_account_id | length > 0
+  register: maxmind_running
+  changed_when: false
+  failed_when: maxmind_running.stdout | length == 0

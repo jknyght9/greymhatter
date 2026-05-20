@@ -17,7 +17,8 @@
       ansible.builtin.shell:
         cmd: bash /tmp/deploy_timesketch.sh
         chdir: /opt
-      failed_when: false
+      register: ts_deploy
+      changed_when: ts_deploy.rc == 0
 
     - name: Verify Timesketch was installed
       ansible.builtin.stat:
@@ -38,7 +39,6 @@
   loop:
     - docker-compose.override.yml
     - nginx.conf
-  failed_when: false
 
 - name: Copy Timesketch configuration files
   ansible.builtin.copy:
@@ -48,7 +48,6 @@
   loop:
     - tags.yaml
     - regex_features.yaml
-  failed_when: false
 
 - name: Copy timesketchrc to user home
   ansible.builtin.copy:
@@ -57,7 +56,6 @@
     owner: "{{ greymhatter_username }}"
     group: "{{ greymhatter_username }}"
     mode: "0644"
-  failed_when: false
 
 # --- SSL certificates ---
 - name: Create SSL directories
@@ -101,7 +99,6 @@
       {% if dfiq_dir.stat.exists | default(false) %}
       DFIQ_ENABLED = True
       {% endif %}
-  failed_when: false
 
 # --- ARM64: build Timesketch image from source ---
 # The official OSDFIR image is amd64-only; build natively on ARM64
@@ -139,9 +136,17 @@
       ansible.builtin.command:
         cmd: docker build -t greymhatter/timesketch:arm64 /tmp/timesketch-build/
       when: ts_arm64_image.stdout == ""
-      changed_when: true
+      register: ts_arm64_build
+      changed_when: ts_arm64_build.rc == 0
       async: 600
       poll: 30
+
+    - name: Assert ARM64 Timesketch image was built
+      ansible.builtin.command: docker images -q greymhatter/timesketch:arm64
+      register: ts_arm64_check
+      changed_when: false
+      failed_when: ts_arm64_check.stdout | length == 0
+      when: ts_arm64_image.stdout == ""
 
     - name: Get Timesketch version from config.env
       ansible.builtin.shell:
@@ -152,7 +157,8 @@
     - name: Tag ARM64 image to match compose reference
       ansible.builtin.command:
         cmd: "docker tag greymhatter/timesketch:arm64 us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:{{ ts_version.stdout }}"
-      changed_when: true
+      register: ts_arm64_tag
+      changed_when: ts_arm64_tag.rc == 0
 
     - name: Clean up build directory
       ansible.builtin.file:
@@ -170,7 +176,7 @@
   delay: 10
   register: ts_pull
   until: ts_pull.rc == 0
-  failed_when: false
+  changed_when: ts_pull.stderr is search('(Pulling|Pulled|Downloaded)')
 
 - name: Pull supporting container images (ARM64)
   ansible.builtin.shell:
@@ -181,13 +187,14 @@
   delay: 10
   register: ts_pull_arm
   until: ts_pull_arm.rc == 0
-  failed_when: false
+  changed_when: ts_pull_arm.stderr is search('(Pulling|Pulled|Downloaded)')
 
 - name: Start Timesketch
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env up -d --pull never
     chdir: /opt/timesketch
-  changed_when: true
+  register: ts_up
+  changed_when: ts_up.stderr is search('(Created|Started|Recreated)')
 
 - name: Wait for database schema initialization
   ansible.builtin.shell:
@@ -197,13 +204,17 @@
   retries: 30
   delay: 5
   until: ts_schema.rc == 0
-  failed_when: false
+  changed_when: false
+  # NO failed_when: false — if schema never initializes, fail the playbook.
+  # Previously this was masked; the result was Timesketch shipping with no
+  # tables and tests reporting PASS while the API returned 500s.
 
 - name: Restart timesketch-web (workers race on first schema creation)
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env restart timesketch-web
     chdir: /opt/timesketch
-  changed_when: true
+  register: ts_restart
+  changed_when: ts_restart.rc == 0
 
 - name: Wait for Timesketch to be ready
   ansible.builtin.uri:
@@ -214,7 +225,6 @@
   retries: 30
   delay: 10
   until: ts_ready.status in [200, 302]
-  failed_when: false
 
 - name: Check if Timesketch user exists
   ansible.builtin.shell:
@@ -222,6 +232,7 @@
     chdir: /opt/timesketch
   register: ts_user_check
   changed_when: false
+  # Probe: rc=0 means user exists; rc=1 means absent (expected first run).
   failed_when: false
 
 - name: Create Timesketch user
@@ -237,11 +248,10 @@
   ansible.builtin.pip:
     name: timesketch-import-client
     executable: pip3
-  failed_when: false
 
 - name: Stop Timesketch (starts manually via starttimesketch)
   ansible.builtin.shell:
     cmd: docker compose --env-file config.env down
     chdir: /opt/timesketch
-  changed_when: true
-  failed_when: false
+  register: ts_down
+  changed_when: ts_down.stderr is search('(Removed|Stopped|Removing|Stopping)')

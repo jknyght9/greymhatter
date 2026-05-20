@@ -17,4 +17,13 @@
   ansible.builtin.shell:
     cmd: docker compose up -d
     chdir: /opt/homepage
-  changed_when: true
+  register: homepage_up
+  changed_when: homepage_up.stderr is search('(Created|Started|Recreated|Pulling)')
+
+- name: Verify Homepage container is running
+  ansible.builtin.command:
+    cmd: docker compose ps --status running --quiet
+    chdir: /opt/homepage
+  register: homepage_running
+  changed_when: false
+  failed_when: homepage_running.stdout | length == 0
