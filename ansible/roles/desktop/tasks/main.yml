@@ -248,11 +248,17 @@
     cmd: setsebool -P xrdp_connect_all_unreserved_ports on
   register: xrdp_setsebool
   changed_when: xrdp_setsebool.rc == 0
-  # setsebool returns nonzero when SELinux is disabled entirely — acceptable
-  # on hardened-down systems. Real errors (unknown boolean) still surface.
+  # setsebool returns nonzero in two benign cases on greymhatter:
+  #   1. SELinux is disabled entirely.
+  #   2. The xrdp_connect_all_unreserved_ports boolean isn't defined in this
+  #      SELinux policy (Fedora 42 + xrdp from default repos doesn't ship
+  #      the boolean — and since base/ sets SELINUX=permissive, enforcement
+  #      is off anyway).
+  # Other failures (typos, permission errors) still surface.
   failed_when:
     - xrdp_setsebool.rc != 0
     - "'SELinux is disabled' not in (xrdp_setsebool.stderr | default(''))"
+    - "'is not defined' not in (xrdp_setsebool.stderr | default(''))"
 
 # --- Timezone ---
 
