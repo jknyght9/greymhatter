@@ -15,7 +15,13 @@
       - docker-engine
       - containerd.io
     state: absent
-  failed_when: false
+  register: docker_old_remove
+  # dnf returns nonzero if NONE of the packages are present (clean Fedora
+  # has none of these legacy names). Treat that as success.
+  failed_when:
+    - docker_old_remove is failed
+    - "'No package' not in (docker_old_remove.msg | default(''))"
+    - "'matching' not in (docker_old_remove.msg | default(''))"
 
 - name: Create Docker config directory
   ansible.builtin.file:
@@ -73,6 +79,7 @@
     cmd: "docker network inspect {{ docker_network_name }}"
   register: network_check
   changed_when: false
+  # Probe: rc=0 means network exists; rc=1 means absent (expected first run).
   failed_when: false
 
 - name: Create shared Docker network

@@ -21,11 +21,18 @@
   ansible.builtin.systemd:
     name: packagekit
     state: stopped
-  failed_when: false
+  register: packagekit_stop
+  # PackageKit may be masked, disabled, or absent — those are all fine.
+  # Fail only on real systemd errors.
+  failed_when:
+    - packagekit_stop is failed
+    - "'Could not find' not in (packagekit_stop.msg | default(''))"
+    - "'not loaded' not in (packagekit_stop.msg | default(''))"
 
 - name: Clean DNF cache
   ansible.builtin.command: dnf clean all
-  changed_when: true
+  register: dnf_clean
+  changed_when: dnf_clean.rc == 0
 
 - name: Update all packages
   ansible.builtin.dnf:
@@ -57,13 +64,16 @@
     cmd: getenforce
   register: selinux_status
   changed_when: false
+  # Probe: rc=0 with stdout one of Enforcing/Permissive/Disabled. rc=1 means
+  # getenforce isn't installed (SELinux absent), also fine.
   failed_when: false
 
 - name: Set SELinux to permissive
   ansible.builtin.command:
     cmd: setenforce 0
+  register: setenforce_result
   when: selinux_status.stdout == "Enforcing"
-  failed_when: false
+  changed_when: setenforce_result.rc == 0
 
 - name: Set SELinux to permissive permanently
   ansible.builtin.lineinfile:
@@ -80,7 +90,8 @@
 - name: Apply sysctl settings
   ansible.builtin.command:
     cmd: sysctl -p /etc/sysctl.d/99-opensearch.conf
-  changed_when: true
+  register: sysctl_apply
+  changed_when: sysctl_apply.rc == 0
 
 - name: Enable SSH service
   ansible.builtin.systemd:
@@ -105,8 +116,9 @@
   loop:
     - cockpit
     - dhcpv6-client
-  changed_when: true
-  failed_when: false
+  register: fw_remove_svc
+  # firewall-cmd outputs "Warning: NOT_ENABLED" + rc=0 if already absent.
+  changed_when: "'success' in fw_remove_svc.stdout"
 
 - name: Allow required services
   ansible.builtin.command:
@@ -115,8 +127,9 @@
     - ssh
     - samba
     - https
-  changed_when: true
-  failed_when: false
+  register: fw_add_svc
+  # firewall-cmd outputs "Warning: ALREADY_ENABLED" + rc=0 if already set.
+  changed_when: "'success' in fw_add_svc.stdout"
 
 - name: Allow required ports
   ansible.builtin.command:
@@ -129,13 +142,14 @@
     - 8888/tcp    # Yeti
     - 3389/tcp    # xRDP
     - 5900/tcp    # VNC
-  changed_when: true
-  failed_when: false
+  register: fw_add_port
+  changed_when: "'success' in fw_add_port.stdout"
 
 - name: Reload firewall
   ansible.builtin.command:
     cmd: firewall-cmd --reload
-  changed_when: true
+  register: fw_reload
+  changed_when: fw_reload.rc == 0
 
 - name: Install base packages
   ansible.builtin.dnf:
@@ -217,6 +231,7 @@
   ansible.builtin.command: which ghostty
   register: ghostty_check
   changed_when: false
+  # Probe: rc=0 means installed; rc=1 means absent (expected first run).
   failed_when: false
 
 - name: Install Ghostty
@@ -225,7 +240,12 @@
     - name: Enable Ghostty COPR repo
       ansible.builtin.command:
         cmd: dnf copr enable -y scottames/ghostty
-      changed_when: true
+      register: ghostty_copr
+      changed_when: "'Updating' in ghostty_copr.stdout or 'Enabling' in ghostty_copr.stdout"
+      failed_when:
+        - ghostty_copr.rc != 0
+        - "'already enabled' not in (ghostty_copr.stdout | lower)"
+        - "'already enabled' not in (ghostty_copr.stderr | lower)"
 
     - name: Install Ghostty from COPR
       ansible.builtin.dnf:

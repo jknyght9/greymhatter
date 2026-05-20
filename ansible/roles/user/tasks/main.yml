@@ -74,7 +74,6 @@
   ansible.builtin.file:
     path: "{{ user_home }}/.local/share/applications/dashboard.desktop"
     mode: "0755"
-  failed_when: false
 
 # --- Background and avatar ---
 
@@ -85,7 +84,6 @@
     owner: "{{ greymhatter_username }}"
     group: "{{ greymhatter_username }}"
     mode: "0644"
-  failed_when: false
 
   # User avatar is configured in the desktop role via AccountsService
 
@@ -98,7 +96,6 @@
     owner: "{{ greymhatter_username }}"
     group: "{{ greymhatter_username }}"
     mode: "0644"
-  failed_when: false
 
 # --- Tmux plugins ---
 
@@ -108,7 +105,6 @@
     dest: "{{ user_home }}/.config/tmux/plugins/tpm"
     depth: 1
   become_user: "{{ greymhatter_username }}"
-  failed_when: false
 
 - name: Install tmux plugins
   ansible.builtin.shell:
@@ -116,7 +112,8 @@
   become_user: "{{ greymhatter_username }}"
   environment:
     TMUX_PLUGIN_MANAGER_PATH: "{{ user_home }}/.config/tmux/plugins"
-  failed_when: false
+  register: tpm_install
+  changed_when: tpm_install.rc == 0
 
 # --- XDG user directories ---
 
@@ -128,15 +125,14 @@
     HOME: "{{ user_home }}"
     XDG_RUNTIME_DIR: "/run/user/{{ user_uid.stdout }}"
   changed_when: false
-  failed_when: false
 
 # --- Conky systemd user service ---
 
 - name: Enable user lingering (allows user services to start at boot)
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ greymhatter_username }}"
-  changed_when: true
-  failed_when: false
+  register: loginctl_linger
+  changed_when: loginctl_linger.rc == 0
 
 - name: Create default.target.wants directory
   ansible.builtin.file:
@@ -153,7 +149,6 @@
     state: link
     owner: "{{ greymhatter_username }}"
     group: "{{ greymhatter_username }}"
-  failed_when: false
 
 # --- Set ownership ---
 

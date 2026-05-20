@@ -22,7 +22,8 @@
       ansible.builtin.shell:
         cmd: "{{ item.up_cmd }}"
         chdir: "{{ item.chdir }}"
-      changed_when: true
+      register: verify_startable_up
+      changed_when: verify_startable_up.stderr is search('(Created|Started|Recreated|Pulling)')
       loop: "{{ verify_arch_startable }}"
       loop_control:
         label: "{{ item.service }}"
@@ -72,7 +73,7 @@
         cmd: "{{ item.down_cmd }}"
         chdir: "{{ item.chdir }}"
       register: verify_startable_down
-      changed_when: true
+      changed_when: verify_startable_down.stderr is search('(Removed|Stopped|Removing|Stopping)')
       loop: "{{ verify_arch_startable }}"
       loop_control:
         label: "{{ item.service }}"
