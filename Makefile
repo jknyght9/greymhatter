@@ -39,10 +39,12 @@ build-amd64: ## Stage 2: Clone template → Ansible → Proxmox template
 	cd packer && packer init greymhatter.pkr.hcl && \
 	packer build -only='greymhatter.proxmox-clone.greymhatter' .
 
-export-amd64: ## Stage 3: Export Proxmox template → OVA (TODO: download disk from Proxmox)
-	@echo "Export from Proxmox requires downloading the disk image first."
-	@echo "Use: qm disk export <vmid> scsi0 /tmp/greymhatter.raw"
-	@echo "Then: $(OVFTOOL) /tmp/greymhatter.vmx output/greymhatter-amd64.ova"
+export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
+	@mkdir -p output; \
+	DATE=$$(date +%Y%m%d); N=1; \
+	while [ -e output/greymhatter-f42-amd64-$$DATE.$$N.ova ]; do N=$$((N+1)); done; \
+	OUT=output/greymhatter-f42-amd64-$$DATE.$$N.ova; \
+	bash scripts/export-amd64-ova.sh $$OUT
 
 # =============================================================================
 # ARM64 (VMware Fusion) — runs Packer natively on Mac
@@ -64,11 +66,23 @@ build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 		-var "maxmind_license_key=$$MAXMIND_KEY" \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
-export-arm64: ## Stage 3: Fusion VM → OVA for distribution
-	$(OVFTOOL) output/fusion-arm64/greymhatter-f42-arm64.vmx output/greymhatter-f42-arm64.ova
-	@echo ""
-	@echo "  OVA exported: output/greymhatter-f42-arm64.ova"
-	@echo ""
+export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
+	@# OVA can't be used here: ovftool has no ARM osType in its mapping table,
+	@# so any OVA imported into Fusion ends up with guestos="other" and refuses
+	@# to power on ("requires x86 machine architecture"). Ship the .vmwarevm
+	@# bundle directly so the original guestos="arm-fedora-64" is preserved.
+	@DATE=$$(date +%Y%m%d); N=1; \
+	while [ -e output/greymhatter-f42-arm64-$$DATE.$$N.zip ]; do N=$$((N+1)); done; \
+	OUT=greymhatter-f42-arm64-$$DATE.$$N.zip; \
+	sed -i.bak 's/^displayname = "Clone of greymhatter-f42-arm64-base"$$/displayname = "greymhatter-f42-arm64"/' output/fusion-arm64/greymhatter-f42-arm64.vmx && \
+	rm -f output/fusion-arm64/greymhatter-f42-arm64.vmx.bak && \
+	cd output && mv fusion-arm64 greymhatter-f42-arm64.vmwarevm && \
+	zip -r $$OUT greymhatter-f42-arm64.vmwarevm && \
+	mv greymhatter-f42-arm64.vmwarevm fusion-arm64; \
+	echo ""; \
+	echo "  Bundle exported: output/$$OUT"; \
+	echo "  Recipients: extract, then double-click the .vmx file in Fusion."; \
+	echo ""
 
 # =============================================================================
 # Dev workflow — fast iteration on a live VM
