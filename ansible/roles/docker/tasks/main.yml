@@ -61,6 +61,21 @@
   changed_when: false
   register: docker_version
 
+# Authenticate to Docker Hub (optional but recommended).
+# Anonymous pulls are rate-limited to 100/6h per IP — easy to exhaust on
+# build iteration. Authenticated free-tier accounts get 200/6h per account.
+# Skips silently if credentials are not provided.
+- name: Authenticate to Docker Hub
+  ansible.builtin.command:
+    cmd: "docker login -u {{ docker_hub_username }} --password-stdin"
+    stdin: "{{ docker_hub_token }}"
+  when:
+    - docker_hub_username | default('') | length > 0
+    - docker_hub_token | default('') | length > 0
+  register: docker_hub_login
+  changed_when: "'Login Succeeded' in docker_hub_login.stdout"
+  no_log: true
+
 - name: Display Docker version
   ansible.builtin.debug:
     msg: "{{ docker_version.stdout }}"

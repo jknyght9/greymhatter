@@ -136,3 +136,21 @@ variable "maxmind_license_key" {
   default   = ""
   sensitive = true
 }
+
+# --- Docker Hub credentials (optional but recommended) ---
+# Without auth, Docker Hub rate-limits anonymous pulls to 100 per 6h per
+# source IP — easy to exhaust when iterating builds. Authenticated free-tier
+# accounts get 200 per 6h per ACCOUNT. Use a personal access token instead
+# of your password (Docker Hub → Account Settings → Personal access tokens).
+# Token needs only "Public Repo Read" scope.
+
+variable "docker_hub_username" {
+  type    = string
+  default = ""
+}
+
+variable "docker_hub_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+}

@@ -52,6 +52,17 @@ variable "maxmind_license_key" {
   sensitive = true
 }
 
+variable "docker_hub_username" {
+  type    = string
+  default = ""
+}
+
+variable "docker_hub_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
 packer {
   required_plugins {
     vmware = {
@@ -174,7 +185,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key}'",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token}'",
     ]
   }
 
