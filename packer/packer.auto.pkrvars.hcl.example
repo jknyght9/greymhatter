@@ -16,6 +16,19 @@ proxmox_storage_pool = "local-lvm"
 proxmox_iso_storage  = "local"
 proxmox_bridge       = "vmbr0"
 
+# --- ESX Connection ---
+# Used by the esxi-* Make targets. Reach the ESXi host through an SSH tunnel
+# and point esx_url at the local end (e.g. https://127.0.0.1:4004).
+esx_url       = "https://127.0.0.1:4004"
+esx_host      = "esxi01.local"  # actual ESXi hostname/IP (as it identifies itself)
+esx_username  = "root"
+esx_password  = "your-esxi-password"
+
+# --- ESX Storage & Network ---
+esx_storage     = "datastore1"           # ESXi datastore name
+esx_vm_network  = "VM Network"           # ESXi port group / network name
+esx_iso_file    = "[datastore1] iso/Fedora-Server-netinst-x86_64-42-1.1.iso"
+
 # --- VM Specs ---
 vm_cpus      = 4
 vm_memory    = 8192
