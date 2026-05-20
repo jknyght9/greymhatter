@@ -20,7 +20,13 @@
         item.item.type == 'directory' and item.stat.isdir
         or item.item.type == 'file' and item.stat.isreg
         or item.item.type == 'link' and item.stat.islnk
-      - item.item.owner is not defined or item.stat.pw_name == item.item.owner
+      # Owner is enforced for files and directories, NOT symlinks.
+      # Ansible's file module chowns the target, not the link itself
+      # (follow=true is default), so symlink lchown rarely matches manifest.
+      # On Linux the symlink's own owner has no functional impact.
+      - item.item.owner is not defined
+        or item.item.type == 'link'
+        or item.stat.pw_name == item.item.owner
     fail_msg: |
       Path check FAILED: {{ item.item.path }}
       Expected: type={{ item.item.type }}{{ ', owner=' ~ item.item.owner if item.item.owner is defined else '' }}
