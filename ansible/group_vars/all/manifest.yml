@@ -231,9 +231,11 @@ expected_startable_containers:
 expected_binaries:
   # DFIR core tools (downloaded releases, symlinked to ~/.local/bin)
   - path: /opt/tools/hayabusa/hayabusa
-    probe: "/opt/tools/hayabusa/hayabusa --help"
+    probe: "/opt/tools/hayabusa/hayabusa help"
     arch: [x86_64, aarch64]
     source: tools/hayabusa.yml
+    # hayabusa uses subcommands, not flags — `hayabusa help` shows top-level
+    # help and exits 0; `hayabusa --help` returns rc=2 "unexpected argument"
 
   - path: /opt/tools/capa
     probe: "/opt/tools/capa --version"
@@ -247,10 +249,11 @@ expected_binaries:
     # ARM64 installs via pip; verify checks `floss --help` via PATH on aarch64
 
   - path: /opt/tools/vt
-    probe: "/opt/tools/vt --version"
+    probe: "/opt/tools/vt version"
     arch: [x86_64]
     source: tools/vt-cli.yml
     # ARM64 compiles via `go install` — binary ends up in $GOPATH/bin
+    # vt uses subcommands; `vt version` exits 0, `--version` returns rc=1.
 
   # Volatility wrappers
   - cmd: vol
@@ -307,9 +310,11 @@ expected_binaries:
     source: tools/encryption.yml
 
   - cmd: dislocker
-    probe: "dislocker -V"
+    probe: "command -v dislocker"
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
+    # dislocker -V takes a VOLUME argument (not version); dislocker -h
+    # also exits non-zero. command -v verifies the binary is on PATH.
 
   - cmd: veracrypt
     probe: "veracrypt --text --version"
@@ -322,9 +327,10 @@ expected_binaries:
     source: tools/encryption.yml
 
   - cmd: scalpel
-    probe: "scalpel -V"
+    probe: "command -v scalpel"
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
+    # scalpel -V exits rc=1; command -v verifies the binary is on PATH.
 
   - cmd: hashcat
     probe: "hashcat --version"
