@@ -59,4 +59,5 @@
       ansible.builtin.command:
         cmd: "{{ tools_dir }}/hayabusa/hayabusa update-rules"
         chdir: "{{ tools_dir }}/hayabusa"
-      changed_when: true
+      register: hayabusa_rules
+      changed_when: hayabusa_rules.rc == 0

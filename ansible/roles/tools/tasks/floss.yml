@@ -3,6 +3,7 @@
   ansible.builtin.command: which floss
   register: floss_check
   changed_when: false
+  # Probe: rc=0 means installed; rc=1 means absent (expected first run).
   failed_when: false
 
 # AMD64: download pre-built standalone binary

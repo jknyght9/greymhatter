@@ -59,7 +59,8 @@
       environment:
         GOPATH: /tmp/go
         GOBIN: "{{ tools_dir }}"
-      changed_when: true
+      register: vt_build
+      changed_when: vt_build.rc == 0
 
     - name: Clean up Go cache
       ansible.builtin.file:
