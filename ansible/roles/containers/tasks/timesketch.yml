@@ -19,6 +19,11 @@
         chdir: /opt
       register: ts_deploy
       changed_when: ts_deploy.rc == 0
+      # Google's deploy_timesketch.sh exits non-zero on success (it prints
+      # "* Installation done." then returns 1, likely from a final cleanup
+      # step). The next task — stat /opt/timesketch/docker-compose.yml — is
+      # the real verification of install success; trust that over the rc.
+      failed_when: false
 
     - name: Verify Timesketch was installed
       ansible.builtin.stat:
