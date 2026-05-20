@@ -154,3 +154,15 @@ variable "docker_hub_token" {
   default   = ""
   sensitive = true
 }
+
+# --- Local registry mirror (optional, preferred) ---
+# Pull-through cache for Docker Hub. Eliminates rate limit + speeds builds.
+# Format: "http://host:port" (HTTPS supported but typically HTTP on LAN).
+# Setup: docker run -d -p 5050:5000 -e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
+#                   --restart=unless-stopped -v greymhatter-registry-data:/var/lib/registry \
+#                   --name greymhatter-registry-mirror ghcr.io/distribution/distribution:3.0.0
+
+variable "docker_registry_mirror" {
+  type    = string
+  default = ""
+}

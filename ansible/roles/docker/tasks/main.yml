@@ -30,18 +30,9 @@
     mode: "0755"
 
 - name: Configure Docker daemon (before installation so it's in place at first start)
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: daemon.json.j2
     dest: /etc/docker/daemon.json
-    content: |
-      {
-        "log-driver": "json-file",
-        "log-opts": {
-          "max-size": "10m",
-          "max-file": "3"
-        },
-        "storage-driver": "overlay2",
-        "dns": ["1.1.1.1", "8.8.8.8"]
-      }
     mode: "0644"
 
 - name: Install Docker via get.docker.com

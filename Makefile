@@ -60,12 +60,14 @@ build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 	MAXMIND_KEY=$$(grep '^maxmind_license_key' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	DOCKER_USER=$$(grep '^docker_hub_username' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	DOCKER_TOKEN=$$(grep '^docker_hub_token' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	DOCKER_MIRROR=$$(grep '^docker_registry_mirror' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	cd packer/fusion && packer init greymhatter-fusion.pkr.hcl && \
 	packer build -var 'headless=false' \
 		-var "maxmind_account_id=$$MAXMIND_ID" \
 		-var "maxmind_license_key=$$MAXMIND_KEY" \
 		-var "docker_hub_username=$$DOCKER_USER" \
 		-var "docker_hub_token=$$DOCKER_TOKEN" \
+		-var "docker_registry_mirror=$$DOCKER_MIRROR" \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
 export-arm64: ## Stage 3: Fusion VM → OVA for distribution
