@@ -12,9 +12,14 @@
 - name: Assert systemd services are in expected state
   ansible.builtin.assert:
     that:
-      - item.status.ActiveState == 'active' if item.item.state == 'started' else item.status.ActiveState != 'active'
-      - (item.item.enabled is not defined) or
-        (item.status.UnitFileState in ['enabled', 'enabled-runtime', 'static', 'alias'] if item.item.enabled else true)
+      # Boolean form instead of Jinja ternary — `X if Y else Z` inside
+      # assert.that breaks because Ansible wraps each item in {% if ... %}
+      # and Jinja can't nest `if` blocks.
+      - >-
+        (item.item.state == 'started' and item.status.ActiveState == 'active') or
+        (item.item.state != 'started' and item.status.ActiveState != 'active')
+      - item.item.enabled is not defined
+        or item.status.UnitFileState in ['enabled', 'enabled-runtime', 'static', 'alias']
     fail_msg: |
       Service '{{ item.item.name }}' state mismatch.
       Expected: state={{ item.item.state }}, enabled={{ item.item.enabled | default('any') }}
