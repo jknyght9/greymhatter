@@ -28,6 +28,19 @@
         chdir: /opt/yeti-docker/prod
         creates: /opt/yeti-docker/prod/.env
 
+    # Pre-pull all images so the OVA is self-contained — students can run
+    # `startyeti` offline without waiting on a registry. `docker compose run`
+    # below only pulls api's dependency chain, missing yeti-frontend.
+    - name: Pre-pull Yeti container images
+      ansible.builtin.shell:
+        cmd: docker compose pull
+        chdir: /opt/yeti-docker/prod
+      register: yeti_pull
+      retries: 3
+      delay: 10
+      until: yeti_pull.rc == 0
+      changed_when: yeti_pull.stderr is search('(Pulling|Pulled|Downloaded)')
+
     - name: Generate Yeti auth secret key if missing
       ansible.builtin.shell:
         cmd: >-

@@ -71,8 +71,10 @@ expected_docker_images:
     source: containers/spiderfoot.yml
     action: build
 
-  # clamav-hashbuilder is built from a cloned repo
-  - repo: clamav-hashbuilder
+  # clamav-hashbuilder is built from a cloned repo. docker compose names the
+  # built image <project>-<service> (both "clamav-hashbuilder" here, hence
+  # the doubled name).
+  - repo: clamav-hashbuilder-clamav-hashbuilder
     tag_any: true
     arch: [x86_64, aarch64]
     source: containers/clamav-hashbuilder.yml
