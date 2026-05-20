@@ -2,7 +2,7 @@
 # roles/verify — manifest-driven assertion of build end-state.
 #
 # Replaces the previous `which`-only verify with explicit assertions sourced
-# from ansible/group_vars/manifest.yml. Failure of any sub-task aborts the
+# from ansible/group_vars/all/manifest.yml. Failure of any sub-task aborts the
 # playbook (and, in Packer, the build).
 #
 # Override `verify_deep: false` to skip the docker_startable phase (start/probe/down

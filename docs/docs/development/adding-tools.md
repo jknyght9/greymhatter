@@ -4,7 +4,7 @@
 
 1. Create a task file in `ansible/roles/tools/tasks/`
 2. Include it in `ansible/roles/tools/tasks/main.yml`
-3. Pin the version in `ansible/group_vars/all.yml` (if applicable)
+3. Pin the version in `ansible/group_vars/all/defaults.yml` (if applicable)
 4. Update `docs/docs/tools/overview.md`
 5. Test on both AMD64 and ARM64
 
@@ -75,7 +75,7 @@ url: "tool-{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
 
 ## Version Pinning
 
-Add to `ansible/group_vars/all.yml`:
+Add to `ansible/group_vars/all/defaults.yml`:
 
 ```yaml
 tool_version: "1.2.3"
