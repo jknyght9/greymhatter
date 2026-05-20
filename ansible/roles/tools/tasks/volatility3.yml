@@ -52,23 +52,19 @@
         state: directory
         mode: "0755"
 
-    - name: Download Windows symbol tables
+    - name: Download Volatility 3 symbol tables
       ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
-        dest: "{{ vol3_path.stdout }}/symbols/windows.zip"
+        url: "https://downloads.volatilityfoundation.org/volatility3/symbols/{{ item }}.zip"
+        dest: "{{ vol3_path.stdout }}/symbols/{{ item }}.zip"
         mode: "0644"
-
-    - name: Download Linux symbol tables
-      ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
-        dest: "{{ vol3_path.stdout }}/symbols/linux.zip"
-        mode: "0644"
-
-    - name: Download Mac symbol tables
-      ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
-        dest: "{{ vol3_path.stdout }}/symbols/mac.zip"
-        mode: "0644"
+      retries: 3
+      delay: 10
+      register: vol3_symbol_download
+      until: vol3_symbol_download is succeeded
+      loop:
+        - windows
+        - linux
+        - mac
 
     # Pre-build symbol cache for the hatter user (avoids minutes-long delay on first run)
     - name: Create vol3 cache directory for user
