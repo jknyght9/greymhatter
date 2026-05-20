@@ -59,7 +59,7 @@ source "proxmox-iso" "fedora-base" {
 
   # Boot ISO
   boot_iso {
-    iso_file         = var.iso_file_amd64
+    iso_file         = var.proxmox_iso_file
     iso_storage_pool = var.proxmox_iso_storage
     unmount          = true
   }

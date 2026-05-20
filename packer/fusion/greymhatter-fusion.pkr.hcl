@@ -5,12 +5,13 @@
 #
 # Runs natively on Mac — not containerized (needs Fusion hypervisor access)
 
-variable "iso_url_arm64" {
-  type    = string
-  default = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/aarch64/iso/Fedora-Server-netinst-aarch64-42-1.1.iso"
+variable "fusion_iso_url" {
+  type        = string
+  description = "HTTPS URL to the Fedora ARM64 server ISO; Packer downloads it during the build."
+  default     = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/aarch64/iso/Fedora-Server-netinst-aarch64-42-1.1.iso"
 }
 
-variable "iso_checksum_arm64" {
+variable "fusion_iso_checksum" {
   type    = string
   default = "none"
 }
@@ -70,8 +71,8 @@ source "vmware-iso" "fedora-arm64-base" {
   guest_os_type    = "arm-fedora-64"
   version          = "20"
 
-  iso_url      = var.iso_url_arm64
-  iso_checksum = var.iso_checksum_arm64
+  iso_url      = var.fusion_iso_url
+  iso_checksum = var.fusion_iso_checksum
 
   cpus      = var.vm_cpus
   memory    = var.vm_memory
