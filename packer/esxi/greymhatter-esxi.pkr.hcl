@@ -62,10 +62,10 @@ variable "vm_memory" {
   default = 8192
 }
 
-variable "vm_disk_size_gb" {
-  type        = number
-  default     = 80
-  description = "Disk size in GB"
+variable "vm_disk_size" {
+  type        = string
+  default     = "80G"
+  description = "Disk size with G suffix (matches the shared pkrvars convention)"
 }
 
 variable "ssh_password" {
@@ -118,16 +118,17 @@ source "vsphere-iso" "fedora-esxi-base" {
   guest_os_type = "fedora64Guest"
   notes         = "GreymHatter base template (built by Packer)"
 
-  CPUs         = var.vm_cpus
-  RAM          = var.vm_memory
+  CPUs            = var.vm_cpus
+  RAM             = var.vm_memory
   RAM_reserve_all = false
-  firmware     = "bios"
+  firmware        = "bios"
+  video_ram       = 16384  # 16 MB SVGA — default 4 MB caps the guest at 1280x768
 
   datastore = var.esx_storage
 
   disk_controller_type = ["lsilogic-sas"]
   storage {
-    disk_size             = var.vm_disk_size_gb * 1024
+    disk_size             = parseint(replace(var.vm_disk_size, "G", ""), 10) * 1024
     disk_thin_provisioned = true
   }
 
