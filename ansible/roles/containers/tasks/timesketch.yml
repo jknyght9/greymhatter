@@ -221,19 +221,39 @@
   register: ts_restart
   changed_when: ts_restart.rc == 0
 
-- name: Wait for Timesketch to be ready
-  ansible.builtin.uri:
-    url: https://localhost/login
-    validate_certs: false
-    status_code: [200, 302]
-  register: ts_ready
-  retries: 60
-  delay: 10
-  until: ts_ready.status in [200, 302]
-  # 10 min total. After workers-race restart, timesketch-web needs time to
-  # reconnect to postgres/opensearch and start serving. Previously masked
-  # with failed_when:false — a 502 here meant the user-create tasks below
-  # would silently 502 too, and we'd ship an OVA with no hatter user.
+- name: Wait for Timesketch readiness (with auto-recovery)
+  # Intermittent: sometimes the workers-race restart settles cleanly,
+  # sometimes timesketch-web stays in a 502 loop. If the first 10-min wait
+  # exhausts, do a full-stack restart and retry once more. Previously this
+  # was masked with failed_when:false — silently shipping an OVA with no
+  # hatter user when the wait timed out.
+  block:
+    - name: Wait for Timesketch to be ready
+      ansible.builtin.uri:
+        url: https://localhost/login
+        validate_certs: false
+        status_code: [200, 302]
+      register: ts_ready
+      retries: 60
+      delay: 10
+      until: ts_ready.status in [200, 302]
+  rescue:
+    - name: Recovery — full Timesketch stack restart
+      ansible.builtin.shell:
+        cmd: docker compose --env-file config.env restart
+        chdir: /opt/timesketch
+      register: ts_full_restart
+      changed_when: ts_full_restart.rc == 0
+
+    - name: Wait for Timesketch ready (after full restart)
+      ansible.builtin.uri:
+        url: https://localhost/login
+        validate_certs: false
+        status_code: [200, 302]
+      register: ts_ready_retry
+      retries: 60
+      delay: 10
+      until: ts_ready_retry.status in [200, 302]
 
 - name: Check if Timesketch user exists
   ansible.builtin.shell:
