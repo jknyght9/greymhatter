@@ -272,7 +272,9 @@ build {
 
       "echo '=== [4] Post-cleanup image-count GATE ===' | tee -a $DIAG",
       "systemctl start docker",
-      "sleep 5",
+      "for i in $(seq 1 30); do docker info --format '{{.ServerVersion}}' >/dev/null 2>&1 && break; sleep 2; done",
+      "sleep 10",
+      "echo '--- docker images dump ---' | tee -a $DIAG; docker images --format '{{.Repository}}:{{.Tag}}' | sort | tee -a $DIAG",
       "IMAGE_COUNT=$(docker images --format '{{.Repository}}' | grep -v '^<none>$' | sort -u | wc -l)",
       "echo \"Image count after fstrim: $IMAGE_COUNT\" | tee -a $DIAG",
       "if [ \"$IMAGE_COUNT\" -lt 7 ]; then echo 'FATAL: image count below threshold after cleanup; aborting build' | tee -a $DIAG; exit 1; fi",
