@@ -276,7 +276,7 @@ build {
 
       "echo '=== [4] Post-cleanup image-count GATE ===' | tee -a $DIAG",
       "systemctl start docker",
-      "for i in $(seq 1 30); do docker info --format '{{.ServerVersion}}' >/dev/null 2>&1 && break; sleep 2; done",
+      "for i in $(seq 1 30); do docker info >/dev/null 2>&1 && break; sleep 2; done",
       "sleep 10",
       "echo '--- docker images dump ---' | tee -a $DIAG; docker images | tee -a $DIAG",
       "IMAGE_COUNT=$(docker images --quiet | sort -u | wc -l)",
