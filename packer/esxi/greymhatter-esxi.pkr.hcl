@@ -155,11 +155,12 @@ source "vsphere-iso" "fedora-esxi-base" {
     network_card = "vmxnet3"
   }
 
-  # On standalone ESXi (no vCenter), Packer's "Setting temporary boot order"
-  # path can leave the VM trying HDD first → "Operating system not found"
-  # before GRUB ever loads. Explicit boot_order makes the CD-ROM
-  # authoritative regardless of how the API call lands.
-  boot_order = "cdrom,disk"
+  # Disk first, fallback to CD. On the empty first-install boot EFI falls
+  # through to CD-ROM (Fedora installer loads). After install completes,
+  # the populated disk wins — no install loop. Earlier attempts had this
+  # reversed plus BIOS firmware, which caused both "OS not found" (BIOS
+  # didn't fall through) and the install loop (cdrom always wins post-install).
+  boot_order = "disk,cdrom"
 
   iso_paths = [var.esx_iso_file]
 
