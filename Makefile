@@ -53,19 +53,17 @@ export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
 # ESXi (AMD64) — Packer talks to ESXi via SSH-tunnelled vSphere API
 # =============================================================================
 
-base-esxi: ## Stage 1: ISO → ESXi base template (run once)
+build-esxi: ## One-shot: ISO install + Ansible provisioning (standalone ESXi has no Clone API)
 	cp packer/http/ks.cfg packer/esxi/ks.cfg
 	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
 	packer build -var-file=../packer.auto.pkrvars.hcl \
-		-only='base.vsphere-iso.fedora-esxi-base' greymhatter-esxi.pkr.hcl
+		-only='greymhatter.vsphere-iso.fedora-esxi-base' greymhatter-esxi.pkr.hcl
 	rm -f packer/esxi/ks.cfg
 
-build-esxi: ## Stage 2: Clone base → Ansible → ESXi template
-	cp packer/http/ks.cfg packer/esxi/ks.cfg
-	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
-	packer build -var-file=../packer.auto.pkrvars.hcl \
-		-only='greymhatter.vsphere-clone.greymhatter-esxi' greymhatter-esxi.pkr.hcl
-	rm -f packer/esxi/ks.cfg
+# Compatibility shim: base-esxi was a separate stage on Proxmox/Fusion;
+# on standalone ESXi it's merged into build-esxi. Keep the target name
+# for muscle memory but route it to build-esxi.
+base-esxi: build-esxi ## Alias: standalone ESXi has no Clone API so base+build are one step
 
 export-esxi: ## Stage 3: ESXi template → OVA via ovftool
 	@mkdir -p output; \

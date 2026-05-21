@@ -117,7 +117,6 @@ packer {
 # Strip scheme so the plugin can build its own SDK URL
 locals {
   vcenter_endpoint = trimprefix(trimprefix(var.esx_url, "https://"), "http://")
-  base_vm_name     = "greymhatter-f${var.fedora_version}-esxi-base"
   final_vm_name    = "greymhatter-f${var.fedora_version}-esxi-${formatdate("YYYYMMDD", timestamp())}"
 }
 
@@ -132,9 +131,9 @@ source "vsphere-iso" "fedora-esxi-base" {
   insecure_connection = true
   host                = var.esx_host
 
-  vm_name       = local.base_vm_name
+  vm_name       = local.final_vm_name
   guest_os_type = "fedora64Guest"
-  notes         = "GreymHatter base template (built by Packer)"
+  notes         = "GreymHatter ${formatdate("YYYY-MM-DD", timestamp())} (built by Packer)"
 
   CPUs            = var.vm_cpus
   RAM             = var.vm_memory
@@ -188,58 +187,22 @@ source "vsphere-iso" "fedora-esxi-base" {
 }
 
 # ===========================================================================
-# Stage 2: Full build (clone base, run Ansible, convert to template)
-# ===========================================================================
-
-source "vsphere-clone" "greymhatter-esxi" {
-  vcenter_server      = local.vcenter_endpoint
-  username            = var.esx_username
-  password            = var.esx_password
-  insecure_connection = true
-  host                = var.esx_host
-
-  template  = local.base_vm_name
-  vm_name   = local.final_vm_name
-  notes     = "GreymHatter ${formatdate("YYYY-MM-DD", timestamp())} (built by Packer)"
-  datastore = var.esx_storage
-
-  ssh_username = "root"
-  ssh_password = var.ssh_password
-  ssh_timeout  = "10m"
-
-  shutdown_command    = "shutdown -P now"
-  convert_to_template = false # standalone ESXi (no vCenter) lacks the MarkAsTemplate API. vsphere-clone clones from a regular VM just fine.
-}
-
-# ===========================================================================
-# Build: Stage 1 — Base VM
-# ===========================================================================
-
-build {
-  name = "base"
-
-  sources = [
-    "source.vsphere-iso.fedora-esxi-base",
-  ]
-
-  provisioner "shell" {
-    inline = [
-      "echo 'Base VM build complete'",
-      "ansible --version",
-      "systemctl is-enabled sshd"
-    ]
-  }
-}
-
-# ===========================================================================
-# Build: Stage 2 — Provision with Ansible
+# Build: ISO install + Ansible provisioning (one-shot)
+#
+# Standalone ESXi (no vCenter) doesn't expose the Clone or MarkAsTemplate
+# APIs, so we can't do the Proxmox/Fusion "base template → clone → provision"
+# pattern. Instead this combines both stages into a single vsphere-iso run:
+# install Fedora from ISO, then run Ansible against the freshly-installed
+# VM, then shut down. Iteration cost is ~50 min per build (vs ~25 min on
+# the staged hypervisors) — use `make dev DEV_VM_IP=<ip>` against the
+# resulting VM for fast inner-loop work after the first build completes.
 # ===========================================================================
 
 build {
   name = "greymhatter"
 
   sources = [
-    "source.vsphere-clone.greymhatter-esxi",
+    "source.vsphere-iso.fedora-esxi-base",
   ]
 
   provisioner "shell" {
