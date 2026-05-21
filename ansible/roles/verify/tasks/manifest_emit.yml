@@ -6,7 +6,7 @@
 
 - name: Write verification manifest JSON
   ansible.builtin.copy:
-    dest: /opt/greymhatter/verify-manifest.json
+    dest: /var/lib/greymhatter/verify-manifest.json
     mode: "0644"
     content: |
       {
@@ -28,7 +28,7 @@
 
 - name: Write architecture notes
   ansible.builtin.copy:
-    dest: /opt/greymhatter/arch-notes.txt
+    dest: /var/lib/greymhatter/arch-notes.txt
     mode: "0644"
     content: |
       GreymHatter — Architecture: {{ ansible_architecture }}
@@ -59,5 +59,5 @@
       Paths:        {{ expected_paths | length }} paths validated
       Services:     {{ expected_systemd_services | length }} systemd units active
 
-      Manifest: /opt/greymhatter/verify-manifest.json
+      Manifest: /var/lib/greymhatter/verify-manifest.json
       ========================================

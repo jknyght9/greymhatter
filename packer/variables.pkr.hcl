@@ -44,43 +44,19 @@ variable "proxmox_bridge" {
 # --- Fedora ISO ---
 # Pre-download the ISO to your Proxmox node's ISO storage:
 #   wget -P /var/lib/vz/template/iso/ <fedora-iso-url>
-# Then set iso_file_amd64 to the path as Proxmox sees it (storage:type/filename).
+# Then set proxmox_iso_file to the path as Proxmox sees it (storage:iso/filename).
+# Fusion/ESXi ISO references are declared in their own .pkr.hcl files since
+# this variables.pkr.hcl is only loaded by the Proxmox build.
 
 variable "fedora_version" {
   type    = string
   default = "42"
 }
 
-variable "iso_file_amd64" {
+variable "proxmox_iso_file" {
   type        = string
   description = "Proxmox path to the Fedora ISO (e.g., local:iso/Fedora-Server-netinst-x86_64-42-1.1.iso)"
   default     = ""
-}
-
-variable "iso_url_amd64" {
-  type    = string
-  default = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/x86_64/iso/Fedora-Server-netinst-x86_64-42-1.1.iso"
-}
-
-variable "iso_checksum_amd64" {
-  type    = string
-  default = "none"
-}
-
-variable "iso_file_arm64" {
-  type        = string
-  description = "Proxmox path to the ARM64 Fedora ISO (e.g., local:iso/Fedora-Server-netinst-aarch64-42-1.1.iso)"
-  default     = ""
-}
-
-variable "iso_url_arm64" {
-  type    = string
-  default = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/aarch64/iso/Fedora-Server-netinst-aarch64-42-1.1.iso"
-}
-
-variable "iso_checksum_arm64" {
-  type    = string
-  default = "none"
 }
 
 # --- VM Specs ---

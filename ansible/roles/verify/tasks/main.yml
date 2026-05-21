@@ -10,7 +10,7 @@
 
 - name: Create verify output directory
   ansible.builtin.file:
-    path: /opt/greymhatter
+    path: /var/lib/greymhatter
     state: directory
     mode: "0755"
 

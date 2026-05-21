@@ -44,7 +44,9 @@ VMDK_SIZE_BYTES=$(stat -c%s "$VMDK_FILE" 2>/dev/null || stat -f%z "$VMDK_FILE")
 echo "Generating OVF descriptor..."
 OVF_FILE="${OUTPUT_DIR}/${VM_NAME}-${ARCH}.ovf"
 
-# Hardware version 20 = Workstation 17.x / Fusion 13.x
+# Hardware version 17 = ESXi 7.0+ / Workstation 15.5+ / Fusion 11.5+
+# (vmx-20 ships from Workstation 17 / Fusion 13 but ESXi 7 rejects it as
+# "Unsupported hardware family". Stay at 17 for broad compatibility.)
 cat > "$OVF_FILE" << OVFEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1"
@@ -73,7 +75,7 @@ cat > "$OVF_FILE" << OVFEOF
   <VirtualSystem ovf:id="${VM_NAME}">
     <Info>GreymHatter DFIR Distribution</Info>
     <Name>${VM_NAME}</Name>
-    <OperatingSystemSection ovf:id="101" vmw:osType="fedora-64">
+    <OperatingSystemSection ovf:id="101" vmw:osType="fedora64Guest">
       <Info>The operating system installed</Info>
       <Description>Fedora 64-bit</Description>
     </OperatingSystemSection>
@@ -83,7 +85,7 @@ cat > "$OVF_FILE" << OVFEOF
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
         <vssd:InstanceID>0</vssd:InstanceID>
         <vssd:VirtualSystemIdentifier>${VM_NAME}</vssd:VirtualSystemIdentifier>
-        <vssd:VirtualSystemType>vmx-20</vssd:VirtualSystemType>
+        <vssd:VirtualSystemType>vmx-17</vssd:VirtualSystemType>
       </System>
       <Item>
         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
@@ -135,16 +137,23 @@ OVFEOF
 echo "OVF created: $OVF_FILE"
 
 # --- Step 3: Generate manifest ---
+# Required format per OVF spec: SHA256(filename)= hash
 echo "Computing SHA256 manifest..."
 MF_FILE="${OUTPUT_DIR}/${VM_NAME}-${ARCH}.mf"
 (
   cd "$OUTPUT_DIR"
-  sha256sum "${VM_NAME}-${ARCH}-disk1.vmdk" | sed 's/  / = SHA256:/' | sed 's/^/SHA256(/' | sed 's/ = /\) = /' > "$(basename "$MF_FILE")"
-  sha256sum "${VM_NAME}-${ARCH}.ovf" | sed 's/  / = SHA256:/' | sed 's/^/SHA256(/' | sed 's/ = /\) = /' >> "$(basename "$MF_FILE")"
+  for f in "${VM_NAME}-${ARCH}.ovf" "${VM_NAME}-${ARCH}-disk1.vmdk"; do
+    HASH=$(sha256sum "$f" | awk '{print $1}')
+    printf 'SHA256(%s)= %s\n' "$f" "$HASH"
+  done > "$(basename "$MF_FILE")"
 )
 echo "Manifest created: $MF_FILE"
 
 # --- Step 4: Package OVA ---
+# Use GNU tar's default format (not pax, not ustar). pax extension headers
+# break some OVF parsers ("Line 1: Could not parse the document"), and ustar
+# caps file sizes at 8 GiB which the VMDK regularly exceeds. The default on
+# Linux GNU tar handles large files and is read correctly by ovftool/ESXi.
 echo "Packaging OVA..."
 OVA_FILE="${OUTPUT_DIR}/${VM_NAME}-${ARCH}.ova"
 (

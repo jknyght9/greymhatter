@@ -1,6 +1,6 @@
 # Set greeting — show ARM64 note on first shell if applicable
 if test (uname -m) = "aarch64"
-  set -g -x fish_greeting 'NOTE: Some x86_64-only tools are unavailable on ARM64. See /opt/greymhatter/arch-notes.txt'
+  set -g -x fish_greeting 'NOTE: Some x86_64-only tools are unavailable on ARM64. See /var/lib/greymhatter/arch-notes.txt'
 else
   set -g -x fish_greeting ''
 end
@@ -353,11 +353,16 @@ end
 # --- System Update ---
 
 function greymhatter-update
-  if not test -d /opt/greymhatter
-    printf "Cloning greymhatter repository...\n"
-    sudo git clone https://github.com/jknyght9/greymhatter.git /opt/greymhatter
+  if test -d /opt/greymhatter/.git
+    printf "Pulling latest greymhatter...\n"
+    sudo git -C /opt/greymhatter pull; or return 1
   else
-    sudo git -C /opt/greymhatter pull
+    if test -e /opt/greymhatter
+      printf "Removing stale /opt/greymhatter (not a git checkout)...\n"
+      sudo rm -rf /opt/greymhatter; or return 1
+    end
+    printf "Cloning greymhatter repository...\n"
+    sudo git clone https://github.com/jknyght9/greymhatter.git /opt/greymhatter; or return 1
   end
   printf "Running Ansible playbook...\n"
   sudo ansible-playbook -i /opt/greymhatter/ansible/inventory/local.ini /opt/greymhatter/ansible/playbook.yml --extra-vars greymhatter_repo_path=/opt/greymhatter
@@ -468,6 +473,10 @@ function disk-expand
 end
 
 starship init fish | source
+
+if type -q atuin
+  atuin init fish | source
+end
 
 # --- Fastfetch ---
 if not set -q SSH_CONNECTION

@@ -16,11 +16,36 @@ proxmox_storage_pool = "local-lvm"
 proxmox_iso_storage  = "local"
 proxmox_bridge       = "vmbr0"
 
+# --- ESX Connection ---
+# Used by the esxi-* Make targets. Reach the ESXi host through an SSH tunnel
+# and point esx_url at the local end (e.g. https://127.0.0.1:4004).
+esx_url       = "https://127.0.0.1:4004"
+esx_host      = "esxi01.local"  # actual ESXi hostname/IP (as it identifies itself)
+esx_username  = "root"
+esx_password  = "your-esxi-password"
+
+# --- ESX Storage & Network ---
+esx_storage     = "datastore1"           # ESXi datastore name
+esx_vm_network  = "VM Network"           # ESXi port group / network name
+
 # --- VM Specs ---
 vm_cpus      = 4
 vm_memory    = 8192
 vm_disk_size = "80G"
 
-# --- Fedora ISO (update for new releases) ---
-iso_url_amd64      = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/x86_64/iso/Fedora-Server-netinst-x86_64-42-1.1.iso"
-iso_checksum_amd64 = "none"
+# --- Fedora ISO ---
+# Each hypervisor has its own ISO reference convention. Update these when
+# bumping Fedora versions.
+fedora_version = "42"
+
+# Proxmox: <storage_id>:iso/<filename> — must already exist on the storage.
+# Pre-stage with: wget -P /var/lib/vz/template/iso/ <fedora-iso-url>
+proxmox_iso_file = "local:iso/Fedora-Server-netinst-x86_64-42-1.1.iso"
+
+# ESXi: [<datastore>] <path>/<filename> — must already exist on the datastore.
+esx_iso_file = "[datastore1] iso/Fedora-Server-netinst-x86_64-42-1.1.iso"
+
+# Fusion: HTTPS URL — Packer downloads it locally during the build.
+# Set fusion_iso_checksum to a real sha256 (or "sha256:<hex>") for verification.
+fusion_iso_url      = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/aarch64/iso/Fedora-Server-netinst-aarch64-42-1.1.iso"
+fusion_iso_checksum = "none"

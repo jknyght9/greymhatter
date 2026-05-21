@@ -6,16 +6,19 @@
 # Pipeline:
 #   make base-amd64        Stage 1: ISO → Proxmox base template (run once)
 #   make base-arm64        Stage 1: ISO → Fusion base VM (run once)
-#   make build-amd64       Stage 2: Clone template → Ansible → final template
-#   make build-arm64       Stage 2: Boot base VM → Ansible → final VM
+#   make base-esxi         Stage 1: ISO → ESXi base template (run once)
+#   make build-amd64       Stage 2: Clone template → Ansible → Proxmox template
+#   make build-arm64       Stage 2: Boot base VM → Ansible → Fusion final VM
+#   make build-esxi        Stage 2: Clone base → Ansible → ESXi template
 #   make export-amd64      Stage 3: Proxmox template → OVA for distribution
-#   make export-arm64      Stage 3: Fusion VM → OVA for distribution
+#   make export-arm64      Stage 3: Fusion VM bundle → zip for distribution
+#   make export-esxi       Stage 3: ESXi template → OVA via ovftool
 #   make dev               Fast iteration: SCP + Ansible on a live VM
 #
 # Docs:
 #   make docs              Preview MkDocs site at http://localhost:8000
 
-.PHONY: help base-amd64 base-arm64 build-amd64 build-arm64 export-amd64 export-arm64 dev docs docs-build clean
+.PHONY: help base-amd64 base-arm64 base-esxi build-amd64 build-arm64 build-esxi export-amd64 export-arm64 export-esxi dev docs docs-build clean
 
 # SSH config for dev workflow
 SSH_KEY := crypto/greymhatter
@@ -39,10 +42,47 @@ build-amd64: ## Stage 2: Clone template → Ansible → Proxmox template
 	cd packer && packer init greymhatter.pkr.hcl && \
 	packer build -only='greymhatter.proxmox-clone.greymhatter' .
 
-export-amd64: ## Stage 3: Export Proxmox template → OVA (TODO: download disk from Proxmox)
-	@echo "Export from Proxmox requires downloading the disk image first."
-	@echo "Use: qm disk export <vmid> scsi0 /tmp/greymhatter.raw"
-	@echo "Then: $(OVFTOOL) /tmp/greymhatter.vmx output/greymhatter-amd64.ova"
+export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
+	@mkdir -p output; \
+	DATE=$$(date +%Y%m%d); N=1; \
+	while [ -e output/greymhatter-f42-amd64-$$DATE.$$N.ova ]; do N=$$((N+1)); done; \
+	OUT=output/greymhatter-f42-amd64-$$DATE.$$N.ova; \
+	bash scripts/export-amd64-ova.sh $$OUT
+
+# =============================================================================
+# ESXi (AMD64) — Packer talks to ESXi via SSH-tunnelled vSphere API
+# =============================================================================
+
+base-esxi: ## Stage 1: ISO → ESXi base template (run once)
+	cp packer/http/ks.cfg packer/esxi/ks.cfg
+	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
+	packer build -var-file=../packer.auto.pkrvars.hcl \
+		-only='base.vsphere-iso.fedora-esxi-base' greymhatter-esxi.pkr.hcl
+	rm -f packer/esxi/ks.cfg
+
+build-esxi: ## Stage 2: Clone base → Ansible → ESXi template
+	cp packer/http/ks.cfg packer/esxi/ks.cfg
+	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
+	packer build -var-file=../packer.auto.pkrvars.hcl \
+		-only='greymhatter.vsphere-clone.greymhatter-esxi' greymhatter-esxi.pkr.hcl
+	rm -f packer/esxi/ks.cfg
+
+export-esxi: ## Stage 3: ESXi template → OVA via ovftool
+	@mkdir -p output; \
+	DATE=$$(date +%Y%m%d); N=1; \
+	while [ -e output/greymhatter-f42-esxi-$$DATE.$$N.ova ]; do N=$$((N+1)); done; \
+	OUT=output/greymhatter-f42-esxi-$$DATE.$$N.ova; \
+	ESX_URL=$$(awk -F'"' '/^esx_url/{print $$2}' packer/packer.auto.pkrvars.hcl); \
+	ESX_USER=$$(awk -F'"' '/^esx_username/{print $$2}' packer/packer.auto.pkrvars.hcl); \
+	ESX_PASS=$$(awk -F'"' '/^esx_password/{print $$2}' packer/packer.auto.pkrvars.hcl); \
+	ESX_HOST=$$(echo "$$ESX_URL" | sed -E 's|https?://||'); \
+	VM=greymhatter-f42-esxi-$$(date +%Y%m%d); \
+	ENC_USER=$$(printf '%s' "$$ESX_USER" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
+	ENC_PASS=$$(printf '%s' "$$ESX_PASS" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
+	$(OVFTOOL) --noSSLVerify "vi://$$ENC_USER:$$ENC_PASS@$$ESX_HOST/$$VM" $$OUT
+	@echo ""
+	@echo "  OVA exported: output/greymhatter-f42-esxi-*.ova"
+	@echo ""
 
 # =============================================================================
 # ARM64 (VMware Fusion) — runs Packer natively on Mac
@@ -70,11 +110,23 @@ build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 		-var "docker_registry_mirror=$$DOCKER_MIRROR" \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
-export-arm64: ## Stage 3: Fusion VM → OVA for distribution
-	$(OVFTOOL) output/fusion-arm64/greymhatter-f42-arm64.vmx output/greymhatter-f42-arm64.ova
-	@echo ""
-	@echo "  OVA exported: output/greymhatter-f42-arm64.ova"
-	@echo ""
+export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
+	@# OVA can't be used here: ovftool has no ARM osType in its mapping table,
+	@# so any OVA imported into Fusion ends up with guestos="other" and refuses
+	@# to power on ("requires x86 machine architecture"). Ship the .vmwarevm
+	@# bundle directly so the original guestos="arm-fedora-64" is preserved.
+	@DATE=$$(date +%Y%m%d); N=1; \
+	while [ -e output/greymhatter-f42-arm64-$$DATE.$$N.zip ]; do N=$$((N+1)); done; \
+	OUT=greymhatter-f42-arm64-$$DATE.$$N.zip; \
+	sed -i.bak 's/^displayname = "Clone of greymhatter-f42-arm64-base"$$/displayname = "greymhatter-f42-arm64"/' output/fusion-arm64/greymhatter-f42-arm64.vmx && \
+	rm -f output/fusion-arm64/greymhatter-f42-arm64.vmx.bak && \
+	cd output && mv fusion-arm64 greymhatter-f42-arm64.vmwarevm && \
+	zip -r $$OUT greymhatter-f42-arm64.vmwarevm && \
+	mv greymhatter-f42-arm64.vmwarevm fusion-arm64; \
+	echo ""; \
+	echo "  Bundle exported: output/$$OUT"; \
+	echo "  Recipients: extract, then double-click the .vmx file in Fusion."; \
+	echo ""
 
 # =============================================================================
 # Dev workflow — fast iteration on a live VM
