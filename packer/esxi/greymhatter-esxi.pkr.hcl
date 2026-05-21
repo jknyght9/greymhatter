@@ -139,7 +139,7 @@ source "vsphere-iso" "fedora-esxi-base" {
   CPUs            = var.vm_cpus
   RAM             = var.vm_memory
   RAM_reserve_all = false
-  firmware        = "bios"
+  firmware        = "efi"
   video_ram       = 16384 # 16 MB SVGA — default 4 MB caps the guest at 1280x768
 
   datastore = var.esx_storage
