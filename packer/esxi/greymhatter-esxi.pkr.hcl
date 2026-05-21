@@ -184,7 +184,7 @@ source "vsphere-iso" "fedora-esxi-base" {
   ssh_timeout  = "30m"
 
   shutdown_command    = "shutdown -P now"
-  convert_to_template = true
+  convert_to_template = false # standalone ESXi (no vCenter) lacks the MarkAsTemplate API. vsphere-clone clones from a regular VM just fine.
 }
 
 # ===========================================================================
@@ -208,7 +208,7 @@ source "vsphere-clone" "greymhatter-esxi" {
   ssh_timeout  = "10m"
 
   shutdown_command    = "shutdown -P now"
-  convert_to_template = true
+  convert_to_template = false # standalone ESXi (no vCenter) lacks the MarkAsTemplate API. vsphere-clone clones from a regular VM just fine.
 }
 
 # ===========================================================================
