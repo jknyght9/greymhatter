@@ -155,6 +155,12 @@ source "vsphere-iso" "fedora-esxi-base" {
     network_card = "vmxnet3"
   }
 
+  # On standalone ESXi (no vCenter), Packer's "Setting temporary boot order"
+  # path can leave the VM trying HDD first → "Operating system not found"
+  # before GRUB ever loads. Explicit boot_order makes the CD-ROM
+  # authoritative regardless of how the API call lands.
+  boot_order = "cdrom,disk"
+
   iso_paths = [var.esx_iso_file]
 
   # Kickstart attached as a second CD labelled OEMDRV so anaconda picks it up
