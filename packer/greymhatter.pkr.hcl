@@ -103,6 +103,10 @@ source "proxmox-clone" "greymhatter" {
   token                    = var.proxmox_token
   insecure_skip_tls_verify = true
 
+  # Clone task timeout — default 60s is too short on a busy cluster;
+  # qmclone of a >2GB template can take longer if storage is contended.
+  task_timeout = "10m"
+
   # Clone from base template
   clone_vm_id = var.base_vm_id
   vm_name     = "greymhatter-f${var.fedora_version}-amd64-${formatdate("YYYYMMDD", timestamp())}"
