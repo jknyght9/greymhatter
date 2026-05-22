@@ -1,0 +1,7 @@
+---
+# Shared headers for GitHub API calls in the tools role.
+# Anonymous: 60 requests/hour per IP. Authenticated: 5000/hour per token.
+# When github_token is unset (empty string), headers becomes an empty dict
+# and the uri module skips it — no functional change vs. anonymous behavior.
+
+github_api_headers: "{{ {'Authorization': 'Bearer ' + github_token} if (github_token | default('') | length > 0) else {} }}"

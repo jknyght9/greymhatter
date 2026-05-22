@@ -11,6 +11,7 @@
       ansible.builtin.uri:
         url: "https://api.github.com/repos/Yamato-Security/hayabusa/releases/tags/v{{ hayabusa_version }}"
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: hayabusa_release
 
     - name: Set Hayabusa download URL

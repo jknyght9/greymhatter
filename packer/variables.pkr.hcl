@@ -142,3 +142,16 @@ variable "docker_registry_mirror" {
   type    = string
   default = ""
 }
+
+# --- GitHub PAT (optional but recommended) ---
+# Anonymous GitHub API is 60 req/hr per IP — easy to exhaust when iterating
+# (tools role makes 5 release-lookup calls per build). Authenticated PAT
+# (classic, no scopes) gets 5000 req/hr.
+# Get one at: github.com → Settings → Developer settings →
+#             Personal access tokens (classic) → Generate new token
+
+variable "github_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
