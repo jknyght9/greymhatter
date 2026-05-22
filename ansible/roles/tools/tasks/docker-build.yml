@@ -21,7 +21,7 @@
 
     - name: Build tools container (this takes several minutes)
       ansible.builtin.command:
-        cmd: docker build -f /tmp/Dockerfile.builder -t greymhatter-builder /tmp
+        cmd: docker build --network=host -f /tmp/Dockerfile.builder -t greymhatter-builder /tmp
       register: builder_build
       changed_when: builder_build.rc == 0
       async: 1800
