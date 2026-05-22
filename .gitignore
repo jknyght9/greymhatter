@@ -36,3 +36,4 @@ tests/*.e01
 docs/site/
 GeoIP.conf
 .registry-mirror.env
+packer/esxi/ks.cfg
