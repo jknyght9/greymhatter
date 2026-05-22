@@ -11,6 +11,7 @@
       ansible.builtin.uri:
         url: "https://api.github.com/repos/mandiant/capa/releases/tags/v{{ capa_version }}"
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: capa_release
 
     - name: Set capa download URL

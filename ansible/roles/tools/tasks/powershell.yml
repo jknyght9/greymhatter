@@ -35,6 +35,7 @@
       ansible.builtin.uri:
         url: https://api.github.com/repos/PowerShell/PowerShell/releases/latest
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: pwsh_release
       when: not pwsh_check.stat.exists
 
