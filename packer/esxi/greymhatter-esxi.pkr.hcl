@@ -123,11 +123,14 @@ packer {
 # Strip scheme so the plugin can build its own SDK URL
 locals {
   vcenter_endpoint = trimprefix(trimprefix(var.esx_url, "https://"), "http://")
+  base_vm_name     = "greymhatter-f${var.fedora_version}-esxi-base"
   final_vm_name    = "greymhatter-f${var.fedora_version}-esxi-${formatdate("YYYYMMDD", timestamp())}"
 }
 
 # ===========================================================================
-# Stage 1: Base VM (ISO install only)
+# Stage 1: Base VM (ISO install only) — `make base-esxi`
+# Builds a clean Fedora install with kickstart, leaves it powered off.
+# Re-runs of build-esxi clone from this VM rather than re-installing.
 # ===========================================================================
 
 source "vsphere-iso" "fedora-esxi-base" {
@@ -137,9 +140,9 @@ source "vsphere-iso" "fedora-esxi-base" {
   insecure_connection = true
   host                = var.esx_host
 
-  vm_name       = local.final_vm_name
+  vm_name       = local.base_vm_name
   guest_os_type = "fedora64Guest"
-  notes         = "GreymHatter ${formatdate("YYYY-MM-DD", timestamp())} (built by Packer)"
+  notes         = "GreymHatter base (built by Packer) — clone source for build-esxi"
 
   CPUs            = var.vm_cpus
   RAM             = var.vm_memory
@@ -193,22 +196,69 @@ source "vsphere-iso" "fedora-esxi-base" {
 }
 
 # ===========================================================================
-# Build: ISO install + Ansible provisioning (one-shot)
-#
-# Standalone ESXi (no vCenter) doesn't expose the Clone or MarkAsTemplate
-# APIs, so we can't do the Proxmox/Fusion "base template → clone → provision"
-# pattern. Instead this combines both stages into a single vsphere-iso run:
-# install Fedora from ISO, then run Ansible against the freshly-installed
-# VM, then shut down. Iteration cost is ~50 min per build (vs ~25 min on
-# the staged hypervisors) — use `make dev DEV_VM_IP=<ip>` against the
-# resulting VM for fast inner-loop work after the first build completes.
+# Stage 2: Provision (clone base, run Ansible) — `make build-esxi`
+# Clones from greymhatter-f42-esxi-base, runs the playbook, leaves the
+# result as a powered-off VM named greymhatter-f42-esxi-<DATE>.
+# `linked_clone = false` does a full (deep) copy via vmkfstools — this
+# is the operation standalone ESXi supports. linked_clone would require
+# either a template source or a snapshot, neither of which standalone ESXi
+# can produce reliably.
+# ===========================================================================
+
+source "vsphere-clone" "greymhatter-esxi" {
+  vcenter_server      = local.vcenter_endpoint
+  username            = var.esx_username
+  password            = var.esx_password
+  insecure_connection = true
+  host                = var.esx_host
+
+  template     = local.base_vm_name
+  vm_name      = local.final_vm_name
+  notes        = "GreymHatter ${formatdate("YYYY-MM-DD", timestamp())} (built by Packer)"
+  datastore    = var.esx_storage
+  linked_clone = false
+
+  ssh_username = "root"
+  ssh_password = var.ssh_password
+  ssh_timeout  = "30m"
+
+  shutdown_command    = "shutdown -P now"
+  convert_to_template = false
+}
+
+# ===========================================================================
+# Build: Stage 1 — Base VM
+# ===========================================================================
+
+build {
+  name = "base"
+
+  sources = [
+    "source.vsphere-iso.fedora-esxi-base",
+  ]
+
+  # Base VM is left at a clean Fedora install with ansible-core ready to go.
+  # No provisioning here — that's stage 2's job. The post-install script in
+  # ks.cfg has already installed ansible-core + git.
+  provisioner "shell" {
+    inline = [
+      "echo 'Base VM ready.'",
+      "ansible --version",
+      "systemctl is-enabled sshd",
+      "systemctl is-enabled vmtoolsd"
+    ]
+  }
+}
+
+# ===========================================================================
+# Build: Stage 2 — Provision
 # ===========================================================================
 
 build {
   name = "greymhatter"
 
   sources = [
-    "source.vsphere-iso.fedora-esxi-base",
+    "source.vsphere-clone.greymhatter-esxi",
   ]
 
   provisioner "shell" {
