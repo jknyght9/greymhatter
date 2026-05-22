@@ -155,3 +155,16 @@ variable "github_token" {
   default   = ""
   sensitive = true
 }
+
+# --- Docker daemon MTU (optional, ESXi-specific workaround) ---
+# On networks with VXLAN/overlay encapsulation (typical of ESXi distributed
+# vSwitches), the docker0 bridge's default MTU 1500 causes large TCP packets
+# from inside containers to be silently dropped — `dnf install` in a container
+# hangs at "Curl error (28): Timeout" even though the host VM has full
+# internet access. 1450 leaves room for typical overlay overhead.
+# Leave unset on Proxmox/Fusion where this isn't needed.
+
+variable "docker_mtu" {
+  type    = string
+  default = ""
+}

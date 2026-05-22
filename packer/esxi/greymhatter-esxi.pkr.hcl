@@ -111,6 +111,11 @@ variable "github_token" {
   sensitive = true
 }
 
+variable "docker_mtu" {
+  type    = string
+  default = ""
+}
+
 # --- IP of the cloned VM (populated by scripts/clone-esxi.sh via Makefile) ---
 
 variable "build_vm_ip" {
@@ -278,7 +283,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token}'",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token} docker_mtu=${var.docker_mtu}'",
     ]
   }
 
