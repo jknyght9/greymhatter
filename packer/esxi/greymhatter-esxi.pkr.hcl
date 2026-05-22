@@ -111,6 +111,14 @@ variable "github_token" {
   sensitive = true
 }
 
+# --- IP of the cloned VM (populated by scripts/clone-esxi.sh via Makefile) ---
+
+variable "build_vm_ip" {
+  type        = string
+  description = "IP of the VM to provision. Set by scripts/clone-esxi.sh and passed in by `make build-esxi`. Required for the `greymhatter` build."
+  default     = ""
+}
+
 packer {
   required_plugins {
     vsphere = {
@@ -196,34 +204,22 @@ source "vsphere-iso" "fedora-esxi-base" {
 }
 
 # ===========================================================================
-# Stage 2: Provision (clone base, run Ansible) — `make build-esxi`
-# Clones from greymhatter-f42-esxi-base, runs the playbook, leaves the
-# result as a powered-off VM named greymhatter-f42-esxi-<DATE>.
-# `linked_clone = false` does a full (deep) copy via vmkfstools — this
-# is the operation standalone ESXi supports. linked_clone would require
-# either a template source or a snapshot, neither of which standalone ESXi
-# can produce reliably.
+# Stage 2: Provision (Ansible against a pre-cloned VM) — `make build-esxi`
+#
+# Standalone ESXi (no vCenter) doesn't expose the Clone API that
+# Packer's vsphere-clone source uses, so we clone the base VM externally
+# via ovftool (scripts/clone-esxi.sh) and use Packer's `null` source to
+# run Ansible over SSH against the resulting IP.
+#
+# The clone script handles: ovftool clone, power on, vmtools IP polling.
+# Packer here only owns the provisioning + cleanup steps.
 # ===========================================================================
 
-source "vsphere-clone" "greymhatter-esxi" {
-  vcenter_server      = local.vcenter_endpoint
-  username            = var.esx_username
-  password            = var.esx_password
-  insecure_connection = true
-  host                = var.esx_host
-
-  template     = local.base_vm_name
-  vm_name      = local.final_vm_name
-  notes        = "GreymHatter ${formatdate("YYYY-MM-DD", timestamp())} (built by Packer)"
-  datastore    = var.esx_storage
-  linked_clone = false
-
+source "null" "greymhatter-esxi-clone" {
+  ssh_host     = var.build_vm_ip
   ssh_username = "root"
   ssh_password = var.ssh_password
-  ssh_timeout  = "30m"
-
-  shutdown_command    = "shutdown -P now"
-  convert_to_template = false
+  ssh_timeout  = "10m"
 }
 
 # ===========================================================================
@@ -258,7 +254,7 @@ build {
   name = "greymhatter"
 
   sources = [
-    "source.vsphere-clone.greymhatter-esxi",
+    "source.null.greymhatter-esxi-clone",
   ]
 
   provisioner "shell" {
@@ -315,6 +311,16 @@ build {
       "sync",
       "truncate -s 0 /etc/machine-id",
       "sync"
+    ]
+  }
+
+  # null source has no managed VM lifecycle, so we explicitly shut down at
+  # the end. nohup + & detaches so the SSH disconnect doesn't fail the task.
+  provisioner "shell" {
+    inline = [
+      "echo 'Shutting down VM (nohup so SSH can disconnect cleanly)'",
+      "nohup sh -c 'sleep 2 && shutdown -h now' >/dev/null 2>&1 &",
+      "sleep 1"
     ]
   }
 }

@@ -60,11 +60,19 @@ base-esxi: ## Stage 1: ISO → ESXi base VM (run once; iteration uses build-esxi
 		-only='base.vsphere-iso.fedora-esxi-base' greymhatter-esxi.pkr.hcl
 	rm -f packer/esxi/ks.cfg
 
-build-esxi: ## Stage 2: Clone base VM → Ansible → final ESXi VM
-	cp packer/http/ks.cfg packer/esxi/ks.cfg
+build-esxi: ## Stage 2: ovftool clone base → Ansible → final ESXi VM
+	@# Standalone ESXi has no Clone API, so cloning happens via ovftool
+	@# in scripts/clone-esxi.sh. The IP of the cloned VM is captured and
+	@# passed to Packer's null source for the Ansible + cleanup steps.
+	@echo "==> Cloning base VM via ovftool..."
+	@BUILD_IP=$$(scripts/clone-esxi.sh); \
+	if [ -z "$$BUILD_IP" ]; then echo "ERROR: clone-esxi.sh produced no IP"; exit 1; fi; \
+	echo "==> Provisioning $$BUILD_IP via Packer null source"; \
+	cp packer/http/ks.cfg packer/esxi/ks.cfg; \
 	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
 	packer build -var-file=../packer.auto.pkrvars.hcl \
-		-only='greymhatter.vsphere-clone.greymhatter-esxi' greymhatter-esxi.pkr.hcl
+		-var "build_vm_ip=$$BUILD_IP" \
+		-only='greymhatter.null.greymhatter-esxi-clone' greymhatter-esxi.pkr.hcl; \
 	rm -f packer/esxi/ks.cfg
 
 export-esxi: ## Stage 3: ESXi template → OVA via ovftool
