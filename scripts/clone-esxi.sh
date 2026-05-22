@@ -25,7 +25,6 @@ ESX_URL=$(awk -F'"' '/^esx_url[[:space:]]*=/{print $2}' "$PKRVARS")
 ESX_USER=$(awk -F'"' '/^esx_username[[:space:]]*=/{print $2}' "$PKRVARS")
 ESX_PASS=$(awk -F'"' '/^esx_password[[:space:]]*=/{print $2}' "$PKRVARS")
 ESX_DS=$(awk -F'"' '/^esx_storage[[:space:]]*=/{print $2}' "$PKRVARS")
-ESX_NETWORK=$(awk -F'"' '/^esx_vm_network[[:space:]]*=/{print $2}' "$PKRVARS")
 
 # Strip protocol → host:port for use in vi:// URLs and govc
 ESX_HOSTNAME=$(printf '%s' "$ESX_URL" | sed -E 's|^https?://||')
@@ -66,7 +65,6 @@ echo "==> Cloning $SOURCE_VM → $TARGET_VM via ovftool" >&2
     --datastore="$ESX_DS" \
     --diskMode=thin \
     --name="$TARGET_VM" \
-    --net:"VM Network=$ESX_NETWORK" \
     "vi://${ENC_USER}:${ENC_PASS}@${ESX_HOSTNAME}/${SOURCE_VM}" \
     "vi://${ENC_USER}:${ENC_PASS}@${ESX_HOSTNAME}/" >&2
 
