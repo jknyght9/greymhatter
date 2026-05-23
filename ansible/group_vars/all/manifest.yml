@@ -80,10 +80,11 @@ expected_docker_images:
     source: containers/clamav-hashbuilder.yml
     action: build
 
-  # Volatility 2 (x86_64 only — Python 2.7 base not built for ARM)
+  # Volatility 2 — python:2.7-slim is multi-arch on Docker Hub so the
+  # builder image (and the VOL2 imageinfo/pslist runtime) works on aarch64.
   - repo: greymhatter/volatility2
     tag_any: true
-    arch: [x86_64]
+    arch: [x86_64, aarch64]
     source: containers/volatility2.yml
     action: build
 
@@ -263,7 +264,7 @@ expected_binaries:
 
   - path: /usr/local/bin/vol2
     probe: "test -x /usr/local/bin/vol2"
-    arch: [x86_64]
+    arch: [x86_64, aarch64]
     source: containers/volatility2.yml
 
   # Sleuthkit (compiled via Docker builder)

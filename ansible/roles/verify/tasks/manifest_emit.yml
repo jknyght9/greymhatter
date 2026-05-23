@@ -38,7 +38,6 @@
       ARM64 (aarch64) adaptations:
         - Yeti unavailable (requires x86_64 SSE4.2/AVX)
         - FLOSS via pip (no standalone binary)
-        - Volatility 2 unavailable (Python 2.7 not built for ARM)
         - vt-cli compiled from source via Go
         - Timesketch image built from source (greymhatter/timesketch:arm64)
       {% else %}
