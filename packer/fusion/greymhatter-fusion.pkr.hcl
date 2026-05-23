@@ -155,8 +155,18 @@ build {
     "source.vmware-iso.fedora-arm64-base",
   ]
 
+  # Inject project SSH public key for passwordless dev access — matches
+  # the Proxmox base flow, lets `make smoke/verify/test DEV_VM_IP=<ip>`
+  # work without sshpass fallback.
+  provisioner "file" {
+    source      = "${path.root}/../../crypto/greymhatter.pub"
+    destination = "/home/hatter/.ssh/authorized_keys"
+  }
+
   provisioner "shell" {
     inline = [
+      "chown hatter:hatter /home/hatter/.ssh/authorized_keys",
+      "chmod 600 /home/hatter/.ssh/authorized_keys",
       "echo 'Base VM build complete'",
       "ansible --version",
       "systemctl is-enabled qemu-guest-agent || true",

@@ -157,51 +157,34 @@ dev: ## SCP repo + run Ansible + reboot (usage: make dev DEV_VM_IP=<ip>)
 # Testing — run against a deployed VM
 # =============================================================================
 
+# Detect SSH auth method once, then use the same SSH/SCP for the whole target.
+# Without this, the test script's non-zero exit (real test failure) triggers
+# the `|| sshpass` fallback and runs the entire suite a second time.
+define _test_runner
+	@if [ -z "$(DEV_VM_IP)" ]; then echo ""; echo "  Usage: make $@ DEV_VM_IP=<ip>"; echo "  Options: TEST=test1|test2|test3|all (default: all)"; echo ""; exit 1; fi
+	@set -e; \
+	if ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i $(SSH_KEY) hatter@$(DEV_VM_IP) true 2>/dev/null; then \
+		SSH="ssh $(SSH_OPTS)"; SCP="scp $(SSH_OPTS)"; \
+		echo "==> Using SSH key auth"; \
+	else \
+		SSH="sshpass -p H@tt3r123! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"; \
+		SCP="sshpass -p H@tt3r123! scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"; \
+		echo "==> Falling back to password auth"; \
+	fi; \
+	echo "==> Uploading test data to $(DEV_VM_IP)..."; \
+	$$SSH hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'; \
+	for f in tests/*.zip; do echo "  Copying $$f..."; $$SCP "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; done; \
+	echo "==> Uploading test script..."; \
+	$$SCP tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/; \
+	echo "==> Running tests..."; \
+	$$SSH hatter@$(DEV_VM_IP) "sudo bash /opt/share/test-data/run-tests.sh --$(TEST) $(1)"
+endef
+
 test: ## Run automated integration tests (usage: make test DEV_VM_IP=<ip>)
-	@if [ -z "$(DEV_VM_IP)" ]; then \
-		echo ""; \
-		echo "  Usage: make test DEV_VM_IP=<ip>"; \
-		echo "  Options: TEST=test1|test2|test3|all (default: all)"; \
-		echo ""; \
-		exit 1; \
-	fi
-	@echo "==> Uploading test data to $(DEV_VM_IP)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data' || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'
-	@for f in tests/*.zip; do \
-		echo "  Copying $$f..."; \
-		scp $(SSH_OPTS) "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-		sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; \
-	done
-	@echo "==> Uploading test script..."
-	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/
-	@echo "==> Running tests..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST)' 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST)'
+	$(call _test_runner,)
 
 test-manual: ## Run tests with verbose output for manual verification (usage: make test-manual DEV_VM_IP=<ip>)
-	@if [ -z "$(DEV_VM_IP)" ]; then \
-		echo ""; \
-		echo "  Usage: make test-manual DEV_VM_IP=<ip>"; \
-		echo "  Options: TEST=test1|test2|test3|all (default: all)"; \
-		echo ""; \
-		exit 1; \
-	fi
-	@echo "==> Uploading test data to $(DEV_VM_IP)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data' || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'
-	@for f in tests/*.zip; do \
-		echo "  Copying $$f..."; \
-		scp $(SSH_OPTS) "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-		sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; \
-	done
-	@echo "==> Uploading test script..."
-	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/
-	@echo "==> Running tests (verbose)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST) --verbose' 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST) --verbose'
+	$(call _test_runner,--verbose)
 
 # Default test scope
 TEST ?= all
