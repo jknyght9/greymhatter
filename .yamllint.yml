@@ -1,0 +1,28 @@
+---
+# yamllint config for GreymHatter.
+# Relaxed defaults — Ansible playbooks often have long inline strings and
+# block scalars that the strict profile flags excessively.
+
+extends: default
+
+rules:
+  line-length:
+    max: 200
+    level: warning
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  document-start: disable
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: false
+
+ignore: |
+  output/
+  .git/
+  ansible/roles/*/templates/

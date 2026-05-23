@@ -3,6 +3,7 @@
   ansible.builtin.command: pip3 show volatility3
   register: vol3_check
   changed_when: false
+  # Probe: rc=0 means installed; rc=1 means absent (expected first run).
   failed_when: false
 
 - name: Install Volatility 3
@@ -51,23 +52,19 @@
         state: directory
         mode: "0755"
 
-    - name: Download Windows symbol tables
+    - name: Download Volatility 3 symbol tables
       ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
-        dest: "{{ vol3_path.stdout }}/symbols/windows.zip"
+        url: "https://downloads.volatilityfoundation.org/volatility3/symbols/{{ item }}.zip"
+        dest: "{{ vol3_path.stdout }}/symbols/{{ item }}.zip"
         mode: "0644"
-
-    - name: Download Linux symbol tables
-      ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
-        dest: "{{ vol3_path.stdout }}/symbols/linux.zip"
-        mode: "0644"
-
-    - name: Download Mac symbol tables
-      ansible.builtin.get_url:
-        url: https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
-        dest: "{{ vol3_path.stdout }}/symbols/mac.zip"
-        mode: "0644"
+      retries: 3
+      delay: 10
+      register: vol3_symbol_download
+      until: vol3_symbol_download is succeeded
+      loop:
+        - windows
+        - linux
+        - mac
 
     # Pre-build symbol cache for the hatter user (avoids minutes-long delay on first run)
     - name: Create vol3 cache directory for user
@@ -78,14 +75,14 @@
         group: "{{ greymhatter_username }}"
         mode: "0755"
 
-    - name: Pre-build Volatility 3 symbol cache
-      ansible.builtin.shell:
-        cmd: vol -f /dev/null windows.info 2>/dev/null || true
+    - name: Warm Volatility 3 module cache (touches imports + symbol dirs)
+      ansible.builtin.command:
+        cmd: vol --help
       become_user: "{{ greymhatter_username }}"
       environment:
         HOME: "/home/{{ greymhatter_username }}"
-      changed_when: true
-      failed_when: false
+      register: vol3_warm
+      changed_when: vol3_warm.rc == 0
 
     - name: Clean up Volatility 3 source
       ansible.builtin.file:

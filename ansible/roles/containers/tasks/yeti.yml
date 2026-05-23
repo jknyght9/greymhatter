@@ -28,11 +28,31 @@
         chdir: /opt/yeti-docker/prod
         creates: /opt/yeti-docker/prod/.env
 
+    # Pre-pull all images so the OVA is self-contained — students can run
+    # `startyeti` offline without waiting on a registry. `docker compose run`
+    # below only pulls api's dependency chain, missing yeti-frontend.
+    - name: Pre-pull Yeti container images
+      ansible.builtin.shell:
+        cmd: docker compose pull
+        chdir: /opt/yeti-docker/prod
+      register: yeti_pull
+      retries: 3
+      delay: 10
+      until: yeti_pull.rc == 0
+      changed_when: yeti_pull.stderr is search('(Pulling|Pulled|Downloaded)')
+
     - name: Generate Yeti auth secret key if missing
       ansible.builtin.shell:
-        cmd: grep -q YETI_AUTH_SECRET_KEY .env || echo "YETI_AUTH_SECRET_KEY=$(openssl rand -hex 32)" >> .env
+        cmd: >-
+          if ! grep -q YETI_AUTH_SECRET_KEY .env; then
+            echo "YETI_AUTH_SECRET_KEY=$(openssl rand -hex 32)" >> .env;
+            echo "GENERATED";
+          else
+            echo "EXISTS";
+          fi
         chdir: /opt/yeti-docker/prod
-      changed_when: true
+      register: yeti_secret_gen
+      changed_when: "'GENERATED' in yeti_secret_gen.stdout"
 
     - name: Check if Yeti user already exists
       ansible.builtin.shell:
@@ -40,6 +60,7 @@
         chdir: /opt/yeti-docker/prod
       register: yeti_user_check
       changed_when: false
+      # Probe: rc=0 means user exists; rc=1 means absent (expected).
       failed_when: false
 
     - name: Create Yeti user
@@ -50,16 +71,14 @@
         chdir: /opt/yeti-docker/prod
       register: yeti_user_output
       when: yeti_user_check.rc != 0
-      failed_when: false
+      changed_when: yeti_user_output.rc == 0
 
     - name: Extract Yeti API key
       ansible.builtin.set_fact:
-        yeti_api_key: "{{ yeti_user_output.stdout | regex_search('API key: (.+)', '\\1') | first }}"
+        yeti_api_key: "{{ (yeti_user_output.stdout | regex_findall('API key: ([^\\s]+)') | first) | default('') }}"
       when:
         - yeti_user_output is not skipped
         - yeti_user_output.stdout is defined
-        - "'API key' in yeti_user_output.stdout"
-      failed_when: false
 
     - name: Check if Timesketch config exists
       ansible.builtin.stat:
@@ -75,8 +94,8 @@
           YETI_API_KEY = '{{ yeti_api_key | default("") }}'
       when:
         - yeti_api_key is defined
+        - yeti_api_key | length > 0
         - ts_conf.stat.exists
-      failed_when: false
 
     # Stop Yeti (manual start via fish function)
     - name: Stop Yeti (starts manually via startyeti)
@@ -84,4 +103,3 @@
         cmd: docker compose down
         chdir: /opt/yeti-docker/prod
       changed_when: false
-      failed_when: false

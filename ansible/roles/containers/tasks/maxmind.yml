@@ -29,9 +29,8 @@
     mode: "0600"
   when: maxmind_account_id | length > 0
 
-- name: Start MaxMind GeoIP updater
-  ansible.builtin.shell:
-    cmd: docker compose up -d
-    chdir: /opt/maxmind-geoipupdate
-  when: maxmind_account_id | length > 0
-  failed_when: false
+# Intentionally NOT starting the container during build.
+# MaxMind's free tier limits GeoLite2 downloads to 2000/day per license key
+# — easy to exhaust across build iterations. The container is configured
+# but left stopped. The deployed user runs `docker compose up -d` in
+# /opt/maxmind-geoipupdate post-deploy when they want fresh geoip data.

@@ -35,3 +35,4 @@ tests/*.e01
 # MkDocs
 docs/site/
 GeoIP.conf
+.registry-mirror.env

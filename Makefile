@@ -98,10 +98,18 @@ base-arm64: ## Stage 1: ISO → Fusion base VM (run once)
 build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 	@MAXMIND_ID=$$(grep '^maxmind_account_id' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	MAXMIND_KEY=$$(grep '^maxmind_license_key' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	DOCKER_USER=$$(grep '^docker_hub_username' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	DOCKER_TOKEN=$$(grep '^docker_hub_token' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	DOCKER_MIRROR=$$(grep '^docker_registry_mirror' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
+	GITHUB_TOKEN=$$(grep '^github_token' packer/packer.auto.pkrvars.hcl 2>/dev/null | awk -F'"' '{print $$2}'); \
 	cd packer/fusion && packer init greymhatter-fusion.pkr.hcl && \
 	packer build -var 'headless=false' \
 		-var "maxmind_account_id=$$MAXMIND_ID" \
 		-var "maxmind_license_key=$$MAXMIND_KEY" \
+		-var "docker_hub_username=$$DOCKER_USER" \
+		-var "docker_hub_token=$$DOCKER_TOKEN" \
+		-var "docker_registry_mirror=$$DOCKER_MIRROR" \
+		-var "github_token=$$GITHUB_TOKEN" \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
 export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
@@ -149,54 +157,82 @@ dev: ## SCP repo + run Ansible + reboot (usage: make dev DEV_VM_IP=<ip>)
 # Testing — run against a deployed VM
 # =============================================================================
 
+# Detect SSH auth method once, then use the same SSH/SCP for the whole target.
+# Without this, the test script's non-zero exit (real test failure) triggers
+# the `|| sshpass` fallback and runs the entire suite a second time.
+define _test_runner
+	@if [ -z "$(DEV_VM_IP)" ]; then echo ""; echo "  Usage: make $@ DEV_VM_IP=<ip>"; echo "  Options: TEST=test1|test3|all (default: all)"; echo ""; exit 1; fi
+	@set -e; \
+	if ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i $(SSH_KEY) hatter@$(DEV_VM_IP) true 2>/dev/null; then \
+		SSH="ssh $(SSH_OPTS)"; SCP="scp $(SSH_OPTS)"; \
+		echo "==> Using SSH key auth"; \
+	else \
+		SSH="sshpass -p H@tt3r123! ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"; \
+		SCP="sshpass -p H@tt3r123! scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"; \
+		echo "==> Falling back to password auth"; \
+	fi; \
+	echo "==> Uploading test data to $(DEV_VM_IP)..."; \
+	$$SSH hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'; \
+	for f in tests/*.zip; do echo "  Copying $$f..."; $$SCP "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; done; \
+	echo "==> Uploading test script..."; \
+	$$SCP tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/; \
+	echo "==> Running tests..."; \
+	$$SSH hatter@$(DEV_VM_IP) "sudo bash /opt/share/test-data/run-tests.sh --$(TEST) $(1)"
+endef
+
 test: ## Run automated integration tests (usage: make test DEV_VM_IP=<ip>)
-	@if [ -z "$(DEV_VM_IP)" ]; then \
-		echo ""; \
-		echo "  Usage: make test DEV_VM_IP=<ip>"; \
-		echo "  Options: TEST=test1|test2|test3|all (default: all)"; \
-		echo ""; \
-		exit 1; \
-	fi
-	@echo "==> Uploading test data to $(DEV_VM_IP)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data' || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'
-	@for f in tests/*.zip; do \
-		echo "  Copying $$f..."; \
-		scp $(SSH_OPTS) "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-		sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; \
-	done
-	@echo "==> Uploading test script..."
-	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/
-	@echo "==> Running tests..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST)' 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST)'
+	$(call _test_runner,)
 
 test-manual: ## Run tests with verbose output for manual verification (usage: make test-manual DEV_VM_IP=<ip>)
-	@if [ -z "$(DEV_VM_IP)" ]; then \
-		echo ""; \
-		echo "  Usage: make test-manual DEV_VM_IP=<ip>"; \
-		echo "  Options: TEST=test1|test2|test3|all (default: all)"; \
-		echo ""; \
-		exit 1; \
-	fi
-	@echo "==> Uploading test data to $(DEV_VM_IP)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data' || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo mkdir -p /opt/share/test-data && sudo chown hatter /opt/share/test-data'
-	@for f in tests/*.zip; do \
-		echo "  Copying $$f..."; \
-		scp $(SSH_OPTS) "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-		sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no "$$f" hatter@$(DEV_VM_IP):/opt/share/test-data/; \
-	done
-	@echo "==> Uploading test script..."
-	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/ 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' scp -o StrictHostKeyChecking=no tests/run-tests.sh hatter@$(DEV_VM_IP):/opt/share/test-data/
-	@echo "==> Running tests (verbose)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST) --verbose' 2>/dev/null || \
-	sshpass -p 'H@tt3r123!' ssh -o StrictHostKeyChecking=no hatter@$(DEV_VM_IP) 'sudo bash /opt/share/test-data/run-tests.sh --$(TEST) --verbose'
+	$(call _test_runner,--verbose)
 
 # Default test scope
 TEST ?= all
+
+# =============================================================================
+# Verify — manifest-driven assertions against a deployed VM
+# =============================================================================
+
+verify: ## Run verify role only (fast, skips deep checks). Usage: make verify DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make verify DEV_VM_IP=<ip>"; \
+		echo "  Skips docker_startable deep checks for inner-loop speed."; \
+		echo "  Use 'make verify-deep' for full end-to-end verification."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading ansible/ to $(DEV_VM_IP)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
+	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
+	@echo "==> Running verify role (verify_deep=false)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=false"'
+
+verify-deep: ## Run verify with full startable-service deep checks. Usage: make verify-deep DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make verify-deep DEV_VM_IP=<ip>"; \
+		echo "  Brings up Timesketch/Yeti/SpiderFoot, probes them, takes them down."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading ansible/ to $(DEV_VM_IP)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
+	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
+	@echo "==> Running verify role (verify_deep=true)..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=true"'
+
+smoke: ## Run test0 container smoke test only (<60s). Usage: make smoke DEV_VM_IP=<ip>
+	@if [ -z "$(DEV_VM_IP)" ]; then \
+		echo ""; \
+		echo "  Usage: make smoke DEV_VM_IP=<ip>"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "==> Uploading test script..."
+	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/tmp/run-tests.sh
+	@echo "==> Running test0..."
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /tmp/run-tests.sh --test0'
 
 # =============================================================================
 # Documentation

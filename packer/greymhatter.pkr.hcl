@@ -103,6 +103,10 @@ source "proxmox-clone" "greymhatter" {
   token                    = var.proxmox_token
   insecure_skip_tls_verify = true
 
+  # Clone task timeout — default 60s is too short on a busy cluster;
+  # qmclone of a >2GB template can take longer if storage is contended.
+  task_timeout = "10m"
+
   # Clone from base template
   clone_vm_id = var.base_vm_id
   vm_name     = "greymhatter-f${var.fedora_version}-amd64-${formatdate("YYYYMMDD", timestamp())}"
@@ -177,11 +181,13 @@ build {
   }
 
   # --- Run Ansible playbook in stages to survive SSH reconnects ---
+  # docker_hub creds passed to chunk 1 so the docker role can authenticate
+  # before any subsequent chunk pulls images (avoids Docker Hub rate limit).
   provisioner "shell" {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags base,docker,user",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token}' --tags base,docker,user",
     ]
   }
 
@@ -190,7 +196,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags tools",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter github_token=${var.github_token}' --tags tools",
     ]
   }
 
@@ -217,7 +223,20 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba,verify",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba",
+    ]
+  }
+
+  # --- Verify (build-aborting gate) ---
+  # Runs after all roles. Manifest-driven assertions: any failure aborts the
+  # build before cleanup, so we never seal a template with missing images,
+  # broken services, or schema-less databases. No expect_disconnect: verify
+  # must NOT disconnect SSH, and a failure here is fatal by design.
+  provisioner "shell" {
+    pause_before = "30s"
+    inline = [
+      "cd /tmp/greymhatter",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags verify -v",
     ]
   }
 
@@ -237,7 +256,7 @@ build {
       "DIAG=/var/log/greymhatter/cleanup-diagnostics.log",
 
       "echo '=== [1] Docker state BEFORE cleanup ===' | tee -a $DIAG",
-      "echo 'images:' >> $DIAG; docker images --format '{{.Repository}}:{{.Tag}}' 2>&1 | tee -a $DIAG",
+      "echo 'images:' >> $DIAG; docker images 2>&1 | tee -a $DIAG",
       "echo 'imagedb_count:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
       "echo 'layerdb_count:' $(ls /var/lib/docker/image/overlay2/layerdb/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
       "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-before.json",
@@ -255,7 +274,19 @@ build {
       "echo 'imagedb_count after fstrim:' $(ls /var/lib/docker/image/overlay2/imagedb/content/sha256/ 2>/dev/null | wc -l) | tee -a $DIAG",
       "cp /var/lib/docker/image/overlay2/repositories.json $DIAG.repos-after-fstrim.json",
 
-      "echo '=== [4] Truncating machine-id (last) ===' | tee -a $DIAG",
+      "echo '=== [4] Post-cleanup image-count GATE ===' | tee -a $DIAG",
+      "systemctl start docker",
+      "for i in $(seq 1 30); do docker info --format '{{.ServerVersion}}' >/dev/null 2>&1 && break; sleep 2; done",
+      "sleep 10",
+      "echo '--- docker images dump ---' | tee -a $DIAG; docker images | tee -a $DIAG",
+      "IMAGE_COUNT=$(docker images --quiet | sort -u | wc -l)",
+      "echo \"Image count after fstrim: $IMAGE_COUNT\" | tee -a $DIAG",
+      "if [ \"$IMAGE_COUNT\" -lt 7 ]; then echo 'FATAL: image count below threshold after cleanup; aborting build' | tee -a $DIAG; exit 1; fi",
+      "systemctl stop docker docker.socket containerd",
+      "sleep 5",
+      "sync",
+
+      "echo '=== [5] Truncating machine-id (last) ===' | tee -a $DIAG",
       "truncate -s 0 /etc/machine-id",
       "sync"
     ]

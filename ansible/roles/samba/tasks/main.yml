@@ -36,20 +36,23 @@
     cmd: firewall-cmd --query-service=samba --permanent
   register: fw_samba
   changed_when: false
+  # Probe: rc=0 means rule present; rc!=0 means absent (expected first run).
   failed_when: false
 
 - name: Open firewall for Samba
   ansible.builtin.command:
     cmd: firewall-cmd --permanent --add-service=samba
   when: fw_samba.rc != 0
-  failed_when: false
+  register: fw_samba_add
+  changed_when: "'success' in fw_samba_add.stdout"
   notify: Restart Samba
 
 - name: Reload firewall
   ansible.builtin.command:
     cmd: firewall-cmd --reload
   when: fw_samba.rc != 0
-  failed_when: false
+  register: fw_samba_reload
+  changed_when: fw_samba_reload.rc == 0
 
 - name: Create samba group
   ansible.builtin.group:
@@ -65,20 +68,32 @@
 - name: Set SELinux context for share directory
   ansible.builtin.command:
     cmd: "chcon -t samba_share_t {{ share_dir }} -R"
-  changed_when: true
-  failed_when: false
+  register: chcon_share
+  # chcon returns rc=1 if SELinux is disabled — that's fine on Fedora when
+  # the user has set it to disabled (we set permissive in base/, but a user
+  # may have hardened further). Real chcon errors (path missing) still surface.
+  changed_when: chcon_share.rc == 0
+  failed_when:
+    - chcon_share.rc != 0
+    - "'SELinux is disabled' not in (chcon_share.stderr | default(''))"
 
 - name: Set SELinux fcontext for share directory
   ansible.builtin.command:
     cmd: "semanage fcontext -a -t samba_share_t '{{ share_dir }}(/.*)?'"
-  changed_when: false
-  failed_when: false
+  register: semanage_share
+  changed_when: semanage_share.rc == 0
+  # semanage returns nonzero if rule already exists — that's idempotent and fine.
+  failed_when:
+    - semanage_share.rc != 0
+    - "'already defined' not in (semanage_share.stderr | default(''))"
+    - "'SELinux is disabled' not in (semanage_share.stderr | default(''))"
 
 - name: Check if Samba user exists
   ansible.builtin.command:
     cmd: "pdbedit -L -u {{ greymhatter_username }}"
   register: smb_user_check
   changed_when: false
+  # Probe: rc=0 means user exists; rc!=0 means absent (expected first run).
   failed_when: false
 
 - name: Set Samba password

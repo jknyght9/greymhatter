@@ -3,6 +3,7 @@
   ansible.builtin.command: which floss
   register: floss_check
   changed_when: false
+  # Probe: rc=0 means installed; rc=1 means absent (expected first run).
   failed_when: false
 
 # AMD64: download pre-built standalone binary
@@ -15,6 +16,7 @@
       ansible.builtin.uri:
         url: "https://api.github.com/repos/mandiant/flare-floss/releases/tags/v{{ floss_version }}"
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: floss_release
 
     - name: Set FLOSS download URL

@@ -14,6 +14,7 @@
       ansible.builtin.uri:
         url: "https://api.github.com/repos/VirusTotal/vt-cli/releases/tags/{{ vt_cli_version }}"
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: vt_release
 
     - name: Set vt-cli download URL
@@ -59,7 +60,8 @@
       environment:
         GOPATH: /tmp/go
         GOBIN: "{{ tools_dir }}"
-      changed_when: true
+      register: vt_build
+      changed_when: vt_build.rc == 0
 
     - name: Clean up Go cache
       ansible.builtin.file:

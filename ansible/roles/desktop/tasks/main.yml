@@ -94,7 +94,8 @@
       ansible.builtin.command:
         cmd: bash install.sh -d /usr/share/themes
         chdir: /tmp/qogir-theme
-      changed_when: true
+      register: qogir_theme_install
+      changed_when: qogir_theme_install.rc == 0
 
     - name: Clean up Qogir theme source
       ansible.builtin.file:
@@ -119,7 +120,8 @@
       ansible.builtin.command:
         cmd: bash install.sh -d /usr/share/icons
         chdir: /tmp/qogir-icons
-      changed_when: true
+      register: qogir_icons_install
+      changed_when: qogir_icons_install.rc == 0
       async: 300
       poll: 15
 
@@ -146,7 +148,8 @@
 
     - name: Refresh font cache
       ansible.builtin.command: fc-cache -fv
-      changed_when: true
+      register: fc_cache
+      changed_when: fc_cache.rc == 0
 
 # --- Display manager ---
 
@@ -154,12 +157,12 @@
   ansible.builtin.systemd:
     name: lightdm
     enabled: true
-  failed_when: false
 
 - name: Set graphical target
   ansible.builtin.command:
     cmd: systemctl set-default graphical.target
-  changed_when: true
+  register: graphical_target
+  changed_when: "'Created symlink' in graphical_target.stderr"
 
 # --- LightDM + slick-greeter ---
 
@@ -223,7 +226,6 @@
     name: xrdp
     enabled: true
     state: started
-  failed_when: false
 
 - name: Configure xrdp to use XFCE
   ansible.builtin.copy:
@@ -244,15 +246,27 @@
 - name: Allow xrdp through SELinux
   ansible.builtin.command:
     cmd: setsebool -P xrdp_connect_all_unreserved_ports on
-  changed_when: true
-  failed_when: false
+  register: xrdp_setsebool
+  changed_when: xrdp_setsebool.rc == 0
+  # setsebool returns nonzero in two benign cases on greymhatter:
+  #   1. SELinux is disabled entirely.
+  #   2. The xrdp_connect_all_unreserved_ports boolean isn't defined in this
+  #      SELinux policy (Fedora 42 + xrdp from default repos doesn't ship
+  #      the boolean — and since base/ sets SELINUX=permissive, enforcement
+  #      is off anyway).
+  # Other failures (typos, permission errors) still surface.
+  failed_when:
+    - xrdp_setsebool.rc != 0
+    - "'SELinux is disabled' not in (xrdp_setsebool.stderr | default(''))"
+    - "'is not defined' not in (xrdp_setsebool.stderr | default(''))"
 
 # --- Timezone ---
 
 - name: Set timezone to US Central
   ansible.builtin.command:
     cmd: timedatectl set-timezone America/Chicago
-  changed_when: true
+  register: tz_set
+  changed_when: tz_set.rc == 0
 
 # --- Default resolution (1920x1080) ---
 

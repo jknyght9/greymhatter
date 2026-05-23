@@ -1,0 +1,56 @@
+---
+# verify/docker_images.yml — asserts manifest images are on disk.
+#
+# Catches the bug class where `docker compose pull/build` runs but images
+# disappear before template seal (e.g. Docker storage reset by a handler,
+# repositories.json wiped by fstrim).
+
+- name: List Docker images present on disk
+  ansible.builtin.command: docker image ls --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
+  register: verify_docker_image_list
+  changed_when: false
+
+- name: Build architecture-filtered expected image list
+  ansible.builtin.set_fact:
+    verify_arch_images: >-
+      {{ expected_docker_images
+         | selectattr('arch', 'contains', ansible_architecture)
+         | list }}
+
+- name: Assert each expected image is present
+  ansible.builtin.assert:
+    that:
+      - >-
+        (item.tag_any | default(false))
+        | ternary(
+            verify_docker_image_list.stdout_lines | select('search', '^' ~ (item.repo | regex_escape) ~ ':') | list | length > 0,
+            (item.repo ~ ':' ~ (item.tag | default('latest'))) in verify_docker_image_list.stdout_lines
+          )
+    fail_msg: |
+      MISSING IMAGE: {{ item.repo }}{{ ':' ~ item.tag if item.tag is defined else ' (any tag)' }}
+      Source: {{ item.source }}
+      Architecture: {{ ansible_architecture }}
+      Action: {{ item.action }}
+      Currently present:
+      {{ verify_docker_image_list.stdout }}
+    success_msg: "OK image present: {{ item.repo }}"
+  loop: "{{ verify_arch_images }}"
+  loop_control:
+    label: "{{ item.repo }}"
+
+# Belt-and-suspenders: ensure repositories.json was not silently emptied.
+# This is the exact failure mode of the original Docker-image-disappearance bug.
+- name: Read Docker repositories.json
+  ansible.builtin.slurp:
+    src: /var/lib/docker/image/overlay2/repositories.json
+  register: verify_repos_json
+
+- name: Assert repositories.json has at least the expected image count
+  ansible.builtin.assert:
+    that:
+      - (verify_repos_json.content | b64decode | from_json).Repositories | length >= (verify_arch_images | length)
+    fail_msg: |
+      repositories.json contains {{ (verify_repos_json.content | b64decode | from_json).Repositories | length }} repos,
+      but manifest expects at least {{ verify_arch_images | length }} on {{ ansible_architecture }}.
+      This is the signature of the Packer-cleanup / Docker-handler-restart bug class.
+    success_msg: "repositories.json contains sufficient entries."

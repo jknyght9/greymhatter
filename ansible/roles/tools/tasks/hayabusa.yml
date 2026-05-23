@@ -11,6 +11,7 @@
       ansible.builtin.uri:
         url: "https://api.github.com/repos/Yamato-Security/hayabusa/releases/tags/v{{ hayabusa_version }}"
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: hayabusa_release
 
     - name: Set Hayabusa download URL
@@ -59,4 +60,5 @@
       ansible.builtin.command:
         cmd: "{{ tools_dir }}/hayabusa/hayabusa update-rules"
         chdir: "{{ tools_dir }}/hayabusa"
-      changed_when: true
+      register: hayabusa_rules
+      changed_when: hayabusa_rules.rc == 0

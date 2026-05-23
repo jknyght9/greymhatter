@@ -7,6 +7,7 @@
   ansible.builtin.command: which fls
   register: compiled_tools_check
   changed_when: false
+  # Probe: rc=0 means already installed; rc=1 means we need to build (expected first run).
   failed_when: false
 
 - name: Build tools from source in Docker
@@ -21,68 +22,71 @@
     - name: Build tools container (this takes several minutes)
       ansible.builtin.command:
         cmd: docker build -f /tmp/Dockerfile.builder -t greymhatter-builder /tmp
-      changed_when: true
+      register: builder_build
+      changed_when: builder_build.rc == 0
       async: 1800
       poll: 30
+
+    - name: Assert builder image was created
+      ansible.builtin.command: docker images -q greymhatter-builder
+      register: builder_image_check
+      changed_when: false
+      failed_when: builder_image_check.stdout | length == 0
 
     - name: Create temporary container for binary extraction
       ansible.builtin.command:
         cmd: docker create --name greymhatter-builder-extract greymhatter-builder
-      changed_when: true
+      register: builder_create
+      changed_when: builder_create.rc == 0
 
     - name: Extract compiled binaries
       ansible.builtin.command:
         cmd: docker cp greymhatter-builder-extract:/output/ /tmp/tool-binaries/
-      changed_when: true
+      register: builder_extract
+      changed_when: builder_extract.rc == 0
+
+    - name: Assert extracted binaries exist on host
+      ansible.builtin.stat:
+        path: /tmp/tool-binaries
+      register: extract_check
+      failed_when: not extract_check.stat.exists or not extract_check.stat.isdir
 
     # --- Install each tool's binaries ---
 
-    - name: Install libvmdk binaries and libraries
+    - name: Install compiled binaries from each subtree
       ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/libvmdk/usr/local/* /usr/local/
-      changed_when: true
-
-    - name: Install libvhdi binaries and libraries
-      ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/libvhdi/usr/local/* /usr/local/
-      changed_when: true
-
-    - name: Install Sleuthkit binaries
-      ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/sleuthkit/usr/local/* /usr/local/
-      changed_when: true
-
-    - name: Install bulk_extractor binaries
-      ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/bulk_extractor/usr/local/* /usr/local/
-      changed_when: true
-
-    - name: Install libbde binaries and libraries
-      ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/libbde/usr/local/* /usr/local/
-      changed_when: true
-
-    - name: Install libfvde binaries and libraries
-      ansible.builtin.shell:
-        cmd: cp -r /tmp/tool-binaries/libfvde/usr/local/* /usr/local/
-      changed_when: true
+        cmd: "cp -r /tmp/tool-binaries/{{ item }}/usr/local/* /usr/local/"
+      register: install_result
+      changed_when: install_result.rc == 0
+      loop:
+        - libvmdk
+        - libvhdi
+        - sleuthkit
+        - bulk_extractor
+        - libbde
+        - libfvde
 
     - name: Update shared library cache
       ansible.builtin.command: ldconfig
-      changed_when: true
+      register: ldconfig_result
+      changed_when: ldconfig_result.rc == 0
 
     # --- Cleanup ---
 
     - name: Remove builder container
       ansible.builtin.command:
         cmd: docker rm greymhatter-builder-extract
-      changed_when: true
+      register: builder_rm
+      changed_when: builder_rm.rc == 0
+      # Idempotent cleanup — container may not exist on partial rerun.
       failed_when: false
 
     - name: Remove builder image
       ansible.builtin.command:
         cmd: docker rmi greymhatter-builder
-      changed_when: true
+      register: builder_rmi
+      changed_when: builder_rmi.rc == 0
+      # Idempotent cleanup — image may not exist on partial rerun.
       failed_when: false
 
     - name: Clean up build artifacts
@@ -95,20 +99,12 @@
 
     # --- Verify ---
 
-    - name: Verify Sleuthkit
-      ansible.builtin.command: fls -V
+    - name: Verify compiled tools run
+      ansible.builtin.command:
+        cmd: "{{ item }}"
       changed_when: false
-
-    - name: Verify bulk_extractor
-      ansible.builtin.command: bulk_extractor -V
-      changed_when: false
-
-    - name: Verify bdemount
-      ansible.builtin.command: bdemount --help
-      changed_when: false
-      failed_when: false
-
-    - name: Verify fvdemount
-      ansible.builtin.command: fvdemount --help
-      changed_when: false
-      failed_when: false
+      loop:
+        - fls -V
+        - bulk_extractor -V
+        - bdemount -V
+        - fvdemount -V

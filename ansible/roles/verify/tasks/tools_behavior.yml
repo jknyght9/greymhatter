@@ -1,0 +1,41 @@
+---
+# verify/tools_behavior.yml — runs version/help probes on every binary.
+#
+# Replaces bare `which` checks. Catches missing shared libraries,
+# broken interpreter shebangs, ABI mismatches.
+
+- name: Build architecture-filtered binary list
+  ansible.builtin.set_fact:
+    verify_arch_binaries: >-
+      {{ expected_binaries
+         | selectattr('arch', 'contains', ansible_architecture)
+         | list }}
+
+- name: Run probe for each expected binary
+  ansible.builtin.shell:
+    cmd: "{{ item.probe }}"
+  register: verify_binary_probes
+  changed_when: false
+  # failed_when: false is intentional here — we want to RUN every probe
+  # and gather all rc/stderr before failing. The follow-up assert
+  # ("Assert every probe exited 0") catches non-zero rc with a clear
+  # per-binary fail_msg. This is NOT a masked failure.
+  failed_when: false
+  loop: "{{ verify_arch_binaries }}"
+  loop_control:
+    label: "{{ item.path | default(item.cmd) }}"
+
+- name: Assert every probe exited 0
+  ansible.builtin.assert:
+    that:
+      - item.rc == 0
+    fail_msg: |
+      Binary probe FAILED: {{ item.item.path | default(item.item.cmd) }}
+      Source: {{ item.item.source }}
+      Probe: {{ item.item.probe }}
+      Exit code: {{ item.rc }}
+      Stderr: {{ item.stderr | default('(empty)') | truncate(400) }}
+    success_msg: "OK: {{ item.item.path | default(item.item.cmd) }}"
+  loop: "{{ verify_binary_probes.results }}"
+  loop_control:
+    label: "{{ item.item.path | default(item.item.cmd) }}"

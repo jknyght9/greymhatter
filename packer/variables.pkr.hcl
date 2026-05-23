@@ -112,3 +112,46 @@ variable "maxmind_license_key" {
   default   = ""
   sensitive = true
 }
+
+# --- Docker Hub credentials (optional but recommended) ---
+# Without auth, Docker Hub rate-limits anonymous pulls to 100 per 6h per
+# source IP — easy to exhaust when iterating builds. Authenticated free-tier
+# accounts get 200 per 6h per ACCOUNT. Use a personal access token instead
+# of your password (Docker Hub → Account Settings → Personal access tokens).
+# Token needs only "Public Repo Read" scope.
+
+variable "docker_hub_username" {
+  type    = string
+  default = ""
+}
+
+variable "docker_hub_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+# --- Local registry mirror (optional, preferred) ---
+# Pull-through cache for Docker Hub. Eliminates rate limit + speeds builds.
+# Format: "http://host:port" (HTTPS supported but typically HTTP on LAN).
+# Setup: docker run -d -p 5050:5000 -e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
+#                   --restart=unless-stopped -v greymhatter-registry-data:/var/lib/registry \
+#                   --name greymhatter-registry-mirror ghcr.io/distribution/distribution:3.0.0
+
+variable "docker_registry_mirror" {
+  type    = string
+  default = ""
+}
+
+# --- GitHub PAT (optional but recommended) ---
+# Anonymous GitHub API is 60 req/hr per IP — easy to exhaust when iterating
+# (tools role makes 5 release-lookup calls per build). Authenticated PAT
+# (classic, no scopes) gets 5000 req/hr.
+# Get one at: github.com → Settings → Developer settings →
+#             Personal access tokens (classic) → Generate new token
+
+variable "github_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+}

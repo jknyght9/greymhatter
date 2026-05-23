@@ -49,7 +49,7 @@ make dev DEV_VM_IP=10.1.50.124
 greymhatter/
 ├── ansible/                 # Ansible playbook and roles
 │   ├── playbook.yml         # Main entry point
-│   ├── group_vars/all.yml   # Pinned versions and variables
+│   ├── group_vars/all/defaults.yml   # Pinned versions and variables
 │   └── roles/               # base, docker, desktop, user, tools,
 │                            # containers, courses, samba, verify
 ├── packer/                  # Packer templates

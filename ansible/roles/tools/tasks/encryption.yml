@@ -16,6 +16,7 @@
     cmd: veracrypt --text --version
   register: veracrypt_check
   changed_when: false
+  # Probe: rc=0 means installed; rc=127 means absent (expected first run).
   failed_when: false
 
 - name: Install VeraCrypt (AMD64 — from veracrypt.fr RPM)
@@ -31,11 +32,15 @@
     - name: Enable VeraCrypt COPR repo
       ansible.builtin.command:
         cmd: dnf copr enable -y architektapx/veracrypt
-      changed_when: true
-      failed_when: false
+      register: copr_enable
+      changed_when: "'Updating' in copr_enable.stdout or 'Enabling' in copr_enable.stdout"
+      # dnf copr returns nonzero when the repo is already enabled — that's idempotent and fine.
+      failed_when:
+        - copr_enable.rc != 0
+        - "'already enabled' not in (copr_enable.stdout | lower)"
+        - "'already enabled' not in (copr_enable.stderr | lower)"
 
     - name: Install VeraCrypt from COPR
       ansible.builtin.dnf:
         name: veracrypt
         state: present
-      failed_when: false

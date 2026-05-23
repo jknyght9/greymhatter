@@ -1,0 +1,13 @@
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "storage-driver": "overlay2",
+  "dns": ["1.1.1.1", "8.8.8.8"]{% if docker_registry_mirror | default('') | length > 0 %},
+  "registry-mirrors": ["{{ docker_registry_mirror }}"],
+  "insecure-registries": ["{{ docker_registry_mirror | regex_replace('^https?://', '') }}"]
+{%- endif %}
+
+}
