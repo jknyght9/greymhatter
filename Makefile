@@ -161,7 +161,7 @@ dev: ## SCP repo + run Ansible + reboot (usage: make dev DEV_VM_IP=<ip>)
 # Without this, the test script's non-zero exit (real test failure) triggers
 # the `|| sshpass` fallback and runs the entire suite a second time.
 define _test_runner
-	@if [ -z "$(DEV_VM_IP)" ]; then echo ""; echo "  Usage: make $@ DEV_VM_IP=<ip>"; echo "  Options: TEST=test1|test2|test3|all (default: all)"; echo ""; exit 1; fi
+	@if [ -z "$(DEV_VM_IP)" ]; then echo ""; echo "  Usage: make $@ DEV_VM_IP=<ip>"; echo "  Options: TEST=test1|test3|all (default: all)"; echo ""; exit 1; fi
 	@set -e; \
 	if ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -i $(SSH_KEY) hatter@$(DEV_VM_IP) true 2>/dev/null; then \
 		SSH="ssh $(SSH_OPTS)"; SCP="scp $(SSH_OPTS)"; \

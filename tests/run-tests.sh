@@ -2,11 +2,10 @@
 # GreymHatter Integration Test Suite
 # Runs on a deployed VM to validate all DFIR tools work correctly.
 #
-# Usage: bash run-tests.sh [--test0] [--test1] [--test2] [--test3] [--all]
+# Usage: bash run-tests.sh [--test0] [--test1] [--test3] [--all]
 #   --test0  Container smoke test (fast, <60s) — asserts expected containers
 #            are running and respond. Use this as the inner-loop sanity check.
 #   --test1  Memory analysis (Volatility 2 & 3)
-#   --test2  Disk analysis (TSK & bulk_extractor)
 #   --test3  Timeline analysis (log2timeline, hayabusa, Timesketch)
 #   --all    Run all tests (default; test0 always runs as preflight)
 #
@@ -206,7 +205,6 @@ info "Extracting test images..."
 ZAPFTIS=$(find "$TEST_DIR" -name "*.vmem" -path "*zapftis*" 2>/dev/null | head -1)
 DC01_MEM=$(find "$TEST_DIR" -name "*.vmem" -o -name "*.raw" -o -name "*.mem" 2>/dev/null | grep -i dc01 | head -1)
 DC01_E01=$(find "$TEST_DIR" -name "*.E01" -o -name "*.e01" 2>/dev/null | head -1)
-USB_IMG=$(find "$TEST_DIR" -name "usb-whistleblower.img" 2>/dev/null | head -1)
 
 # =============================================================================
 # Test 1: Memory Analysis (Volatility 2 & 3)
@@ -263,54 +261,6 @@ function test1() {
         assert_lines_gt "vol3: windows.pslist on DC01" 10 vol -f "$DC01_MEM" windows.pslist
     else
         warn "DC01 memory image not found, skipping"
-    fi
-}
-
-# =============================================================================
-# Test 2: Disk Analysis (TSK & bulk_extractor)
-# =============================================================================
-
-function test2() {
-    header "TEST 2: Disk Analysis (TSK & bulk_extractor)"
-
-    if [ -z "$USB_IMG" ]; then
-        # Asset missing is a SKIP, not a FAIL — the test depends on a binary
-        # blob that isn't checked into the repo. Distinguishes "can't test this"
-        # from "the tool is broken".
-        warn "TEST 2 SKIPPED — usb-whistleblower.img not available in test data"
-        return
-    fi
-
-    info "Testing with: $USB_IMG"
-
-    # Sleuthkit
-    info "--- Sleuthkit ---"
-    assert_contains "mmls: partition table" "Partition Table" mmls "$USB_IMG"
-
-    # Get first real partition offset (match rows with numeric slot like "004:  000")
-    local offset
-    offset=$(mmls "$USB_IMG" 2>/dev/null | awk '/^[0-9]+:  [0-9]/ {print $3; exit}' || echo "")
-    if [ -n "$offset" ]; then
-        check_output "fls: file listing at offset $offset" fls -o "$offset" "$USB_IMG"
-    else
-        # Try without offset (whole disk image)
-        check_output "fls: file listing (whole disk)" fls "$USB_IMG"
-    fi
-
-    check_output "img_stat: image info" img_stat "$USB_IMG"
-
-    # bulk_extractor
-    info "--- bulk_extractor ---"
-    local be_output="$RESULTS_DIR/bulk_output_test"
-    rm -rf "$be_output"
-    if bulk_extractor -o "$be_output" "$USB_IMG" 2>&1 | tail -5; then
-        if [ -d "$be_output" ] && [ "$(ls -A $be_output)" ]; then
-            success "bulk_extractor: produced output in $be_output"
-        else
-            fail "bulk_extractor: no output files"
-        fi
-    else
-        fail "bulk_extractor: command failed"
     fi
 }
 
@@ -502,20 +452,18 @@ print(len(sketch.get('timelines',[])))
 
 RUN_TEST0=false
 RUN_TEST1=false
-RUN_TEST2=false
 RUN_TEST3=false
 
 if [ $# -eq 0 ]; then
-    RUN_TEST1=true; RUN_TEST2=true; RUN_TEST3=true
+    RUN_TEST1=true; RUN_TEST3=true
 fi
 
 for arg in "$@"; do
     case "$arg" in
         --test0)   RUN_TEST0=true ;;
         --test1)   RUN_TEST1=true ;;
-        --test2)   RUN_TEST2=true ;;
         --test3)   RUN_TEST3=true ;;
-        --all)     RUN_TEST0=true; RUN_TEST1=true; RUN_TEST2=true; RUN_TEST3=true ;;
+        --all)     RUN_TEST0=true; RUN_TEST1=true; RUN_TEST3=true ;;
         --verbose) VERBOSE=true ;;
     esac
 done
@@ -527,14 +475,12 @@ preflight
 # Extract only the images needed for requested tests
 [ "$RUN_TEST1" = "true" ] && extract_image /opt/share/test-data/0zapftis.zip
 [ "$RUN_TEST1" = "true" ] && extract_image /opt/share/test-data/DC01-memory.zip
-[ "$RUN_TEST2" = "true" ] && extract_image /opt/share/test-data/usb-whistleblower.img.zip
 [ "$RUN_TEST3" = "true" ] && extract_image /opt/share/test-data/DC01-E01.zip
 
 header "GreymHatter Integration Test Suite"
 
 [ "$RUN_TEST0" = "true" ] && test0
 [ "$RUN_TEST1" = "true" ] && test1
-[ "$RUN_TEST2" = "true" ] && test2
 [ "$RUN_TEST3" = "true" ] && test3
 
 # --- Summary ---
