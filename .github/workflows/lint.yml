@@ -63,11 +63,15 @@ jobs:
             -var 'proxmox_iso_file=stub:iso/Fedora.iso' \
             -var 'ssh_password=stub' \
             .
-      # Fusion template's cd_files references ${path.root}/ks.cfg; the
-      # Makefile copies it from packer/http/ before each build. Mirror that.
+      # Fusion stage 2 (vmware-vmx) source_path references the base VM's .vmx
+      # which is created by `make base-arm64`. CI doesn't run that, so we stub
+      # the file. Together with the ks.cfg copy (mirrors Makefile pattern),
+      # this lets validate parse the entire .pkr.hcl including both builds.
       - name: Validate Fusion template
         run: |
           cp packer/http/ks.cfg packer/fusion/ks.cfg
+          mkdir -p output/fusion-arm64-base
+          touch output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx
           cd packer/fusion
           packer init greymhatter-fusion.pkr.hcl
           packer validate greymhatter-fusion.pkr.hcl
