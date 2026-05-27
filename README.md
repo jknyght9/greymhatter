@@ -1,6 +1,10 @@
+![greymhatter-logo](./media/v2/logo/greymhatter-banner.png)
+
 # GreymHatter
 
 A digital forensics and incident response (DFIR) distribution based on Fedora Linux. Built as a teaching and casework platform, GreymHatter integrates forensic tools, analysis platforms, and workflow automation into a single deployable VM.
+
+[Read the Documentation Here](https://jknyght9.github.io/greymhatter/)
 
 ## Features
 
