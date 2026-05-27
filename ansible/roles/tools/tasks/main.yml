@@ -1,6 +1,5 @@
 ---
 # roles/tools - DFIR tool installation
-# Replaces: install-tools.sh, install-volatility2.sh, install-volatility3.sh
 
 # Create tools directory
 - name: Create tools directory

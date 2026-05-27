@@ -1,6 +1,5 @@
 ---
 # roles/docker - Docker CE installation and configuration
-# Replaces: setup.sh installDocker()
 
 - name: Remove old Docker packages
   ansible.builtin.dnf:

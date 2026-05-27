@@ -1,6 +1,5 @@
 ---
 # roles/base - OS configuration, package installation, third-party binaries
-# Replaces: setup.sh updatingOS(), configuringOS(), installRequiredSoftware(), install3dPartySources()
 
 - name: Optimize DNF configuration
   ansible.builtin.copy:

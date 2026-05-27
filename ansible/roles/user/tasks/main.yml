@@ -1,6 +1,5 @@
 ---
 # roles/user - User creation, dotfiles, shell configuration
-# Replaces: setup.sh createUser()
 
 # --- Prerequisite lookups ---
 

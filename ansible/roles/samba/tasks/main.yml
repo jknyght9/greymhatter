@@ -1,6 +1,5 @@
 ---
 # roles/samba - SMB/Samba network share
-# Replaces: install-smbshare.sh
 
 - name: Create share directories
   ansible.builtin.file:

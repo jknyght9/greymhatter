@@ -1,6 +1,5 @@
 ---
 # roles/containers - Docker service deployment
-# Replaces: install-containers.sh and individual install scripts
 
 - name: Install DFIQ
   ansible.builtin.include_tasks: dfiq.yml
