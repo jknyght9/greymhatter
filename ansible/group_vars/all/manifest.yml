@@ -400,6 +400,64 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: base
 
+  # yazi + its previewer deps (added together so verify catches any
+  # missing piece — yazi works partially if a dep is gone, which is
+  # exactly the silent-degradation we want to surface loudly).
+  - cmd: yazi
+    probe: "yazi --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: fd
+    probe: "fd --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: fzf
+    probe: "fzf --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: zoxide
+    probe: "zoxide --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: ffmpeg
+    probe: "ffmpeg -version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: magick
+    probe: "magick -version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: xclip
+    probe: "xclip -version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: pdftotext
+    probe: "pdftotext -v"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: mediainfo
+    probe: "mediainfo --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: 7z
+    probe: "7z --help"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: chafa
+    probe: "chafa --version"
+    arch: [x86_64, aarch64]
+    source: base
+
   - cmd: docker
     probe: "docker --version"
     arch: [x86_64, aarch64]

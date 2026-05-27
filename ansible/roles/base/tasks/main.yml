@@ -150,6 +150,15 @@
   register: fw_reload
   changed_when: fw_reload.rc == 0
 
+# RPM Fusion (free) — required for full ffmpeg with patent-encumbered codecs.
+# Adds the repo definition + GPG key. Idempotent: dnf install is a no-op if
+# the release package is already present.
+- name: Enable RPM Fusion (free) repository
+  ansible.builtin.dnf:
+    name: "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+
 - name: Install base packages
   ansible.builtin.dnf:
     name:
@@ -157,6 +166,7 @@
       - atuin
       - bat
       - btop
+      - chafa
       - clamav
       - clamav-freshclam
       - cloud-utils-growpart
@@ -165,20 +175,28 @@
       - dbus-x11
       - duf
       - ewftools
+      - fd-find
+      - ffmpeg-free
       - firefox
       - fish
+      - fzf
       - gcc
       - gcc-c++
       - gdisk
-      - make
       - git
+      - ImageMagick
       - imhex
       - jq
       - fastfetch
       - libreoffice
+      - make
+      - mediainfo
       - neovim
       - ntfs-3g
       - openssl
+      - p7zip
+      - p7zip-plugins
+      - poppler-utils
       - python3
       - python3-pip
       - ripgrep
@@ -188,10 +206,25 @@
       - tmux
       - unzip
       - wireshark
+      - xclip
       - xdg-user-dirs
       - xxd
+      - yazi
+      - zoxide
     state: present
     install_weak_deps: false
+
+# Swap ffmpeg-free (limited codecs) for the full ffmpeg from RPM Fusion.
+# Idempotent: dnf swap exits 0 with "Nothing to do" when ffmpeg is already
+# the installed flavor. We register the run and only mark changed when the
+# swap actually happened.
+- name: Swap ffmpeg-free → full ffmpeg from RPM Fusion
+  ansible.builtin.command:
+    cmd: dnf swap -y ffmpeg-free ffmpeg --allowerasing
+  register: ffmpeg_swap
+  changed_when:
+    - "'Nothing to do' not in ffmpeg_swap.stdout"
+    - "'Complete!' in ffmpeg_swap.stdout"
 
 - name: Remove Example line from freshclam.conf (blocks daemon until removed)
   ansible.builtin.lineinfile:

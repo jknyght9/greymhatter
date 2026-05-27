@@ -478,6 +478,21 @@ if type -q atuin
   atuin init fish | source
 end
 
+if type -q zoxide
+  zoxide init fish | source
+end
+
+# yazi wrapper — `y` opens the TUI file manager and cd's the shell to
+# wherever yazi was sitting when you exited.
+function y
+    set tmp (mktemp -t "yazi-cwd.XXXXXX")
+    yazi $argv --cwd-file="$tmp"
+    if read -z cwd < "$tmp"; and test -n "$cwd"; and test "$cwd" != "$PWD"
+        builtin cd -- "$cwd"
+    end
+    rm -f -- "$tmp"
+end
+
 # --- Fastfetch ---
 if not set -q SSH_CONNECTION
   if type -q fastfetch
