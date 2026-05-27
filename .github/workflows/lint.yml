@@ -39,6 +39,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-packer@main
+      # crypto/ is gitignored (contains real SSH keys); CI needs a stub
+      # for the Packer file-provisioner blocks that inject the project pubkey.
+      - name: Stub crypto/greymhatter.pub for validation
+        run: |
+          mkdir -p crypto
+          echo "ssh-ed25519 AAAAStubKeyForCIValidationOnly stub@ci" > crypto/greymhatter.pub
       # Directory-mode validation: Packer auto-loads variables.pkr.hcl
       # alongside greymhatter.pkr.hcl from the same dir. Stub values come
       # from -var so required variables (no defaults) satisfy validation.
