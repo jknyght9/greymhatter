@@ -280,13 +280,13 @@ function test3() {
 
     # Start Timesketch
     info "Starting Timesketch..."
-    cd /opt/timesketch
+    cd /opt/timesketch || { fail "cd /opt/timesketch failed"; return; }
     docker compose --env-file config.env up -d --pull never 2>/dev/null
 
     # Wait for Timesketch
     info "Waiting for Timesketch to be ready..."
     local ready=false
-    for i in $(seq 1 60); do
+    for _ in $(seq 1 60); do
         if curl -kso /dev/null -w '%{http_code}' https://localhost 2>/dev/null | grep -q "200\|302"; then
             ready=true
             break
