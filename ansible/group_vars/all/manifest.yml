@@ -390,6 +390,16 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: base
 
+  - cmd: sqlite3
+    probe: "sqlite3 --version"
+    arch: [x86_64, aarch64]
+    source: base
+
+  - cmd: libreoffice
+    probe: "libreoffice --version"
+    arch: [x86_64, aarch64]
+    source: base
+
   - cmd: docker
     probe: "docker --version"
     arch: [x86_64, aarch64]

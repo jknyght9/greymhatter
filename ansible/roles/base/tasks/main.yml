@@ -175,6 +175,7 @@
       - imhex
       - jq
       - fastfetch
+      - libreoffice
       - neovim
       - ntfs-3g
       - openssl
@@ -182,6 +183,7 @@
       - python3-pip
       - ripgrep
       - sassc
+      - sqlite
       - tcpdump
       - tmux
       - unzip
