@@ -199,13 +199,6 @@ extract_image() {
     warn "  Failed to extract $(basename $zip)"
 }
 
-info "Extracting test images..."
-
-# Find extracted files
-ZAPFTIS=$(find "$TEST_DIR" -name "*.vmem" -path "*zapftis*" 2>/dev/null | head -1)
-DC01_MEM=$(find "$TEST_DIR" -name "*.vmem" -o -name "*.raw" -o -name "*.mem" 2>/dev/null | grep -i dc01 | head -1)
-DC01_E01=$(find "$TEST_DIR" -name "*.E01" -o -name "*.e01" 2>/dev/null | head -1)
-
 # =============================================================================
 # Test 1: Memory Analysis (Volatility 2 & 3)
 # =============================================================================
@@ -476,6 +469,14 @@ preflight
 [ "$RUN_TEST1" = "true" ] && extract_image /opt/share/test-data/0zapftis.zip
 [ "$RUN_TEST1" = "true" ] && extract_image /opt/share/test-data/DC01-memory.zip
 [ "$RUN_TEST3" = "true" ] && extract_image /opt/share/test-data/DC01-E01.zip
+
+# Locate extracted images. MUST run AFTER extract_image — on a fresh VM the
+# image dir is empty before extraction, and these globals would be empty
+# strings, then test1/test3 would print "image not found" despite the files
+# existing on disk.
+ZAPFTIS=$(find "$TEST_DIR" -name "*.vmem" -path "*zapftis*" 2>/dev/null | head -1)
+DC01_MEM=$(find "$TEST_DIR" \( -name "*.vmem" -o -name "*.raw" -o -name "*.mem" \) 2>/dev/null | grep -i dc01 | head -1)
+DC01_E01=$(find "$TEST_DIR" \( -name "*.E01" -o -name "*.e01" \) 2>/dev/null | head -1)
 
 header "GreymHatter Integration Test Suite"
 
