@@ -1,5 +1,8 @@
 .DS_Store
 
+# Ansible inventory files
+.ansible/
+
 # Claude Code project files
 .claude/
 

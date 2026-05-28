@@ -20,7 +20,7 @@ A digital forensics and incident response (DFIR) distribution based on Fedora Li
 
 Download the latest OVA and import into VMware Workstation or Fusion.
 
-```
+```text
 Username: hatter
 Password: H@tt3r123!
 ```
@@ -65,7 +65,7 @@ make docs                # Preview at http://localhost:8000
 
 ## Architecture
 
-```
+```text
 greymhatter/
 ├── ansible/             # Ansible playbook and roles (9 roles)
 │   ├── roles/base/      # OS config, packages, firewall
@@ -88,21 +88,33 @@ greymhatter/
 
 ## Container Services
 
-| Service | Port | Auto-start | Start Command |
-|---|---|---|---|
-| Homepage | 3000 | Yes | — |
-| CyberChef | 8080 | Yes | — |
-| Courses | 8000 | Yes | — |
-| Timesketch | 443 | No | `starttimesketch` |
-| Yeti | 8888 | No | `startyeti` |
-| SpiderFoot | 5001 | No | `startspiderfoot` |
+| Service    | Port | Auto-start | Start Command     |
+|------------|------|------------|-------------------|
+| Homepage   | 3000 | Yes        | —                 |
+| CyberChef  | 8080 | Yes        | —                 |
+| Courses    | 8000 | Yes        | —                 |
+| Timesketch | 443  | No         | `starttimesketch` |
+| Yeti       | 8888 | No         | `startyeti`       |
+| SpiderFoot | 5001 | No         | `startspiderfoot` |
 
 ## Updating a Deployed VM
 
-```fish
+```bash
 greymhatter-update
 ```
 
 ## Legal
 
 This platform was developed for instructional purposes and has not been tested in a production environment. The authors and maintainers of this project are not responsible for loss of data or productivity while using this product.
+
+## Screenshots
+
+![desktop](./media/v2/screenshots/desktop.png)
+
+![terminal](./media/v2/screenshots/terminal.png)
+
+![homepage](./media/v2/screenshots/homepage.png)
+
+![timesketch](./media/v2/screenshots/timesketch.png)
+
+![spiderfoot](./media/v2/screenshots/spiderfoot.png)
