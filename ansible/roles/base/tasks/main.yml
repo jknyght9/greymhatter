@@ -159,6 +159,14 @@
     state: present
     disable_gpg_check: true
 
+# Yazi is not in Fedora's main repos — only the upstream-maintained COPR.
+# `creates:` makes this idempotent: re-runs skip after the repo file appears.
+- name: Enable yazi COPR (lihaohong/yazi)
+  ansible.builtin.command:
+    cmd: dnf copr enable -y lihaohong/yazi
+  args:
+    creates: /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:lihaohong:yazi.repo
+
 - name: Install base packages
   ansible.builtin.dnf:
     name:
