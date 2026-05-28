@@ -213,16 +213,18 @@ function test1() {
 
     info "Testing with: $ZAPFTIS"
 
-    # Volatility 3 — content-aware: ran tool AND parsed the image successfully
-    info "--- Volatility 3 ---"
-    assert_contains "vol3: windows.info on 0zapftis" "Kernel Base" vol -f "$ZAPFTIS" windows.info
-    # 0zapftis is a small WinXP memory dump with a handful of processes (System,
-    # smss, csrss, winlogon, explorer, ...). vol3's table-formatted output adds
-    # 2 header rows. 5 rows total is realistic — anything less means vol3 failed
-    # to enumerate processes at all.
-    assert_lines_gt "vol3: windows.pslist on 0zapftis" 4 vol -f "$ZAPFTIS" windows.pslist
+    # Tool/image pairing:
+    #   0zapftis (WinXP)   → vol2 only. vol3's PDB-based symbol resolution
+    #                        against Microsoft's symbol server has poor WinXP
+    #                        coverage — windows.pslist returns near-empty.
+    #   DC01 (modern Win)  → vol3 only. vol2's WinXP profiles don't match
+    #                        modern Windows kernel layouts.
+    #
+    # First vol3 invocation on a fresh VM may need 30s+ to download PDB
+    # symbols from Microsoft. windows.info before windows.pslist warms the
+    # cache as a side effect — keep them in that order for DC01 below.
 
-    # Volatility 2 (Docker)
+    # Volatility 2 (Docker) on WinXP image
     info "--- Volatility 2 (Docker) ---"
     if ! docker images -q greymhatter/volatility2 2>/dev/null | grep -q .; then
         fail "vol2: Docker image greymhatter/volatility2 not found"
@@ -248,12 +250,16 @@ function test1() {
         fi
     fi
 
+    # Volatility 3 on modern Windows image
     if [ -n "$DC01_MEM" ]; then
+        info "--- Volatility 3 ---"
         info "Testing with: $DC01_MEM"
+        # windows.info first to warm the PDB cache; windows.pslist then asserts
+        # actual process enumeration.
         assert_contains "vol3: windows.info on DC01" "Kernel Base" vol -f "$DC01_MEM" windows.info
         assert_lines_gt "vol3: windows.pslist on DC01" 10 vol -f "$DC01_MEM" windows.pslist
     else
-        warn "DC01 memory image not found, skipping"
+        warn "DC01 memory image not found, skipping vol3 checks"
     fi
 }
 
