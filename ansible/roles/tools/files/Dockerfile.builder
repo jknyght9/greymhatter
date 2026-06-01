@@ -22,10 +22,19 @@ RUN dnf install -y \
 
 RUN mkdir -p /output
 
+# Workaround: libyal repos' top-level common/byte_stream.h is stale (last
+# touched in their 2024-era release) and uses an `(uint8_t) 'b'` macro that
+# newer GCC's preprocessor rejects. libfvalue@20260531 ships a fixed copy.
+# synclibs.sh doesn't propagate it to the parent repo's common/, so we overlay
+# it ourselves after sync. Drop this when upstream libyal repos release a new
+# tag with synchronized common/. Tracked at: https://github.com/libyal/libvmdk/issues
+ARG LIBFVALUE_BYTE_STREAM_URL=https://raw.githubusercontent.com/libyal/libfvalue/20260531/common/byte_stream.h
+
 # --- libvmdk (VMDK image support for Sleuthkit) ---
 RUN git clone --depth 1 https://github.com/libyal/libvmdk /build/libvmdk \
     && cd /build/libvmdk \
     && ./synclibs.sh \
+    && curl -fsSL "$LIBFVALUE_BYTE_STREAM_URL" > common/byte_stream.h \
     && ./autogen.sh \
     && ./configure \
     && make -j$(nproc) \
@@ -37,6 +46,7 @@ RUN git clone --depth 1 https://github.com/libyal/libvmdk /build/libvmdk \
 RUN git clone --depth 1 https://github.com/libyal/libvhdi /build/libvhdi \
     && cd /build/libvhdi \
     && ./synclibs.sh \
+    && curl -fsSL "$LIBFVALUE_BYTE_STREAM_URL" > common/byte_stream.h \
     && ./autogen.sh \
     && ./configure \
     && make -j$(nproc) \
@@ -66,6 +76,7 @@ RUN git clone --depth 1 --recursive https://github.com/simsong/bulk_extractor /b
 RUN git clone --depth 1 https://github.com/libyal/libbde /build/libbde \
     && cd /build/libbde \
     && ./synclibs.sh \
+    && curl -fsSL "$LIBFVALUE_BYTE_STREAM_URL" > common/byte_stream.h \
     && ./autogen.sh \
     && ./configure --enable-python \
     && make -j$(nproc) \
@@ -76,6 +87,7 @@ RUN git clone --depth 1 https://github.com/libyal/libbde /build/libbde \
 RUN git clone --depth 1 https://github.com/libyal/libfvde /build/libfvde \
     && cd /build/libfvde \
     && ./synclibs.sh \
+    && curl -fsSL "$LIBFVALUE_BYTE_STREAM_URL" > common/byte_stream.h \
     && ./autogen.sh \
     && ./configure --enable-python \
     && make -j$(nproc) \

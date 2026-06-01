@@ -12,7 +12,6 @@
       - docker-latest-logrotate
       - docker-logrotate
       - docker-engine
-      - containerd.io
     state: absent
   register: docker_old_remove
   # dnf returns nonzero if NONE of the packages are present (clean Fedora

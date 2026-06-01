@@ -184,7 +184,7 @@
       - duf
       - ewftools
       - fd-find
-      - ffmpeg-free
+      - ffmpeg
       - firefox
       - fish
       - fzf
@@ -221,18 +221,10 @@
       - zoxide
     state: present
     install_weak_deps: false
-
-# Swap ffmpeg-free (limited codecs) for the full ffmpeg from RPM Fusion.
-# Idempotent: dnf swap exits 0 with "Nothing to do" when ffmpeg is already
-# the installed flavor. We register the run and only mark changed when the
-# swap actually happened.
-- name: Swap ffmpeg-free → full ffmpeg from RPM Fusion
-  ansible.builtin.command:
-    cmd: dnf swap -y ffmpeg-free ffmpeg --allowerasing
-  register: ffmpeg_swap
-  changed_when:
-    - "'Nothing to do' not in ffmpeg_swap.stdout"
-    - "'Complete!' in ffmpeg_swap.stdout"
+    # ffmpeg (from RPM Fusion) conflicts with the ffmpeg-free that Fedora's
+    # default group pulls in. allowerasing lets dnf swap them on first run
+    # and is a no-op on subsequent runs once ffmpeg is the only one present.
+    allowerasing: true
 
 - name: Remove Example line from freshclam.conf (blocks daemon until removed)
   ansible.builtin.lineinfile:
