@@ -27,6 +27,19 @@ SSH_OPTS := -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o Batch
 # ovftool path (ships with VMware Fusion)
 OVFTOOL := /Applications/VMware\ Fusion.app/Contents/Library/VMware\ OVF\ Tool/ovftool
 
+# Build identity — captured once, threaded to Packer + Ansible + filenames.
+# Plain short SHA (no tag-relative describe) keeps the version string compact:
+# `cd3c28a` clean, `cd3c28a-dirty` if tracked files have uncommitted changes.
+# Untracked files do NOT count as dirty (--untracked-files=no), since the
+# repo has long-standing untracked legacy files that shouldn't poison every
+# build. Tarball/CI fallback yields BUILD_SHA=unknown.
+BUILD_DATE         := $(shell date +%Y%m%d)
+BUILD_SHA_RAW      := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo unknown)
+BUILD_DIRTY        := $(shell git status --porcelain --untracked-files=no 2>/dev/null | grep -q . && echo "-dirty")
+BUILD_SHA          := $(BUILD_SHA_RAW)$(BUILD_DIRTY)
+PACKER_BUILD_VARS  := -var "build_date=$(BUILD_DATE)" -var "build_sha=$(BUILD_SHA)"
+ANSIBLE_BUILD_VARS := build_sha=$(BUILD_SHA) build_date=$(BUILD_DATE)
+
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
@@ -36,17 +49,15 @@ help: ## Show this help
 
 base-amd64: ## Stage 1: ISO → Proxmox base template (run once)
 	cd packer && packer init greymhatter.pkr.hcl && \
-	packer build -only='base.proxmox-iso.fedora-base' .
+	packer build $(PACKER_BUILD_VARS) -only='base.proxmox-iso.fedora-base' .
 
 build-amd64: ## Stage 2: Clone template → Ansible → Proxmox template
 	cd packer && packer init greymhatter.pkr.hcl && \
-	packer build -only='greymhatter.proxmox-clone.greymhatter' .
+	packer build $(PACKER_BUILD_VARS) -only='greymhatter.proxmox-clone.greymhatter' .
 
 export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
 	@mkdir -p output; \
-	DATE=$$(date +%Y%m%d); N=1; \
-	while [ -e output/greymhatter-f42-amd64-$$DATE.$$N.ova ]; do N=$$((N+1)); done; \
-	OUT=output/greymhatter-f42-amd64-$$DATE.$$N.ova; \
+	OUT=output/greymhatter-f42-amd64-$(BUILD_DATE).$(BUILD_SHA).ova; \
 	bash scripts/export-amd64-ova.sh $$OUT
 
 # =============================================================================
@@ -56,27 +67,25 @@ export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
 base-esxi: ## Stage 1: ISO → ESXi base template (run once)
 	cp packer/http/ks.cfg packer/esxi/ks.cfg
 	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
-	packer build -var-file=../packer.auto.pkrvars.hcl \
+	packer build -var-file=../packer.auto.pkrvars.hcl $(PACKER_BUILD_VARS) \
 		-only='base.vsphere-iso.fedora-esxi-base' greymhatter-esxi.pkr.hcl
 	rm -f packer/esxi/ks.cfg
 
 build-esxi: ## Stage 2: Clone base → Ansible → ESXi template
 	cp packer/http/ks.cfg packer/esxi/ks.cfg
 	cd packer/esxi && packer init greymhatter-esxi.pkr.hcl && \
-	packer build -var-file=../packer.auto.pkrvars.hcl \
+	packer build -var-file=../packer.auto.pkrvars.hcl $(PACKER_BUILD_VARS) \
 		-only='greymhatter.vsphere-clone.greymhatter-esxi' greymhatter-esxi.pkr.hcl
 	rm -f packer/esxi/ks.cfg
 
 export-esxi: ## Stage 3: ESXi template → OVA via ovftool
 	@mkdir -p output; \
-	DATE=$$(date +%Y%m%d); N=1; \
-	while [ -e output/greymhatter-f42-esxi-$$DATE.$$N.ova ]; do N=$$((N+1)); done; \
-	OUT=output/greymhatter-f42-esxi-$$DATE.$$N.ova; \
+	OUT=output/greymhatter-f42-esxi-$(BUILD_DATE).$(BUILD_SHA).ova; \
 	ESX_URL=$$(awk -F'"' '/^esx_url/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_USER=$$(awk -F'"' '/^esx_username/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_PASS=$$(awk -F'"' '/^esx_password/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_HOST=$$(echo "$$ESX_URL" | sed -E 's|https?://||'); \
-	VM=greymhatter-f42-esxi-$$(date +%Y%m%d); \
+	VM=greymhatter-f42-esxi-$(BUILD_DATE).$(BUILD_SHA); \
 	ENC_USER=$$(printf '%s' "$$ESX_USER" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
 	ENC_PASS=$$(printf '%s' "$$ESX_PASS" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
 	$(OVFTOOL) --noSSLVerify "vi://$$ENC_USER:$$ENC_PASS@$$ESX_HOST/$$VM" $$OUT
@@ -91,7 +100,7 @@ export-esxi: ## Stage 3: ESXi template → OVA via ovftool
 base-arm64: ## Stage 1: ISO → Fusion base VM (run once)
 	cp packer/http/ks.cfg packer/fusion/ks.cfg
 	cd packer/fusion && packer init greymhatter-fusion.pkr.hcl && \
-	packer build -var 'headless=false' \
+	packer build -var 'headless=false' $(PACKER_BUILD_VARS) \
 		-only='base.vmware-iso.fedora-arm64-base' greymhatter-fusion.pkr.hcl
 	rm -f packer/fusion/ks.cfg
 
@@ -110,6 +119,7 @@ build-arm64: ## Stage 2: Boot base VM → Ansible → final VM
 		-var "docker_hub_token=$$DOCKER_TOKEN" \
 		-var "docker_registry_mirror=$$DOCKER_MIRROR" \
 		-var "github_token=$$GITHUB_TOKEN" \
+		$(PACKER_BUILD_VARS) \
 		-only='greymhatter.vmware-vmx.greymhatter-arm64' greymhatter-fusion.pkr.hcl
 
 export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
@@ -117,14 +127,11 @@ export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
 	@# so any OVA imported into Fusion ends up with guestos="other" and refuses
 	@# to power on ("requires x86 machine architecture"). Ship the .vmwarevm
 	@# bundle directly so the original guestos="arm-fedora-64" is preserved.
-	@DATE=$$(date +%Y%m%d); N=1; \
-	while [ -e output/greymhatter-f42-arm64-$$DATE.$$N.zip ]; do N=$$((N+1)); done; \
-	OUT=greymhatter-f42-arm64-$$DATE.$$N.zip; \
-	sed -i.bak 's/^displayname = "Clone of greymhatter-f42-arm64-base"$$/displayname = "greymhatter-f42-arm64"/' output/fusion-arm64/greymhatter-f42-arm64.vmx && \
-	rm -f output/fusion-arm64/greymhatter-f42-arm64.vmx.bak && \
-	cd output && mv fusion-arm64 greymhatter-f42-arm64.vmwarevm && \
-	zip -r $$OUT greymhatter-f42-arm64.vmwarevm && \
-	mv greymhatter-f42-arm64.vmwarevm fusion-arm64; \
+	@VM=greymhatter-f42-arm64-$(BUILD_DATE).$(BUILD_SHA); \
+	OUT=$$VM.zip; \
+	cd output && mv fusion-arm64 $$VM.vmwarevm && \
+	zip -r $$OUT $$VM.vmwarevm && \
+	mv $$VM.vmwarevm fusion-arm64; \
 	echo ""; \
 	echo "  Bundle exported: output/$$OUT"; \
 	echo "  Recipients: extract, then double-click the .vmx file in Fusion."; \
@@ -146,7 +153,7 @@ dev: ## SCP repo + run Ansible + reboot (usage: make dev DEV_VM_IP=<ip>)
 	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
 	scp $(SSH_OPTS) -r media hatter@$(DEV_VM_IP):/tmp/greymhatter/media
 	@echo "==> Running Ansible playbook..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars greymhatter_repo_path=/tmp/greymhatter'
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars "greymhatter_repo_path=/tmp/greymhatter $(ANSIBLE_BUILD_VARS)"'
 	@echo "==> Rebooting VM..."
 	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo reboot' || true
 	@echo ""
@@ -206,7 +213,7 @@ verify: ## Run verify role only (fast, skips deep checks). Usage: make verify DE
 	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
 	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
 	@echo "==> Running verify role (verify_deep=false)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=false"'
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=false $(ANSIBLE_BUILD_VARS)"'
 
 verify-deep: ## Run verify with full startable-service deep checks. Usage: make verify-deep DEV_VM_IP=<ip>
 	@if [ -z "$(DEV_VM_IP)" ]; then \
@@ -220,7 +227,7 @@ verify-deep: ## Run verify with full startable-service deep checks. Usage: make 
 	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo rm -rf /tmp/greymhatter && sudo mkdir -p /tmp/greymhatter && sudo chown hatter /tmp/greymhatter'
 	scp $(SSH_OPTS) -r ansible hatter@$(DEV_VM_IP):/tmp/greymhatter/ansible
 	@echo "==> Running verify role (verify_deep=true)..."
-	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=true"'
+	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'cd /tmp/greymhatter && sudo ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --tags verify --extra-vars "greymhatter_repo_path=/tmp/greymhatter verify_deep=true $(ANSIBLE_BUILD_VARS)"'
 
 smoke: ## Run test0 container smoke test only (<60s). Usage: make smoke DEV_VM_IP=<ip>
 	@if [ -z "$(DEV_VM_IP)" ]; then \

@@ -109,7 +109,7 @@ source "proxmox-clone" "greymhatter" {
 
   # Clone from base template
   clone_vm_id = var.base_vm_id
-  vm_name     = "greymhatter-f${var.fedora_version}-amd64-${formatdate("YYYYMMDD", timestamp())}"
+  vm_name     = "greymhatter-f${var.fedora_version}-amd64-${var.build_date}.${var.build_sha}"
   vm_id       = 0 # auto-assign
 
   # Hardware (inherit from template, but can override)
@@ -187,7 +187,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token}' --tags base,docker,user",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token} build_sha=${var.build_sha} build_date=${var.build_date}' --tags base,docker,user",
     ]
   }
 
@@ -196,7 +196,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter github_token=${var.github_token}' --tags tools",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter github_token=${var.github_token} build_sha=${var.build_sha} build_date=${var.build_date}' --tags tools",
     ]
   }
 
@@ -205,7 +205,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key}' --tags containers",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} build_sha=${var.build_sha} build_date=${var.build_date}' --tags containers",
     ]
   }
 
@@ -214,7 +214,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags desktop",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter build_sha=${var.build_sha} build_date=${var.build_date}' --tags desktop",
     ]
   }
 
@@ -223,7 +223,7 @@ build {
     pause_before      = "10s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags courses,samba",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter build_sha=${var.build_sha} build_date=${var.build_date}' --tags courses,samba",
     ]
   }
 
@@ -236,7 +236,7 @@ build {
     pause_before = "30s"
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter' --tags verify -v",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter build_sha=${var.build_sha} build_date=${var.build_date}' --tags verify -v",
     ]
   }
 

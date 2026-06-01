@@ -53,6 +53,22 @@ variable "fedora_version" {
   default = "42"
 }
 
+# --- Build identity (passed through by Makefile) ---
+# build_date: YYYYMMDD stamped into VM name + filenames.
+# build_sha: 7-char git short SHA, with -dirty suffix if working tree is modified.
+# Both default to ad-hoc-safe values so direct `packer build` (without Make)
+# still produces something valid.
+
+variable "build_date" {
+  type    = string
+  default = ""
+}
+
+variable "build_sha" {
+  type    = string
+  default = "unknown"
+}
+
 variable "proxmox_iso_file" {
   type        = string
   description = "Proxmox path to the Fedora ISO (e.g., local:iso/Fedora-Server-netinst-x86_64-42-1.1.iso)"

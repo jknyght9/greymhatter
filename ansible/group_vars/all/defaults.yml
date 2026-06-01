@@ -44,3 +44,9 @@ tools_dir: /opt/tools
 share_dir: /opt/share
 user_home: "/home/{{ greymhatter_username }}"
 user_local_bin: "{{ user_home }}/.local/bin"
+
+# Build identity — overridden by Makefile/Packer via --extra-vars.
+# Defaults make ad-hoc `ansible-playbook` runs produce a valid (if uninformative)
+# /etc/greymhatter-release rather than failing on undefined-variable.
+build_sha: "unknown"
+build_date: "00000000"

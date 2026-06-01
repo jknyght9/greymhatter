@@ -75,6 +75,17 @@ variable "github_token" {
   sensitive = true
 }
 
+# --- Build identity (passed through by Makefile) ---
+variable "build_date" {
+  type    = string
+  default = ""
+}
+
+variable "build_sha" {
+  type    = string
+  default = "unknown"
+}
+
 packer {
   required_plugins {
     vmware = {
@@ -131,7 +142,7 @@ source "vmware-iso" "fedora-arm64-base" {
 # ===========================================================================
 
 source "vmware-vmx" "greymhatter-arm64" {
-  vm_name     = "greymhatter-f42-arm64"
+  vm_name     = "greymhatter-f42-arm64-${var.build_date}.${var.build_sha}"
   source_path = "${path.root}/../../output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx"
 
   output_directory = "${path.root}/../../output/fusion-arm64"
@@ -207,7 +218,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token}'",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} docker_hub_username=${var.docker_hub_username} docker_hub_token=${var.docker_hub_token} docker_registry_mirror=${var.docker_registry_mirror} github_token=${var.github_token} build_sha=${var.build_sha} build_date=${var.build_date}'",
     ]
   }
 

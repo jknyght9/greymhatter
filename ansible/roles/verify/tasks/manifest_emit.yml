@@ -23,6 +23,8 @@
         "binaries_verified": {{ verify_arch_binaries | length }},
         "paths_verified": {{ expected_paths | length }},
         "services_verified": {{ expected_systemd_services | length }},
+        "build_sha": "{{ build_sha }}",
+        "full_version": "greymhatter-f{{ ansible_distribution_major_version }}-{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}-{{ build_date }}.{{ build_sha }}",
         "assertions_passed": true
       }
 

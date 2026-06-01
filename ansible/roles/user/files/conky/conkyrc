@@ -52,7 +52,8 @@ UTC   ${utime %H:%M:%S}${font}${color}
 
 ${color3}${hr 1}${color}
 ${color0}${font JetBrains Mono:Bold:size=9}System${font}${color}
-${color2}Kernel ${alignr}${kernel}
+${color2}Build ${alignr}${execi 3600 . /etc/greymhatter-release && echo $FULL_VERSION}
+Kernel ${alignr}${kernel}
 Uptime ${alignr}${uptime_short}${color}
 
 ${color3}${hr 1}${color}

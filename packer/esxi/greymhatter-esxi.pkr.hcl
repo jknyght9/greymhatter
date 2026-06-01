@@ -87,6 +87,17 @@ variable "maxmind_license_key" {
   sensitive = true
 }
 
+# --- Build identity (passed through by Makefile) ---
+variable "build_date" {
+  type    = string
+  default = ""
+}
+
+variable "build_sha" {
+  type    = string
+  default = "unknown"
+}
+
 packer {
   required_plugins {
     vsphere = {
@@ -100,7 +111,7 @@ packer {
 locals {
   vcenter_endpoint = trimprefix(trimprefix(var.esx_url, "https://"), "http://")
   base_vm_name     = "greymhatter-f${var.fedora_version}-esxi-base"
-  final_vm_name    = "greymhatter-f${var.fedora_version}-esxi-${formatdate("YYYYMMDD", timestamp())}"
+  final_vm_name    = "greymhatter-f${var.fedora_version}-esxi-${var.build_date}.${var.build_sha}"
 }
 
 # ===========================================================================
@@ -238,7 +249,7 @@ build {
     expect_disconnect = true
     inline = [
       "cd /tmp/greymhatter",
-      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key}'",
+      "ansible-playbook -i ansible/inventory/local.ini ansible/playbook.yml --extra-vars 'greymhatter_repo_path=/tmp/greymhatter maxmind_account_id=${var.maxmind_account_id} maxmind_license_key=${var.maxmind_license_key} build_sha=${var.build_sha} build_date=${var.build_date}'",
     ]
   }
 

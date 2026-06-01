@@ -300,3 +300,25 @@
       ansible.builtin.dnf:
         name: ghostty
         state: present
+
+# --- Build identity ---
+# Single source of truth for "what build is this VM?" — consumed by conky
+# (Build: line in SYSTEM block), by /etc/motd at login, and by the verify
+# manifest. build_sha / build_date arrive as --extra-vars from Packer/Make;
+# defaults in group_vars make ad-hoc runs still produce a valid file.
+
+- name: Render /etc/greymhatter-release
+  ansible.builtin.template:
+    src: greymhatter-release.j2
+    dest: /etc/greymhatter-release
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Render /etc/motd
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: "0644"
