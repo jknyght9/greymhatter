@@ -55,7 +55,11 @@ RUN git clone --depth 1 https://github.com/libyal/libvhdi /build/libvhdi \
     && rm -rf /build/libvhdi
 
 # --- Sleuthkit (with libvmdk and libvhdi compiled above) ---
-RUN git clone --depth 1 https://github.com/sleuthkit/sleuthkit /build/sleuthkit \
+# Pinned to release tag because sleuthkit's default branch (develop-4.1x) is
+# active-development and breaks Linux builds (e.g. populate_fs_name calling
+# Windows-only convert_wide_string_to_utf8 unconditionally). Bump this when
+# a new tagged release is verified.
+RUN git clone --branch sleuthkit-4.15.0 --depth 1 https://github.com/sleuthkit/sleuthkit /build/sleuthkit \
     && cd /build/sleuthkit \
     && ./bootstrap \
     && ./configure \
