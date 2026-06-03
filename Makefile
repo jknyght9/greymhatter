@@ -127,11 +127,22 @@ export-arm64: ## Stage 3: Fusion VM bundle → .vmwarevm zip for distribution
 	@# so any OVA imported into Fusion ends up with guestos="other" and refuses
 	@# to power on ("requires x86 machine architecture"). Ship the .vmwarevm
 	@# bundle directly so the original guestos="arm-fedora-64" is preserved.
-	@VM=greymhatter-f42-arm64-$(BUILD_DATE).$(BUILD_SHA); \
+	@# VM name is derived from the .vmx Packer actually produced rather
+	@# than $(BUILD_SHA), so an edit between `build-arm64` and `export-arm64`
+	@# (which flips the SHA to `-dirty`) doesn't drift the filename.
+	@#
+	@# `displayname` is set by Packer via `vmx_data` in the .pkr.hcl, so we
+	@# don't touch the .vmx here — just rename, zip, restore.
+	@set -e; \
+	cd output; \
+	VMX=$$(ls fusion-arm64/*.vmx | head -1); \
+	VM=$$(basename "$$VMX" .vmx); \
 	OUT=$$VM.zip; \
-	cd output && mv fusion-arm64 $$VM.vmwarevm && \
-	zip -r $$OUT $$VM.vmwarevm && \
-	mv $$VM.vmwarevm fusion-arm64; \
+	if [ -e "$$VM.vmwarevm" ]; then echo "ERROR: output/$$VM.vmwarevm already exists; mv would nest fusion-arm64 inside it. Remove it first." >&2; exit 1; fi; \
+	mv fusion-arm64 "$$VM.vmwarevm"; \
+	rm -f "$$OUT"; \
+	zip -r "$$OUT" "$$VM.vmwarevm"; \
+	mv "$$VM.vmwarevm" fusion-arm64; \
 	echo ""; \
 	echo "  Bundle exported: output/$$OUT"; \
 	echo "  Recipients: extract, then double-click the .vmx file in Fusion."; \

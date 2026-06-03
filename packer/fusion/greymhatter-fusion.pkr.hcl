@@ -147,6 +147,14 @@ source "vmware-vmx" "greymhatter-arm64" {
 
   output_directory = "${path.root}/../../output/fusion-arm64"
 
+  # Overwrite the inherited `displayname = "Clone of greymhatter-f42-arm64-base"`
+  # that Fusion writes into every clone. Without this the imported VM shows up
+  # in the library as "Clone of …" — and the prior workaround (sed-rewriting
+  # the .vmx at export time) created a duplicate key whenever case differed.
+  vmx_data = {
+    "displayname" = "greymhatter-f42-arm64-${var.build_date}.${var.build_sha}"
+  }
+
   ssh_username = "root"
   ssh_password = var.ssh_password
   ssh_timeout  = "10m"
