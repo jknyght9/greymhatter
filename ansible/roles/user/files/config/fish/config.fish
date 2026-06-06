@@ -391,13 +391,31 @@ function disk-expand
     return 1
   end
 
-  # Parse parent disk and partition number
+  # Parse parent disk and partition number.
+  # Don't use `set -l` inside if/else — fish scopes those to the block,
+  # leaving $disk/$partnum empty for the rest of the function. Without
+  # this, `growpart` and `sgdisk` ran with empty args (silent failure).
   if string match -q '/dev/nvme*' $pv_device
-    set -l disk (string replace -r 'p[0-9]+$' '' $pv_device)
-    set -l partnum (string replace -r '.*p' '' $pv_device)
+    set disk (string replace -r 'p[0-9]+$' '' $pv_device)
+    set partnum (string replace -r '.*p' '' $pv_device)
   else
-    set -l disk (string replace -r '[0-9]+$' '' $pv_device)
-    set -l partnum (string replace -r '.*[^0-9]' '' $pv_device)
+    set disk (string replace -r '[0-9]+$' '' $pv_device)
+    set partnum (string replace -r '.*[^0-9]' '' $pv_device)
+  end
+
+  # Force kernel to re-read disk geometry. QEMU/virtio and SCSI disks
+  # don't auto-detect hypervisor-side resizes; without poking sysfs,
+  # lsblk reports the cached pre-expansion size and `grow` reports
+  # "no expansion needed" even after the host has grown the disk.
+  # `test -e` (not `-w`) because sysfs nodes are --w------- owned by
+  # root — non-root `-w` checks fail even though `sudo sh -c` writes ok.
+  set -l disk_base (string replace '/dev/' '' $disk)
+  set -l rescan_sysfs "/sys/class/block/$disk_base/device/rescan"
+  set -l rescan_nvme  "/sys/class/block/$disk_base/device/rescan_controller"
+  if test -e $rescan_sysfs
+    sudo sh -c "echo 1 > $rescan_sysfs" 2>/dev/null; or true
+  else if test -e $rescan_nvme
+    sudo sh -c "echo 1 > $rescan_nvme" 2>/dev/null; or true
   end
 
   # Get sizes for comparison
