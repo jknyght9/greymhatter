@@ -18,7 +18,7 @@
 # Docs:
 #   make docs              Preview MkDocs site at http://localhost:8000
 
-.PHONY: help base-amd64 base-arm64 base-esxi build-amd64 build-arm64 build-esxi export-amd64 export-arm64 export-esxi dev docs docs-build clean
+.PHONY: help base-amd64 base-arm64 base-esxi build-amd64 build-arm64 build-esxi export-amd64 export-arm64 export-esxi dev release-upload docs docs-build clean
 
 # SSH config for dev workflow
 SSH_KEY := crypto/greymhatter
@@ -251,6 +251,13 @@ smoke: ## Run test0 container smoke test only (<60s). Usage: make smoke DEV_VM_I
 	scp $(SSH_OPTS) tests/run-tests.sh hatter@$(DEV_VM_IP):/tmp/run-tests.sh
 	@echo "==> Running test0..."
 	ssh $(SSH_OPTS) hatter@$(DEV_VM_IP) 'sudo bash /tmp/run-tests.sh --test0'
+
+# =============================================================================
+# Release
+# =============================================================================
+
+release-upload: ## Upload OVA/zip artifacts in output/ to Cloudflare R2 (usage: make release-upload [TAG=v2.0.0])
+	bash scripts/upload-release.sh $(TAG)
 
 # =============================================================================
 # Documentation
