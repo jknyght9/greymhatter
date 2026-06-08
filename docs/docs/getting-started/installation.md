@@ -11,12 +11,15 @@
 
 ## Download
 
-Download the latest OVA for your architecture:
+Download the latest release artifacts for your architecture:
 
-| Architecture | Download | SHA256 |
-|---|---|---|
-| AMD64 (Intel/AMD) | Coming soon | — |
-| ARM64 (Apple Silicon) | Coming soon | — |
+| Architecture | Download |
+|---|---|
+| AMD64 (Intel/AMD) | [greymhatter-f42-amd64-20260603.e9e97d0.ova](https://releases.greymhatter.com/v2.0.0/greymhatter-f42-amd64-20260603.e9e97d0.ova) |
+| ARM64 (Apple Silicon) | [greymhatter-f42-arm64-20260603.e9e97d0.zip](https://releases.greymhatter.com/v2.0.0/greymhatter-f42-arm64-20260603.e9e97d0.zip) |
+| Checksums | [SHA256SUMS](https://releases.greymhatter.com/v2.0.0/SHA256SUMS) |
+
+Older releases are available under `https://releases.greymhatter.com/<tag>/`.
 
 ## Verify Download
 
@@ -25,14 +28,18 @@ Always verify the download integrity before importing:
 === "Linux / macOS"
 
     ```bash
-    sha256sum -c greymhatter*.sha256
+    # Download the checksum manifest into the same directory as the artifact
+    curl -O https://releases.greymhatter.com/v2.0.0/SHA256SUMS
+    sha256sum --check --ignore-missing SHA256SUMS
     ```
 
 === "Windows (PowerShell)"
 
     ```powershell
-    Get-FileHash greymhatter*.zip
-    Get-Content greymhatter*.sha256
+    # Compute and compare against the published SHA256SUMS
+    (Get-FileHash greymhatter-f42-amd64-*.ova -Algorithm SHA256).Hash
+    Invoke-WebRequest https://releases.greymhatter.com/v2.0.0/SHA256SUMS -OutFile SHA256SUMS
+    Get-Content SHA256SUMS
     ```
 
 ## Import into VMware

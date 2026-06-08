@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## v2.0.0 — 2026-06-08
+
+First tagged release of the modernized Ansible + Packer pipeline. Replaces the v1.0.0 bash-script installer with reproducible image builds and adds ARM64 parity alongside AMD64.
+
+Downloads: <https://releases.greymhatter.com/v2.0.0/>
 
 ### Changed
 - Migrated provisioning from bash scripts to Ansible roles (9 roles)

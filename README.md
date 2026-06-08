@@ -18,7 +18,13 @@ A digital forensics and incident response (DFIR) distribution based on Fedora Li
 
 ## Quick Start
 
-Download the latest OVA and import into VMware Workstation or Fusion.
+Download the latest release and import into VMware Workstation or Fusion.
+
+| Architecture | Download |
+|---|---|
+| AMD64 (Intel/AMD) | [greymhatter-f42-amd64-20260603.e9e97d0.ova](https://releases.greymhatter.com/v2.0.0/greymhatter-f42-amd64-20260603.e9e97d0.ova) |
+| ARM64 (Apple Silicon) | [greymhatter-f42-arm64-20260603.e9e97d0.zip](https://releases.greymhatter.com/v2.0.0/greymhatter-f42-arm64-20260603.e9e97d0.zip) |
+| Checksums | [SHA256SUMS](https://releases.greymhatter.com/v2.0.0/SHA256SUMS) |
 
 ```text
 Username: hatter
