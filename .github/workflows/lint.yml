@@ -52,6 +52,9 @@ jobs:
         working-directory: packer
         run: |
           packer init .
+          # build_date/build_sha must be non-empty: vm_name interpolates
+          # "...-${build_date}.${build_sha}" and the Proxmox plugin rejects
+          # names starting with a dot ("must be a valid DNS name").
           packer validate \
             -var 'proxmox_url=https://example.invalid:8006/api2/json' \
             -var 'proxmox_node=stub' \
@@ -62,6 +65,8 @@ jobs:
             -var 'proxmox_bridge=vmbr0' \
             -var 'proxmox_iso_file=stub:iso/Fedora.iso' \
             -var 'ssh_password=stub' \
+            -var 'build_date=20260101' \
+            -var 'build_sha=ci00000' \
             .
       # Fusion stage 2 (vmware-vmx) source_path references the base VM's .vmx
       # which is created by `make base-arm64`. CI doesn't run that, so we stub
@@ -74,7 +79,10 @@ jobs:
           touch output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx
           cd packer/fusion
           packer init greymhatter-fusion.pkr.hcl
-          packer validate greymhatter-fusion.pkr.hcl
+          packer validate \
+            -var 'build_date=20260101' \
+            -var 'build_sha=ci00000' \
+            greymhatter-fusion.pkr.hcl
           rm -f ks.cfg
 
   shellcheck:
