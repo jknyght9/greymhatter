@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.0 — 2026-08-28
+
+### Added
+- Eric Zimmerman tools (.NET 9 cross-platform builds) — AmcacheParser, AppCompatCacheParser, bstrings, EvtxECmd, Hasher, JLECmd, LECmd, MFTECmd, PECmd, RBCmd, RecentFileCacheParser, RECmd, SBECmd, SumECmd, WxTCmd, iisGeolocate — installed to `/opt/tools/ezimmerman/net9/` with wrapper scripts in `~/.local/bin/`
+- .NET 9 runtime at `/opt/dotnet/` (dependency for Zimmerman tools), added to system PATH via `/etc/profile.d/dotnet.sh`
+
+Rerun `greymhatter-update` on an existing v2.0.0 VM to pick up the new tools.
+
+Downloads: <https://releases.greymhatter.com/v2.1.0/>
+
 ## v2.0.0 — 2026-06-08
 
 First tagged release of the modernized Ansible + Packer pipeline. Replaces the v1.0.0 bash-script installer with reproducible image builds and adds ARM64 parity alongside AMD64.

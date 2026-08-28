@@ -14,6 +14,31 @@ Complete list of software installed on GreymHatter, with pinned versions where a
 | Volatility 2 | 2.6.1 | Legacy memory forensics (Docker container) | [GitHub](https://github.com/volatilityfoundation/volatility) |
 | Volatility 3 | stable | Memory forensics framework | [GitHub](https://github.com/volatilityfoundation/volatility3) |
 
+## Eric Zimmerman Tools
+
+Cross-platform .NET 9 builds, installed via `Get-ZimmermanTools.ps1` into `/opt/tools/ezimmerman/net9/` and invoked through wrapper scripts in `~/.local/bin/`. Runs on both amd64 and arm64.
+
+| Software | Version | Purpose | Source |
+|---|---|---|---|
+| AmcacheParser | latest | Windows Amcache.hve parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| AppCompatCacheParser | latest | Shimcache / AppCompatCache parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| bstrings | latest | Better strings (unicode-aware) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| EvtxECmd | latest | Windows Event Log (EVTX) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| Hasher | latest | File/directory hasher | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| JLECmd | latest | Jump List parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| LECmd | latest | LNK shortcut parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| MFTECmd | latest | $MFT / $J / $Boot / $SDS / $LogFile parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| PECmd | latest | Prefetch parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| RBCmd | latest | Recycle Bin parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| RecentFileCacheParser | latest | RecentFileCache.bcf parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| RECmd | latest | Registry hive parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| SBECmd | latest | ShellBag parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| SumECmd | latest | SRUM parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| WxTCmd | latest | Windows 10 timeline (ActivitiesCache.db) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| iisGeolocate | latest | IIS log geolocation | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+
+Rerun `greymhatter-update` on a running VM to pull the latest tool versions.
+
 ## Malware Analysis
 
 | Software | Version | Purpose | Source |
@@ -109,6 +134,7 @@ Complete list of software installed on GreymHatter, with pinned versions where a
 | Software | Version | Purpose | Source |
 |---|---|---|---|
 | Ansible | system | Configuration management | Fedora repos |
+| .NET Runtime | 9.0 | Runtime for Eric Zimmerman tools | [dot.net](https://dot.net/) |
 | Docker CE | latest | Container runtime | [docker.com](https://docs.docker.com/) |
 | Docker Compose | latest | Container orchestration | Included with Docker CE |
 | firewalld | system | Host firewall | Fedora repos |

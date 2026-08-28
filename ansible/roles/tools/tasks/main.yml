@@ -64,3 +64,6 @@
 # --- DFIR utilities ---
 - name: Install dfir-pstools
   ansible.builtin.include_tasks: dfir-pstools.yml
+
+- name: Install Eric Zimmerman tools (.NET 9)
+  ansible.builtin.include_tasks: ezimmerman.yml

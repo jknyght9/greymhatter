@@ -1,0 +1,91 @@
+---
+# Eric Zimmerman DFIR tools — .NET 9 cross-platform builds.
+# Runs on both amd64 and arm64; tools are framework-dependent DLLs invoked via `dotnet`.
+
+# --- .NET 9 runtime (installed to /opt/dotnet, arch-agnostic via dotnet-install.sh) ---
+- name: Check if .NET 9 runtime is installed
+  ansible.builtin.stat:
+    path: /opt/dotnet/shared/Microsoft.NETCore.App
+  register: dotnet9_check
+
+- name: Install .NET 9 runtime
+  when: not dotnet9_check.stat.exists
+  block:
+    - name: Download dotnet-install.sh
+      ansible.builtin.get_url:
+        url: https://dot.net/v1/dotnet-install.sh
+        dest: /tmp/dotnet-install.sh
+        mode: "0755"
+
+    - name: Run dotnet-install.sh (runtime, channel 9.0)
+      ansible.builtin.command:
+        cmd: /tmp/dotnet-install.sh --runtime dotnet --channel 9.0 --install-dir /opt/dotnet
+      changed_when: true
+
+    - name: Remove dotnet installer
+      ansible.builtin.file:
+        path: /tmp/dotnet-install.sh
+        state: absent
+
+- name: Symlink dotnet into /usr/local/bin
+  ansible.builtin.file:
+    src: /opt/dotnet/dotnet
+    dest: /usr/local/bin/dotnet
+    state: link
+
+- name: Set DOTNET_ROOT and PATH for all users
+  ansible.builtin.copy:
+    dest: /etc/profile.d/dotnet.sh
+    content: |
+      export DOTNET_ROOT=/opt/dotnet
+      export PATH="$PATH:/opt/dotnet"
+    mode: "0644"
+
+# --- Zimmerman tools ---
+- name: Create ezimmerman directory
+  ansible.builtin.file:
+    path: "{{ tools_dir }}/ezimmerman"
+    state: directory
+    mode: "0755"
+
+- name: Download Get-ZimmermanTools.ps1
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/EricZimmerman/Get-ZimmermanTools/master/Get-ZimmermanTools.ps1
+    dest: "{{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1"
+    mode: "0755"
+    force: true
+
+- name: Fetch/update Zimmerman tools (net9)
+  ansible.builtin.command:
+    cmd: pwsh -File {{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1 -Dest {{ tools_dir }}/ezimmerman/net9 -NetVersion 9
+    chdir: "{{ tools_dir }}/ezimmerman"
+  register: ezt_run
+  changed_when: "'downloaded' in ezt_run.stdout | lower or 'updated' in ezt_run.stdout | lower"
+
+- name: Find EZ tool DLL entrypoints (dll whose name matches parent folder)
+  ansible.builtin.shell: |
+    set -e
+    find {{ tools_dir }}/ezimmerman/net9 -maxdepth 3 -type f -name '*.dll' | while read -r dll; do
+      base="$(basename "$dll" .dll)"
+      parent="$(basename "$(dirname "$dll")")"
+      if [ "$base" = "$parent" ]; then
+        echo "$dll"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  register: ezt_entrypoints
+  changed_when: false
+
+- name: Write wrapper scripts into ~/.local/bin
+  ansible.builtin.copy:
+    dest: "{{ user_local_bin }}/{{ item | basename | regex_replace('\\.dll$', '') }}"
+    content: |
+      #!/bin/bash
+      export DOTNET_ROOT=/opt/dotnet
+      exec /opt/dotnet/dotnet "{{ item }}" "$@"
+    mode: "0755"
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+  loop: "{{ ezt_entrypoints.stdout_lines }}"
+  when: ezt_entrypoints.stdout_lines | length > 0
