@@ -85,7 +85,7 @@ variable "vm_name" {
 variable "base_vm_id" {
   type        = number
   description = "VM ID for the base Fedora template (Stage 1). Must be fixed so Stage 2 can clone it."
-  default     = 9000
+  default     = 9001
 }
 
 variable "vm_cpus" {

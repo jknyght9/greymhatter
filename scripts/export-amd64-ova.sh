@@ -11,7 +11,7 @@
 #
 # What it does:
 #   1. Queries the Proxmox API to find the most recent greymhatter-f<ver>-amd64
-#      template (excludes the base template vmid=9000). Version taken from
+#      template (excludes base templates 9000/9001). Version taken from
 #      pkrvars `fedora_version`, or FEDORA_MAJOR env override.
 #   2. SSH'es to the Proxmox node, exports the disk as raw, then runs
 #      packer/scripts/export-ova.sh on the node to produce a stream-optimized
@@ -54,12 +54,12 @@ echo "==> Locating most recent greymhatter-f${FEDORA_MAJOR}-amd64 template..."
 VMID="$(curl -sk -H "$AUTH_HEADER" "${PROX_URL}/nodes/${PROX_NODE}/qemu" | python3 -c "
 import json, sys
 vms = json.load(sys.stdin)['data']
-cand = [v for v in vms if v.get('template') and 'greymhatter-f${FEDORA_MAJOR}-amd64' in v['name'] and v['vmid'] != 9000]
+cand = [v for v in vms if v.get('template') and 'greymhatter-f${FEDORA_MAJOR}-amd64' in v['name'] and v['vmid'] not in (9000, 9001)]
 cand.sort(key=lambda x: x['vmid'], reverse=True)
 print(cand[0]['vmid'] if cand else '')
 ")"
 if [[ -z "$VMID" ]]; then
-  echo "ERROR: no greymhatter-f${FEDORA_MAJOR}-amd64 template found (excluding base vmid=9000)" >&2
+  echo "ERROR: no greymhatter-f${FEDORA_MAJOR}-amd64 template found (excluding base vmids 9000/9001)" >&2
   exit 1
 fi
 echo "    using vmid=$VMID"
