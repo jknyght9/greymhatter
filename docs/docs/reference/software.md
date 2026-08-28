@@ -23,7 +23,7 @@ Cross-platform .NET 9 builds, installed via `Get-ZimmermanTools.ps1` into `/opt/
 | AmcacheParser | latest | Windows Amcache.hve parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | AppCompatCacheParser | latest | Shimcache / AppCompatCache parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | bstrings | latest | Better strings (unicode-aware) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| EvtxeCmd | latest | Windows Event Log (EVTX) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| EvtxECmd | latest | Windows Event Log (EVTX) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | iisGeolocate | latest | IIS log geolocation | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | JLECmd | latest | Jump List parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | LECmd | latest | LNK shortcut parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |

@@ -76,16 +76,16 @@
   changed_when: "'downloaded' in ezt_run.stdout | lower or 'updated' in ezt_run.stdout | lower"
 
 # Every .NET entrypoint has a <Tool>.runtimeconfig.json next to <Tool>.dll.
-# Filter to Microsoft.NETCore.App so we skip WPF GUIs (RegistryExplorer,
-# TimelineExplorer, etc.) that require Microsoft.WindowsDesktop.App.
+# WPF GUI runtimeconfigs (RegistryExplorer, TimelineExplorer, etc.) list BOTH
+# Microsoft.NETCore.App and Microsoft.WindowsDesktop.App, so filter by the
+# WindowsDesktop presence — those apps won't run on Linux either way.
 - name: Find EZ tool CLI entrypoints
   ansible.builtin.shell: |
-    set -e
     find {{ tools_dir }}/ezimmerman/net9 -type f -name '*.runtimeconfig.json' | while read -r rc; do
       base="$(basename "$rc" .runtimeconfig.json)"
       dir="$(dirname "$rc")"
       dll="$dir/$base.dll"
-      if [ -f "$dll" ] && grep -q '"Microsoft.NETCore.App"' "$rc"; then
+      if [ -f "$dll" ] && ! grep -q 'Microsoft.WindowsDesktop.App' "$rc"; then
         echo "$dll"
       fi
     done
