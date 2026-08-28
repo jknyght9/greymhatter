@@ -100,10 +100,11 @@
 
 - name: Find existing ezimmerman-owned wrappers in ~/.local/bin
   ansible.builtin.shell: |
-    set -e
     for f in {{ user_local_bin }}/*; do
       [ -f "$f" ] || continue
-      grep -q '/opt/tools/ezimmerman/' "$f" 2>/dev/null && basename "$f"
+      if grep -q '/opt/tools/ezimmerman/' "$f" 2>/dev/null; then
+        basename "$f"
+      fi
     done
   args:
     executable: /bin/bash
