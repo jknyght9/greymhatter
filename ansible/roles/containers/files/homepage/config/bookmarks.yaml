@@ -2,7 +2,7 @@
 - References:
     - Plaso User Guide:
         - icon: mdi-timelapse
-          href: https://plaso-fork.readthedocs.io/en/latest/sources/user/Users-Guide.html
+          href: https://plaso.readthedocs.io/en/latest/sources/user/Users-Guide.html
     - VirusTotal CLI Reference:
         - icon: mdi-virus
           href: https://virustotal.github.io/vt-cli/
