@@ -10,8 +10,9 @@
 #   PROXMOX_SSH_KEY   (default: ssh-agent or ~/.ssh/id_rsa)
 #
 # What it does:
-#   1. Queries the Proxmox API to find the most recent greymhatter-f42-amd64
-#      template (excludes the base template vmid=9000).
+#   1. Queries the Proxmox API to find the most recent greymhatter-f<ver>-amd64
+#      template (excludes the base template vmid=9000). Version taken from
+#      pkrvars `fedora_version`, or FEDORA_MAJOR env override.
 #   2. SSH'es to the Proxmox node, exports the disk as raw, then runs
 #      packer/scripts/export-ova.sh on the node to produce a stream-optimized
 #      VMDK + OVF + manifest, packaged as an OVA.
@@ -37,6 +38,8 @@ PROX_USERNAME="$(pv proxmox_username)"
 PROX_TOKEN="$(pv proxmox_token)"
 VM_CPUS="$(awk -F'=' '/^vm_cpus[[:space:]]*=/{gsub(/ /,""); print $2; exit}' "$PKRVARS")"
 VM_MEM="$(awk -F'=' '/^vm_memory[[:space:]]*=/{gsub(/ /,""); print $2; exit}' "$PKRVARS")"
+FEDORA_MAJOR="${FEDORA_MAJOR:-$(pv fedora_version)}"
+FEDORA_MAJOR="${FEDORA_MAJOR:-44}"
 
 PROX_HOST="$(echo "$PROX_URL" | sed -E 's|https?://||; s|:.*||')"
 PROXMOX_SSH_USER="${PROXMOX_SSH_USER:-root}"
@@ -47,16 +50,16 @@ fi
 
 AUTH_HEADER="Authorization: PVEAPIToken=${PROX_USERNAME}=${PROX_TOKEN}"
 
-echo "==> Locating most recent greymhatter-f42-amd64 template..."
+echo "==> Locating most recent greymhatter-f${FEDORA_MAJOR}-amd64 template..."
 VMID="$(curl -sk -H "$AUTH_HEADER" "${PROX_URL}/nodes/${PROX_NODE}/qemu" | python3 -c "
 import json, sys
 vms = json.load(sys.stdin)['data']
-cand = [v for v in vms if v.get('template') and 'greymhatter-f42-amd64' in v['name'] and v['vmid'] != 9000]
+cand = [v for v in vms if v.get('template') and 'greymhatter-f${FEDORA_MAJOR}-amd64' in v['name'] and v['vmid'] != 9000]
 cand.sort(key=lambda x: x['vmid'], reverse=True)
 print(cand[0]['vmid'] if cand else '')
 ")"
 if [[ -z "$VMID" ]]; then
-  echo "ERROR: no greymhatter-f42-amd64 template found (excluding base vmid=9000)" >&2
+  echo "ERROR: no greymhatter-f${FEDORA_MAJOR}-amd64 template found (excluding base vmid=9000)" >&2
   exit 1
 fi
 echo "    using vmid=$VMID"
@@ -79,10 +82,10 @@ ssh "${SSH_OPTS[@]}" "$PROXMOX_SSH_USER@$PROX_HOST" "
   lvchange -ay -K \"\$LV_REF\" 2>&1 || true
   trap 'lvchange -an -K \"'\"\$LV_REF\"'\" 2>/dev/null || true' EXIT
   qemu-img convert -f raw -O raw \"\$DISK_PATH\" $REMOTE_STAGE/raw/disk.raw
-  bash $REMOTE_STAGE/export-ova.sh $REMOTE_STAGE/raw greymhatter-f42 amd64 $VM_CPUS $VM_MEM
+  bash $REMOTE_STAGE/export-ova.sh $REMOTE_STAGE/raw greymhatter-f${FEDORA_MAJOR} amd64 $VM_CPUS $VM_MEM
 "
 
-REMOTE_OVA="$REMOTE_STAGE/ova-amd64/greymhatter-f42-amd64.ova"
+REMOTE_OVA="$REMOTE_STAGE/ova-amd64/greymhatter-f${FEDORA_MAJOR}-amd64.ova"
 echo "==> Downloading OVA to $OUTPUT_OVA..."
 mkdir -p "$(dirname "$OUTPUT_OVA")"
 scp "${SSH_OPTS[@]}" "$PROXMOX_SSH_USER@$PROX_HOST:$REMOTE_OVA" "$OUTPUT_OVA"

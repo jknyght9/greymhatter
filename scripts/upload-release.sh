@@ -8,8 +8,8 @@
 # Artifacts must already exist in output/ (built via `make build-* && make export-*`).
 #
 # Layout on R2:
-#   <bucket>/<TAG>/greymhatter-f42-amd64-YYYYMMDD.SHA.ova
-#   <bucket>/<TAG>/greymhatter-f42-arm64-YYYYMMDD.SHA.zip
+#   <bucket>/<TAG>/greymhatter-f<ver>-amd64-YYYYMMDD.SHA.ova
+#   <bucket>/<TAG>/greymhatter-f<ver>-arm64-YYYYMMDD.SHA.zip
 #   <bucket>/<TAG>/SHA256SUMS
 #
 # Requires:
@@ -30,6 +30,7 @@ REMOTE="${R2_REMOTE:-r2-greymhatter}"
 BUCKET="${R2_BUCKET:-greymhatter-releases}"
 PUBLIC_BASE="${R2_PUBLIC_BASE:-}"
 OUT=output
+FEDORA_MAJOR="${FEDORA_MAJOR:-44}"
 
 TAG="${1:-$(git describe --tags --abbrev=0 2>/dev/null || true)}"
 if [[ -z "$TAG" ]]; then
@@ -49,9 +50,9 @@ if ! rclone listremotes | grep -qx "${REMOTE}:"; then
 fi
 
 shopt -s nullglob
-artifacts=("$OUT"/greymhatter-f42-*.ova "$OUT"/greymhatter-f42-*.zip)
+artifacts=("$OUT"/greymhatter-f${FEDORA_MAJOR}-*.ova "$OUT"/greymhatter-f${FEDORA_MAJOR}-*.zip)
 if [[ ${#artifacts[@]} -eq 0 ]]; then
-  echo "ERROR: no greymhatter-f42-*.{ova,zip} in $OUT/. Build first." >&2
+  echo "ERROR: no greymhatter-f${FEDORA_MAJOR}-*.{ova,zip} in $OUT/. Build first." >&2
   exit 1
 fi
 
@@ -81,8 +82,8 @@ done
 
 echo "==> Uploading to ${REMOTE}:${BUCKET}/${TAG}/"
 rclone copy "$OUT" "${REMOTE}:${BUCKET}/${TAG}/" \
-  --include "greymhatter-f42-*.ova" \
-  --include "greymhatter-f42-*.zip" \
+  --include "greymhatter-f${FEDORA_MAJOR}-*.ova" \
+  --include "greymhatter-f${FEDORA_MAJOR}-*.zip" \
   --include "SHA256SUMS" \
   --progress --transfers 4 --checksum
 

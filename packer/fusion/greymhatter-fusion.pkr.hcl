@@ -5,15 +5,20 @@
 #
 # Runs natively on Mac — not containerized (needs Fusion hypervisor access)
 
+variable "fedora_version" {
+  type    = string
+  default = "44"
+}
+
 variable "fusion_iso_url" {
   type        = string
   description = "HTTPS URL to the Fedora ARM64 server ISO; Packer downloads it during the build."
-  default     = "https://download.fedoraproject.org/pub/fedora/linux/releases/42/Server/aarch64/iso/Fedora-Server-netinst-aarch64-42-1.1.iso"
+  default     = "https://download.fedoraproject.org/pub/fedora/linux/releases/44/Server/aarch64/iso/Fedora-Server-netinst-aarch64-44-1.7.iso"
 }
 
 variable "fusion_iso_checksum" {
   type    = string
-  default = "none"
+  default = "sha256:a93ebd0322cda5a439039710b727ac1899a06e1c11876cfdf7f27c25b8262cc3"
 }
 
 variable "vm_cpus" {
@@ -100,7 +105,7 @@ packer {
 # ===========================================================================
 
 source "vmware-iso" "fedora-arm64-base" {
-  vm_name       = "greymhatter-f42-arm64-base"
+  vm_name       = "greymhatter-f${var.fedora_version}-arm64-base"
   guest_os_type = "arm-fedora-64"
   version       = "20"
 
@@ -142,17 +147,17 @@ source "vmware-iso" "fedora-arm64-base" {
 # ===========================================================================
 
 source "vmware-vmx" "greymhatter-arm64" {
-  vm_name     = "greymhatter-f42-arm64-${var.build_date}.${var.build_sha}"
-  source_path = "${path.root}/../../output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx"
+  vm_name     = "greymhatter-f${var.fedora_version}-arm64-${var.build_date}.${var.build_sha}"
+  source_path = "${path.root}/../../output/fusion-arm64-base/greymhatter-f${var.fedora_version}-arm64-base.vmx"
 
   output_directory = "${path.root}/../../output/fusion-arm64"
 
-  # Overwrite the inherited `displayname = "Clone of greymhatter-f42-arm64-base"`
-  # that Fusion writes into every clone. Without this the imported VM shows up
-  # in the library as "Clone of …" — and the prior workaround (sed-rewriting
-  # the .vmx at export time) created a duplicate key whenever case differed.
+  # Overwrite the inherited "Clone of ..." displayname that Fusion writes into
+  # every clone. Without this the imported VM shows up in the library as
+  # "Clone of …" — and the prior workaround (sed-rewriting the .vmx at export
+  # time) created a duplicate key whenever case differed.
   vmx_data = {
-    "displayname" = "greymhatter-f42-arm64-${var.build_date}.${var.build_sha}"
+    "displayname" = "greymhatter-f${var.fedora_version}-arm64-${var.build_date}.${var.build_sha}"
   }
 
   ssh_username = "root"

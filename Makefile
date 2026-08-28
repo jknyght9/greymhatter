@@ -37,7 +37,8 @@ BUILD_DATE         := $(shell date +%Y%m%d)
 BUILD_SHA_RAW      := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo unknown)
 BUILD_DIRTY        := $(shell git status --porcelain --untracked-files=no 2>/dev/null | grep -q . && echo "-dirty")
 BUILD_SHA          := $(BUILD_SHA_RAW)$(BUILD_DIRTY)
-PACKER_BUILD_VARS  := -var "build_date=$(BUILD_DATE)" -var "build_sha=$(BUILD_SHA)"
+FEDORA_MAJOR       := 44
+PACKER_BUILD_VARS  := -var "build_date=$(BUILD_DATE)" -var "build_sha=$(BUILD_SHA)" -var "fedora_version=$(FEDORA_MAJOR)"
 ANSIBLE_BUILD_VARS := build_sha=$(BUILD_SHA) build_date=$(BUILD_DATE)
 
 help: ## Show this help
@@ -57,7 +58,7 @@ build-amd64: ## Stage 2: Clone template → Ansible → Proxmox template
 
 export-amd64: ## Stage 3: Proxmox template → OVA for ESXi / Workstation
 	@mkdir -p output; \
-	OUT=output/greymhatter-f42-amd64-$(BUILD_DATE).$(BUILD_SHA).ova; \
+	OUT=output/greymhatter-f$(FEDORA_MAJOR)-amd64-$(BUILD_DATE).$(BUILD_SHA).ova; \
 	bash scripts/export-amd64-ova.sh $$OUT
 
 # =============================================================================
@@ -80,17 +81,17 @@ build-esxi: ## Stage 2: Clone base → Ansible → ESXi template
 
 export-esxi: ## Stage 3: ESXi template → OVA via ovftool
 	@mkdir -p output; \
-	OUT=output/greymhatter-f42-esxi-$(BUILD_DATE).$(BUILD_SHA).ova; \
+	OUT=output/greymhatter-f$(FEDORA_MAJOR)-esxi-$(BUILD_DATE).$(BUILD_SHA).ova; \
 	ESX_URL=$$(awk -F'"' '/^esx_url/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_USER=$$(awk -F'"' '/^esx_username/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_PASS=$$(awk -F'"' '/^esx_password/{print $$2}' packer/packer.auto.pkrvars.hcl); \
 	ESX_HOST=$$(echo "$$ESX_URL" | sed -E 's|https?://||'); \
-	VM=greymhatter-f42-esxi-$(BUILD_DATE).$(BUILD_SHA); \
+	VM=greymhatter-f$(FEDORA_MAJOR)-esxi-$(BUILD_DATE).$(BUILD_SHA); \
 	ENC_USER=$$(printf '%s' "$$ESX_USER" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
 	ENC_PASS=$$(printf '%s' "$$ESX_PASS" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(), safe=""))'); \
 	$(OVFTOOL) --noSSLVerify "vi://$$ENC_USER:$$ENC_PASS@$$ESX_HOST/$$VM" $$OUT
 	@echo ""
-	@echo "  OVA exported: output/greymhatter-f42-esxi-*.ova"
+	@echo "  OVA exported: output/greymhatter-f$(FEDORA_MAJOR)-esxi-*.ova"
 	@echo ""
 
 # =============================================================================

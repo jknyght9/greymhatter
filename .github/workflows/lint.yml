@@ -76,7 +76,7 @@ jobs:
         run: |
           cp packer/http/ks.cfg packer/fusion/ks.cfg
           mkdir -p output/fusion-arm64-base
-          touch output/fusion-arm64-base/greymhatter-f42-arm64-base.vmx
+          touch output/fusion-arm64-base/greymhatter-f44-arm64-base.vmx
           cd packer/fusion
           packer init greymhatter-fusion.pkr.hcl
           packer validate \

@@ -50,7 +50,7 @@ variable "proxmox_bridge" {
 
 variable "fedora_version" {
   type    = string
-  default = "42"
+  default = "44"
 }
 
 # --- Build identity (passed through by Makefile) ---
