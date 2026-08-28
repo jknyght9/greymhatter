@@ -2,6 +2,7 @@ services:
 
   frontend:
     image: yetiplatform/yeti-frontend:${YETI_IMAGE_TAG:-latest}
+    container_name: yeti-frontend
     ports:
       - {{ yeti_port }}:80
     volumes:

@@ -480,3 +480,24 @@
     - { name: "nvim.dockitem", launcher: "file:///usr/share/applications/nvim.desktop" }
     - { name: "xfce4-settings-manager.dockitem", launcher: "file:///usr/share/applications/xfce4-settings-manager.desktop" }
     - { name: "trash.dockitem", launcher: "docklet://trash" }
+
+- name: Ensure Firefox policies directory exists
+  ansible.builtin.file:
+    path: /etc/firefox/policies
+    state: directory
+    mode: "0755"
+
+- name: Set Firefox default homepage to Homepage dashboard
+  ansible.builtin.copy:
+    dest: /etc/firefox/policies/policies.json
+    mode: "0644"
+    content: |
+      {
+        "policies": {
+          "Homepage": {
+            "URL": "http://localhost:3000",
+            "Locked": false,
+            "StartPage": "homepage"
+          }
+        }
+      }
