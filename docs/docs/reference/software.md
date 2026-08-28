@@ -23,19 +23,22 @@ Cross-platform .NET 9 builds, installed via `Get-ZimmermanTools.ps1` into `/opt/
 | AmcacheParser | latest | Windows Amcache.hve parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | AppCompatCacheParser | latest | Shimcache / AppCompatCache parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | bstrings | latest | Better strings (unicode-aware) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| EvtxECmd | latest | Windows Event Log (EVTX) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| Hasher | latest | File/directory hasher | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| EvtxeCmd | latest | Windows Event Log (EVTX) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| iisGeolocate | latest | IIS log geolocation | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | JLECmd | latest | Jump List parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | LECmd | latest | LNK shortcut parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | MFTECmd | latest | $MFT / $J / $Boot / $SDS / $LogFile parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | PECmd | latest | Prefetch parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | RBCmd | latest | Recycle Bin parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | RecentFileCacheParser | latest | RecentFileCache.bcf parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| RECmd | latest | Registry hive parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| RECmd | latest | Registry hive parser (ships with BatchExamples) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| rla | latest | Registry Live Agent | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | SBECmd | latest | ShellBag parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| SumECmd | latest | SRUM parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| SQLECmd | latest | SQLite parser (maps included) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| SrumECmd | latest | SRUM (System Resource Usage Monitor) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| SumECmd | latest | Server User Metrics parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
+| VSCMount | latest | Volume Shadow Copy mounter (Windows-only, wrapper present) | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 | WxTCmd | latest | Windows 10 timeline (ActivitiesCache.db) parser | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
-| iisGeolocate | latest | IIS log geolocation | [ericzimmerman.github.io](https://ericzimmerman.github.io/) |
 
 Rerun `greymhatter-update` on a running VM to pull the latest tool versions.
 

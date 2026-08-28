@@ -48,6 +48,17 @@
     state: directory
     mode: "0755"
 
+- name: Detect doubled-up net9/net9 from earlier buggy install
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/ezimmerman/net9/net9"
+  register: ezt_doubled
+
+- name: Remove nested net9 dir from earlier buggy install
+  ansible.builtin.file:
+    path: "{{ tools_dir }}/ezimmerman/net9"
+    state: absent
+  when: ezt_doubled.stat.exists
+
 - name: Download Get-ZimmermanTools.ps1
   ansible.builtin.get_url:
     url: https://raw.githubusercontent.com/EricZimmerman/Get-ZimmermanTools/master/Get-ZimmermanTools.ps1
@@ -55,20 +66,26 @@
     mode: "0755"
     force: true
 
+# Get-ZimmermanTools creates its own net9/ subfolder under -Dest, so point
+# -Dest at the parent to end up with .../ezimmerman/net9/.
 - name: Fetch/update Zimmerman tools (net9)
   ansible.builtin.command:
-    cmd: pwsh -File {{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1 -Dest {{ tools_dir }}/ezimmerman/net9 -NetVersion 9
+    cmd: pwsh -File {{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1 -Dest {{ tools_dir }}/ezimmerman -NetVersion 9
     chdir: "{{ tools_dir }}/ezimmerman"
   register: ezt_run
   changed_when: "'downloaded' in ezt_run.stdout | lower or 'updated' in ezt_run.stdout | lower"
 
-- name: Find EZ tool DLL entrypoints (dll whose name matches parent folder)
+# Every .NET entrypoint has a <Tool>.runtimeconfig.json next to <Tool>.dll.
+# Filter to Microsoft.NETCore.App so we skip WPF GUIs (RegistryExplorer,
+# TimelineExplorer, etc.) that require Microsoft.WindowsDesktop.App.
+- name: Find EZ tool CLI entrypoints
   ansible.builtin.shell: |
     set -e
-    find {{ tools_dir }}/ezimmerman/net9 -maxdepth 3 -type f -name '*.dll' | while read -r dll; do
-      base="$(basename "$dll" .dll)"
-      parent="$(basename "$(dirname "$dll")")"
-      if [ "$base" = "$parent" ]; then
+    find {{ tools_dir }}/ezimmerman/net9 -type f -name '*.runtimeconfig.json' | while read -r rc; do
+      base="$(basename "$rc" .runtimeconfig.json)"
+      dir="$(dirname "$rc")"
+      dll="$dir/$base.dll"
+      if [ -f "$dll" ] && grep -q '"Microsoft.NETCore.App"' "$rc"; then
         echo "$dll"
       fi
     done
@@ -76,6 +93,28 @@
     executable: /bin/bash
   register: ezt_entrypoints
   changed_when: false
+
+- name: Compute wanted wrapper names
+  ansible.builtin.set_fact:
+    ezt_wanted: "{{ ezt_entrypoints.stdout_lines | map('basename') | map('regex_replace', '\\.dll$', '') | list }}"
+
+- name: Find existing ezimmerman-owned wrappers in ~/.local/bin
+  ansible.builtin.shell: |
+    set -e
+    for f in {{ user_local_bin }}/*; do
+      [ -f "$f" ] || continue
+      grep -q '/opt/tools/ezimmerman/' "$f" 2>/dev/null && basename "$f"
+    done
+  args:
+    executable: /bin/bash
+  register: ezt_existing_wrappers
+  changed_when: false
+
+- name: Remove stale ezimmerman wrappers (present but no longer wanted)
+  ansible.builtin.file:
+    path: "{{ user_local_bin }}/{{ item }}"
+    state: absent
+  loop: "{{ ezt_existing_wrappers.stdout_lines | difference(ezt_wanted) }}"
 
 - name: Write wrapper scripts into ~/.local/bin
   ansible.builtin.copy:
