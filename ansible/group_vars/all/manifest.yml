@@ -327,12 +327,6 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
-  - cmd: scalpel
-    probe: "command -v scalpel"
-    arch: [x86_64, aarch64]
-    source: tools/encryption.yml
-    # scalpel -V exits rc=1; command -v verifies the binary is on PATH.
-
   - cmd: hashcat
     probe: "hashcat --version"
     arch: [x86_64, aarch64]

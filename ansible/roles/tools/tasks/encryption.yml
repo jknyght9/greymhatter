@@ -7,7 +7,6 @@
       - exfatprogs
       - foremost
       - hashcat
-      - scalpel
     state: present
     install_weak_deps: false
 
