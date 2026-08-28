@@ -8,7 +8,7 @@
 #   docker cp builder:/output/ /tmp/tool-binaries/
 #   docker rm builder && docker rmi greymhatter-builder
 
-FROM fedora:42
+FROM fedora:44
 
 # All build dependencies — these never touch the host system
 RUN dnf install -y \
