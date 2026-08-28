@@ -72,6 +72,10 @@
       register: yeti_user_output
       when: yeti_user_check.rc != 0
       changed_when: yeti_user_output.rc == 0
+      failed_when:
+        - yeti_user_output.rc is defined
+        - yeti_user_output.rc != 0
+        - "'already exists' not in (yeti_user_output.stderr | default(''))"
 
     - name: Extract Yeti API key
       ansible.builtin.set_fact:
