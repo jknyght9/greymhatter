@@ -16,7 +16,7 @@ RUN dnf install -y \
     bison flex pkg-config \
     zlib-devel e2fsprogs-devel libuuid-devel \
     afflib-devel libewf-devel \
-    fuse-devel python3-devel python3-setuptools python3-pip \
+    fuse-devel fuse3-devel python3-devel python3-setuptools python3-pip \
     re2 re2-devel gettext-devel openssl-devel \
     && dnf clean all
 
