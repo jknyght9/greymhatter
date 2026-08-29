@@ -119,7 +119,7 @@ source "vmware-iso" "fedora-arm64-base" {
   disk_adapter_type    = "sata"
   network_adapter_type = "e1000e"
 
-  output_directory = "${path.root}/../../output/fusion-arm64-base"
+  output_directory = "${path.root}/../../output/fusion-arm64-base-f${var.fedora_version}"
 
   cd_files = ["${path.root}/ks.cfg"]
   cd_label = "OEMDRV"
@@ -148,7 +148,7 @@ source "vmware-iso" "fedora-arm64-base" {
 
 source "vmware-vmx" "greymhatter-arm64" {
   vm_name     = "greymhatter-f${var.fedora_version}-arm64-${var.build_date}.${var.build_sha}"
-  source_path = "${path.root}/../../output/fusion-arm64-base/greymhatter-f${var.fedora_version}-arm64-base.vmx"
+  source_path = "${path.root}/../../output/fusion-arm64-base-f${var.fedora_version}/greymhatter-f${var.fedora_version}-arm64-base.vmx"
 
   output_directory = "${path.root}/../../output/fusion-arm64"
 
