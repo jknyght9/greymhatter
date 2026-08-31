@@ -124,6 +124,15 @@ source "vmware-iso" "fedora-arm64-base" {
   cd_files = ["${path.root}/ks.cfg"]
   cd_label = "OEMDRV"
 
+  # Pin the MAC so Fusion NAT DHCP hands us a stable IP; then we can
+  # tell Packer that IP directly via ssh_host and skip its broken
+  # lease-file lookup on Apple Silicon Fusion (returns empty, never
+  # falls back to VMware Tools, times out at 60m).
+  vmx_data = {
+    "ethernet0.address"     = "00:0c:29:73:b6:3f"
+    "ethernet0.addressType" = "static"
+  }
+
   boot_command = [
     "<up><wait>",
     "e<wait>",
@@ -135,13 +144,8 @@ source "vmware-iso" "fedora-arm64-base" {
 
   ssh_username = "root"
   ssh_password = var.ssh_password
+  ssh_host     = "192.168.26.135"
   ssh_timeout  = "60m"
-
-  # Packer's Fusion plugin tries to reach the guest via a
-  # 127.0.0.1:<random-port> forward through Fusion NAT, which is broken on
-  # Apple Silicon Fusion 13+ (the port binds but no forward is installed).
-  # Skip the NAT hop and connect directly to the guest's DHCP-assigned IP.
-  ssh_skip_nat_mapping = true
 
   shutdown_command = "shutdown -P now"
   headless         = var.headless
