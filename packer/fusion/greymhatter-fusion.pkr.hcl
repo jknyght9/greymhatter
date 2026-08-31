@@ -137,6 +137,12 @@ source "vmware-iso" "fedora-arm64-base" {
   ssh_password = var.ssh_password
   ssh_timeout  = "60m"
 
+  # Packer's Fusion plugin tries to reach the guest via a
+  # 127.0.0.1:<random-port> forward through Fusion NAT, which is broken on
+  # Apple Silicon Fusion 13+ (the port binds but no forward is installed).
+  # Skip the NAT hop and connect directly to the guest's DHCP-assigned IP.
+  ssh_skip_nat_mapping = true
+
   shutdown_command = "shutdown -P now"
   headless         = var.headless
 }
