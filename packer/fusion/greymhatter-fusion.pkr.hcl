@@ -135,7 +135,7 @@ source "vmware-iso" "fedora-arm64-base" {
 
   ssh_username = "root"
   ssh_password = var.ssh_password
-  ssh_timeout  = "30m"
+  ssh_timeout  = "60m"
 
   shutdown_command = "shutdown -P now"
   headless         = var.headless
