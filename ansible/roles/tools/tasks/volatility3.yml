@@ -56,6 +56,7 @@
       ansible.builtin.get_url:
         url: "https://downloads.volatilityfoundation.org/volatility3/symbols/{{ item }}.zip"
         dest: "{{ vol3_path.stdout }}/symbols/{{ item }}.zip"
+        checksum: "sha256:https://downloads.volatilityfoundation.org/volatility3/symbols/SHA256SUMS"
         mode: "0644"
       retries: 3
       delay: 10

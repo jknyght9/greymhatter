@@ -1,0 +1,44 @@
+---
+# JPCERTCC Windows symbol tables for Volatility 3 offline analysis. Cloned
+# (not copied) so `update-vol3-symbols` can refresh them with a git pull.
+- name: Get Volatility 3 site-packages path
+  ansible.builtin.command:
+    cmd: python3 -c "import volatility3; import os; print(os.path.dirname(volatility3.__file__))"
+  register: vol3_jpcert_path
+  changed_when: false
+
+- name: Create JPCERTCC symbol tables directory
+  ansible.builtin.file:
+    path: "{{ tools_dir }}/Windows-Symbol-Tables"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Clone JPCERTCC Windows symbol tables
+  ansible.builtin.git:
+    repo: https://github.com/JPCERTCC/Windows-Symbol-Tables.git
+    dest: "{{ tools_dir }}/Windows-Symbol-Tables"
+    version: main
+    depth: 1
+    update: false
+  become_user: "{{ greymhatter_username }}"
+
+- name: Link JPCERTCC tables into Volatility 3 symbols directory
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/Windows-Symbol-Tables/symbols/windows"
+    dest: "{{ vol3_jpcert_path.stdout }}/symbols/windows"
+    state: link
+
+- name: Install update-vol3-symbols helper
+  ansible.builtin.copy:
+    src: update-vol3-symbols
+    dest: "{{ tools_dir }}/update-vol3-symbols"
+    mode: "0755"
+
+- name: Symlink update-vol3-symbols to user bin
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/update-vol3-symbols"
+    dest: "{{ user_local_bin }}/update-vol3-symbols"
+    state: link
+    owner: "{{ greymhatter_username }}"

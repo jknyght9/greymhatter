@@ -58,6 +58,9 @@
 - name: Install Volatility 3
   ansible.builtin.include_tasks: volatility3.yml
 
+- name: Install JPCERTCC symbol tables for Volatility 3
+  ansible.builtin.include_tasks: vol3-jpcert-symbols.yml
+
 - name: Install YARA
   ansible.builtin.include_tasks: yara.yml
 
