@@ -129,7 +129,7 @@ source "vmware-iso" "fedora-arm64-base" {
   # lease-file lookup on Apple Silicon Fusion (returns empty, never
   # falls back to VMware Tools, times out at 60m).
   vmx_data = {
-    "ethernet0.address"     = "00:0c:29:73:b6:3f"
+    "ethernet0.address"     = "00:50:56:26:01:00"
     "ethernet0.addressType" = "static"
   }
 
@@ -144,7 +144,7 @@ source "vmware-iso" "fedora-arm64-base" {
 
   ssh_username = "root"
   ssh_password = var.ssh_password
-  ssh_host     = "192.168.26.135"
+  ssh_host     = "192.168.26.100"
   ssh_timeout  = "60m"
 
   shutdown_command = "shutdown -P now"
