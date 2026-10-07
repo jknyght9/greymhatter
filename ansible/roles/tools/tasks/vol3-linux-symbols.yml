@@ -1,0 +1,30 @@
+---
+# On-demand Linux ISFs from Abyss-W4tcher/volatility3-symbols. The repo is too
+# large to bundle; `vol3-linux-symbols <dump>` fetches only what a dump needs
+# into symbols/linux, which hatter owns so no sudo is required.
+- name: Get Volatility 3 site-packages path
+  ansible.builtin.command:
+    cmd: python3 -c "import volatility3; import os; print(os.path.dirname(volatility3.__file__))"
+  register: vol3_linux_path
+  changed_when: false
+
+- name: Create user-writable Volatility 3 Linux symbols directory
+  ansible.builtin.file:
+    path: "{{ vol3_linux_path.stdout }}/symbols/linux"
+    state: directory
+    owner: "{{ greymhatter_username }}"
+    group: "{{ greymhatter_username }}"
+    mode: "0755"
+
+- name: Install vol3-linux-symbols helper
+  ansible.builtin.copy:
+    src: vol3-linux-symbols
+    dest: "{{ tools_dir }}/vol3-linux-symbols"
+    mode: "0755"
+
+- name: Symlink vol3-linux-symbols to user bin
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/vol3-linux-symbols"
+    dest: "{{ user_local_bin }}/vol3-linux-symbols"
+    state: link
+    owner: "{{ greymhatter_username }}"

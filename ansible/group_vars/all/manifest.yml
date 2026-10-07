@@ -262,10 +262,10 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/volatility3.yml
 
-  - path: /opt/tools/update-vol3-symbols
-    probe: "test -x /opt/tools/update-vol3-symbols"
+  - path: /opt/tools/vol3-linux-symbols
+    probe: "test -x /opt/tools/vol3-linux-symbols"
     arch: [x86_64, aarch64]
-    source: tools/vol3-jpcert-symbols.yml
+    source: tools/vol3-linux-symbols.yml
 
   - path: /usr/local/bin/vol2
     probe: "test -x /usr/local/bin/vol2"
