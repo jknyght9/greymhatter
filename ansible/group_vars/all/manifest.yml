@@ -262,11 +262,6 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/volatility3.yml
 
-  - path: /opt/tools/update-maxmind-timesketch
-    probe: "test -x /opt/tools/update-maxmind-timesketch"
-    arch: [x86_64, aarch64]
-    source: containers/maxmind.yml
-
   - path: /opt/tools/vol3-linux-symbols
     probe: "test -x /opt/tools/vol3-linux-symbols"
     arch: [x86_64, aarch64]
@@ -551,6 +546,8 @@ expected_paths_x86_64:
 expected_paths_when_maxmind:
   - path: /opt/maxmind-geoipupdate
     type: directory
+  - path: /opt/maxmind-geoipupdate/.env
+    type: file
   - path: /opt/maxmind-geoipupdate/geoip_data
     type: directory
 

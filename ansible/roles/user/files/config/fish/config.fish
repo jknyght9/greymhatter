@@ -83,12 +83,12 @@ function hayabusa-timeline
     printf "Hayabusa is not installed.\n"
     return 1
   end
-  # Hayabusa exits on -G without the databases; skip GeoIP until update-maxmind-timesketch has run
+  # Hayabusa exits on -G without the databases; skip GeoIP until geoipupdate has downloaded them
   set -l geoip
   if test -f /opt/maxmind-geoipupdate/geoip_data/GeoLite2-City.mmdb
     set geoip -G /opt/maxmind-geoipupdate/geoip_data/
   else
-    printf "GeoIP databases not found; run update-maxmind-timesketch to add SrcCountry/SrcCity/SrcASN.\n"
+    printf "GeoIP databases not found; SrcCountry/SrcCity/SrcASN will be empty. Start geoipupdate in /opt/maxmind-geoipupdate.\n\n"
   end
   printf "Running command: hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T $geoip -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv --sort\n\n"
   /opt/tools/hayabusa/hayabusa csv-timeline -d $argv[1] --RFC-3339 -p timesketch-verbose -U -T $geoip -o /opt/share/hayabusa/$argv[2]-hayabusa-timeline.csv --sort

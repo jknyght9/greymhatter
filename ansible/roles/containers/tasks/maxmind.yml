@@ -1,7 +1,6 @@
 ---
-# MaxMind GeoIP — always installed, never shipped with credentials.
-# Students run `update-maxmind-timesketch` with their own GeoLite2 account,
-# which writes .env, starts the container, and configures Timesketch.
+# MaxMind GeoIP — always installed, credentials optional
+# Students configure their own account in /opt/maxmind-geoipupdate/.env
 
 - name: Check if MaxMind is already installed
   ansible.builtin.stat:
@@ -21,20 +20,30 @@
     state: directory
     mode: "0755"
 
-- name: Install update-maxmind-timesketch helper
+- name: Configure MaxMind credentials
   ansible.builtin.copy:
-    src: update-maxmind-timesketch
-    dest: "{{ tools_dir }}/update-maxmind-timesketch"
-    mode: "0755"
+    dest: /opt/maxmind-geoipupdate/.env
+    content: |
+      GEOIPUPDATE_ACCOUNT_ID={{ maxmind_account_id }}
+      GEOIPUPDATE_LICENSE_KEY={{ maxmind_license_key }}
+    mode: "0600"
+  when: maxmind_account_id | length > 0
 
-- name: Symlink update-maxmind-timesketch to user bin
-  ansible.builtin.file:
-    src: "{{ tools_dir }}/update-maxmind-timesketch"
-    dest: "{{ user_local_bin }}/update-maxmind-timesketch"
-    state: link
-    owner: "{{ greymhatter_username }}"
+# Start geoipupdate during the build so the databases exist before the
+# Timesketch task sets MAXMIND_DB_PATH, and hayabusa-timeline gets GeoIP.
+# Each build spends one download per edition (3) against MaxMind's daily
+# limit. restart: unless-stopped keeps it refreshing (72h) after deploy.
+- name: Start MaxMind GeoIP updater
+  when: maxmind_account_id | length > 0
+  block:
+    - name: Start geoipupdate
+      ansible.builtin.shell:
+        cmd: docker compose up -d
+        chdir: /opt/maxmind-geoipupdate
+      register: maxmind_up
+      changed_when: maxmind_up.stderr is search('(Created|Started|Recreated|Pulling)')
 
-# Intentionally NOT starting the container during build.
-# MaxMind's free tier limits GeoLite2 downloads to 2000/day per license key
-# — easy to exhaust across build iterations. The container is configured
-# but left stopped until the deployed user runs update-maxmind-timesketch.
+    - name: Wait for GeoLite2 databases
+      ansible.builtin.wait_for:
+        path: /opt/maxmind-geoipupdate/geoip_data/GeoLite2-City.mmdb
+        timeout: 300
