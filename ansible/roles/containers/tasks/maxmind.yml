@@ -33,8 +33,15 @@
 # Timesketch task sets MAXMIND_DB_PATH, and hayabusa-timeline gets GeoIP.
 # Each build spends one download per edition (3) against MaxMind's daily
 # limit. restart: unless-stopped keeps it refreshing (72h) after deploy.
+# Gate on .env, not maxmind_account_id: greymhatter-update passes no
+# credentials but deployed images already carry .env from the build.
+- name: Check for MaxMind credentials
+  ansible.builtin.stat:
+    path: /opt/maxmind-geoipupdate/.env
+  register: maxmind_env
+
 - name: Start MaxMind GeoIP updater
-  when: maxmind_account_id | length > 0
+  when: maxmind_env.stat.exists
   block:
     - name: Start geoipupdate
       ansible.builtin.shell:
