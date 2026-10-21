@@ -98,12 +98,19 @@
     path: /opt/timesketch/etc/timesketch/timesketch.conf
     marker: "# {mark} GREYMHATTER CONFIGURATION"
     block: |
-      {% if maxmind_db.stat.exists | default(false) %}
-      MAXMIND_DB_PATH = '/opt/maxmind/GeoLite2-City.mmdb'
-      {% endif %}
       {% if dfiq_dir.stat.exists | default(false) %}
       DFIQ_ENABLED = True
       {% endif %}
+
+# Replace the shipped MAXMIND_DB_PATH = "" in place rather than shadowing it
+# with a second assignment. Runs after blockinfile so that, on boxes that
+# had it in the block, the block copy is gone and only the shipped line matches.
+- name: Configure Timesketch MaxMind database path
+  ansible.builtin.lineinfile:
+    path: /opt/timesketch/etc/timesketch/timesketch.conf
+    regexp: '^MAXMIND_DB_PATH\s*='
+    line: "MAXMIND_DB_PATH = '/opt/maxmind/GeoLite2-City.mmdb'"
+  when: maxmind_db.stat.exists
 
 # --- ARM64: build Timesketch image from source ---
 # The official OSDFIR image is amd64-only; build natively on ARM64
