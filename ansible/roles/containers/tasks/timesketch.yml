@@ -82,25 +82,19 @@
       -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
     creates: /opt/timesketch/ssl/certs/nginx-selfsigned.crt
 
-# --- Integrations (MaxMind, DFIQ) ---
+# --- Integrations (MaxMind) ---
 - name: Check if MaxMind database exists
   ansible.builtin.stat:
     path: /opt/maxmind-geoipupdate/geoip_data/GeoLite2-City.mmdb
   register: maxmind_db
 
-- name: Check if DFIQ is installed
-  ansible.builtin.stat:
-    path: /opt/dfiq
-  register: dfiq_dir
-
-- name: Configure Timesketch integrations
+# DFIQ is disabled (never worked). Remove the block that enabled it on
+# boxes deployed before that; a no-op on fresh builds.
+- name: Remove GREYMHATTER configuration block
   ansible.builtin.blockinfile:
     path: /opt/timesketch/etc/timesketch/timesketch.conf
     marker: "# {mark} GREYMHATTER CONFIGURATION"
-    block: |
-      {% if dfiq_dir.stat.exists | default(false) %}
-      DFIQ_ENABLED = True
-      {% endif %}
+    state: absent
 
 # Replace the shipped MAXMIND_DB_PATH = "" in place rather than shadowing it
 # with a second assignment. Runs after blockinfile so that, on boxes that

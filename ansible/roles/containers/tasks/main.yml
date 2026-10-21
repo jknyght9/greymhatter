@@ -1,9 +1,6 @@
 ---
 # roles/containers - Docker service deployment
 
-- name: Install DFIQ
-  ansible.builtin.include_tasks: dfiq.yml
-
 - name: Install MaxMind GeoIP
   ansible.builtin.include_tasks: maxmind.yml
 

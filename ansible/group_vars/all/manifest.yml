@@ -503,8 +503,6 @@ expected_paths:
     type: file
   - path: /opt/clamav-hashbuilder/compose.yml
     type: file
-  - path: /opt/dfiq
-    type: directory
 
   # Timesketch
   - path: /opt/timesketch

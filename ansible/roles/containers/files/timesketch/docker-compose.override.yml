@@ -35,4 +35,3 @@ services:
       - ${TIMESKETCH_LOGS_PATH}:/var/log/timesketch/
       - /opt/share/:/share/
       - /opt/maxmind-geoipupdate/geoip_data:/opt/maxmind
-      - /opt/dfiq/dfiq/data/:/etc/timesketch/dfiq
