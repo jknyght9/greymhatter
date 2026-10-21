@@ -1,6 +1,7 @@
 ---
-# MaxMind GeoIP — always installed, credentials optional
-# Students configure their own account in /opt/maxmind-geoipupdate/.env
+# MaxMind GeoIP — always installed, never shipped with credentials.
+# Students run `update-maxmind-timesketch` with their own GeoLite2 account,
+# which writes .env, starts the container, and configures Timesketch.
 
 - name: Check if MaxMind is already installed
   ansible.builtin.stat:
@@ -20,17 +21,20 @@
     state: directory
     mode: "0755"
 
-- name: Configure MaxMind credentials
+- name: Install update-maxmind-timesketch helper
   ansible.builtin.copy:
-    dest: /opt/maxmind-geoipupdate/.env
-    content: |
-      GEOIPUPDATE_ACCOUNT_ID={{ maxmind_account_id }}
-      GEOIPUPDATE_LICENSE_KEY={{ maxmind_license_key }}
-    mode: "0600"
-  when: maxmind_account_id | length > 0
+    src: update-maxmind-timesketch
+    dest: "{{ tools_dir }}/update-maxmind-timesketch"
+    mode: "0755"
+
+- name: Symlink update-maxmind-timesketch to user bin
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/update-maxmind-timesketch"
+    dest: "{{ user_local_bin }}/update-maxmind-timesketch"
+    state: link
+    owner: "{{ greymhatter_username }}"
 
 # Intentionally NOT starting the container during build.
 # MaxMind's free tier limits GeoLite2 downloads to 2000/day per license key
 # — easy to exhaust across build iterations. The container is configured
-# but left stopped. The deployed user runs `docker compose up -d` in
-# /opt/maxmind-geoipupdate post-deploy when they want fresh geoip data.
+# but left stopped until the deployed user runs update-maxmind-timesketch.

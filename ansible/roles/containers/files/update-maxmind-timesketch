@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Wire a student's own MaxMind GeoLite2 account into GreymHatter.
+#
+# Prompts for the account ID and license key, verifies them against MaxMind,
+# starts the geoipupdate container (refreshes every 72h, survives reboots),
+# waits for the databases, then points Timesketch at GeoLite2-City.mmdb.
+# Hayabusa picks the databases up from the same directory.
+set -euo pipefail
+
+MAXMIND_DIR=/opt/maxmind-geoipupdate
+CITY_DB=$MAXMIND_DIR/geoip_data/GeoLite2-City.mmdb
+TS_DIR=/opt/timesketch
+TS_CONF=$TS_DIR/etc/timesketch/timesketch.conf
+# Path inside timesketch-worker; see the /opt/maxmind mount in docker-compose.override.yml
+TS_DB_PATH=/opt/maxmind/GeoLite2-City.mmdb
+
+echo "Create a free account at https://www.maxmind.com/en/geolite2/signup"
+echo "then generate a license key under Account > Manage License Keys."
+echo
+read -rp "MaxMind account ID: " account_id
+read -rsp "MaxMind license key: " license_key
+echo
+
+if [[ -z "$account_id" || -z "$license_key" ]]; then
+    echo "update-maxmind-timesketch: account ID and license key are both required" >&2
+    exit 1
+fi
+
+# Metadata lookup authenticates without spending a database download.
+status=$(curl -s -o /dev/null -w '%{http_code}' -u "$account_id:$license_key" \
+    'https://updates.maxmind.com/geoip/updates/metadata?edition_id=GeoLite2-City')
+case "$status" in
+    200) echo "Credentials verified." ;;
+    401) echo "update-maxmind-timesketch: MaxMind rejected the account ID or license key" >&2; exit 1 ;;
+    *)   echo "update-maxmind-timesketch: could not reach MaxMind (HTTP $status)" >&2; exit 1 ;;
+esac
+
+printf 'GEOIPUPDATE_ACCOUNT_ID=%s\nGEOIPUPDATE_LICENSE_KEY=%s\n' "$account_id" "$license_key" \
+    | sudo tee "$MAXMIND_DIR/.env" >/dev/null
+sudo chmod 0600 "$MAXMIND_DIR/.env"
+
+echo "Starting geoipupdate and downloading GeoLite2 databases..."
+(cd "$MAXMIND_DIR" && sudo docker compose up -d --force-recreate)
+
+for _ in $(seq 60); do
+    [[ -f "$CITY_DB" ]] && break
+    sleep 3
+done
+if [[ ! -f "$CITY_DB" ]]; then
+    echo "update-maxmind-timesketch: no GeoLite2-City.mmdb after 3 minutes; check 'sudo docker logs geoipupdate'" >&2
+    exit 1
+fi
+echo "GeoLite2 databases downloaded to $MAXMIND_DIR/geoip_data"
+
+# timesketch.conf is Python; set every MAXMIND_DB_PATH line, or add one.
+if sudo grep -q '^MAXMIND_DB_PATH' "$TS_CONF"; then
+    sudo sed -i "s|^MAXMIND_DB_PATH.*|MAXMIND_DB_PATH = '$TS_DB_PATH'|" "$TS_CONF"
+else
+    echo "MAXMIND_DB_PATH = '$TS_DB_PATH'" | sudo tee -a "$TS_CONF" >/dev/null
+fi
+echo "Timesketch configured: MAXMIND_DB_PATH = '$TS_DB_PATH'"
+
+if [[ -n "$(cd "$TS_DIR" && sudo docker compose --env-file config.env ps -q timesketch-worker)" ]]; then
+    echo "Restarting Timesketch..."
+    (cd "$TS_DIR" && sudo docker compose --env-file config.env restart timesketch-web timesketch-worker)
+else
+    echo "Timesketch is not running; the GeoIP settings apply on the next 'starttimesketch'."
+fi
