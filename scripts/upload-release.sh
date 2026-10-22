@@ -50,7 +50,7 @@ if ! rclone listremotes | grep -qx "${REMOTE}:"; then
 fi
 
 shopt -s nullglob
-artifacts=("$OUT"/greymhatter-f${FEDORA_MAJOR}-*.ova "$OUT"/greymhatter-f${FEDORA_MAJOR}-*.zip)
+artifacts=("$OUT"/greymhatter-f"${FEDORA_MAJOR}"-*.ova "$OUT"/greymhatter-f"${FEDORA_MAJOR}"-*.zip)
 if [[ ${#artifacts[@]} -eq 0 ]]; then
   echo "ERROR: no greymhatter-f${FEDORA_MAJOR}-*.{ova,zip} in $OUT/. Build first." >&2
   exit 1
