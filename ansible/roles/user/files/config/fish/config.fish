@@ -95,27 +95,66 @@ function hayabusa-timeline
 end
 
 # --- Log2timeline (Plaso via Timesketch container) ---
+# Plaso runs inside timesketch-worker, which sees host /opt/share as /share.
+# Each wrapper prints the real Plaso command so students learn the tool, not
+# the wrapper.
 
-function log2timeline
-  if test (count $argv) -eq 0; or test "$argv[1]" = "-h"
-    printf "Usage: log2timeline TIMELINENAME.plaso IMAGEORDIRECTORYPATH ADDITIONALARGUMENTS\n\n"
-    printf "Outputting to the /opt/share/plaso directory.\n"
-    return 0
+function _plaso_ready
+  if test (pwd) != "/opt/share"
+    printf "Run this from /opt/share (cd /opt/share first).\n"
+    printf "Plaso runs inside the Timesketch container, which can only see /opt/share\n"
+    printf "(mounted as /share), so evidence and timeline paths are relative to it.\n"
+    return 1
   end
   if not _container_running timesketch-worker
     printf "Timesketch is not running. Starting...\n"
     starttimesketch
+    cd /opt/share
     sleep 10
     if not _container_running timesketch-worker
       printf "Failed to start Timesketch\n"
       return 1
     end
   end
-  if test (pwd) = "/opt/share"
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
-  else
-    printf "Your evidence and current directory must be '/opt/share'\n"
+end
+
+# Catches swapped positionals before Plaso fails with a confusing parser error
+function _plaso_check_args
+  if not string match -q '*.plaso' -- $argv[1]
+    printf "First argument must be the timeline name ending in .plaso (e.g. dc.plaso), got '%s'\n" $argv[1]
+    return 1
   end
+  if not test -e "$argv[2]"
+    printf "Evidence '%s' not found under /opt/share\n" $argv[2]
+    return 1
+  end
+end
+
+# window needs a terminal; linear works under nohup, scripts and non-interactive SSH.
+# Sets a global rather than echoing: inside (...) stdout is a pipe, never a tty.
+function _plaso_status_view
+  if isatty stdout
+    set -g _plaso_view window
+  else
+    set -g _plaso_view linear
+  end
+end
+
+function _plaso_run
+  printf "Running command (inside timesketch-worker): %s\n\n" (string join ' ' -- $argv)
+  sudo docker exec -i timesketch-worker $argv
+end
+
+function log2timeline
+  if test (count $argv) -lt 2; or test "$argv[1]" = "-h"
+    printf "Usage: log2timeline TIMELINENAME.plaso IMAGEORDIRECTORYPATH ADDITIONALARGUMENTS\n\n"
+    printf "Outputting to the /opt/share/plaso directory.\n"
+    return 0
+  end
+  _plaso_ready; or return 1
+  _plaso_check_args $argv[1] $argv[2]; or return 1
+  _plaso_status_view
+  _plaso_run log2timeline.py --status-view $_plaso_view --storage-file /share/plaso/$argv[1] /share/$argv[2] $argv[3..-1]
 end
 
 function log2timeline-triage
@@ -124,20 +163,10 @@ function log2timeline-triage
     printf "Outputting to the /opt/share/plaso directory.\n"
     return 0
   end
-  if not _container_running timesketch-worker
-    printf "Timesketch is not running. Starting...\n"
-    starttimesketch
-    sleep 10
-    if not _container_running timesketch-worker
-      printf "Failed to start Timesketch\n"
-      return 1
-    end
-  end
-  if test (pwd) = "/opt/share"
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2]
-  else
-    printf "Your evidence and current directory must be '/opt/share'\n"
-  end
+  _plaso_ready; or return 1
+  _plaso_check_args $argv[1] $argv[2]; or return 1
+  _plaso_status_view
+  _plaso_run log2timeline.py --status-view $_plaso_view --storage-file /share/plaso/$argv[1] /share/$argv[2]
 end
 
 function log2timeline-targeted
@@ -146,20 +175,10 @@ function log2timeline-targeted
     printf "Outputting to the /opt/share/plaso directory.\n"
     return 0
   end
-  if not _container_running timesketch-worker
-    printf "Timesketch is not running. Starting...\n"
-    starttimesketch
-    sleep 10
-    if not _container_running timesketch-worker
-      printf "Failed to start Timesketch\n"
-      return 1
-    end
-  end
-  if test (pwd) = "/opt/share"
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers=$argv[3] --partitions "all"
-  else
-    printf "Your evidence and current directory must be '/opt/share'\n"
-  end
+  _plaso_ready; or return 1
+  _plaso_check_args $argv[1] $argv[2]; or return 1
+  _plaso_status_view
+  _plaso_run log2timeline.py --status-view $_plaso_view --storage-file /share/plaso/$argv[1] /share/$argv[2] --parsers=$argv[3] --partitions all
 end
 
 function log2timeline-full
@@ -168,20 +187,10 @@ function log2timeline-full
     printf "Outputting to the /opt/share/plaso directory.\n"
     return 0
   end
-  if not _container_running timesketch-worker
-    printf "Timesketch is not running. Starting...\n"
-    starttimesketch
-    sleep 10
-    if not _container_running timesketch-worker
-      printf "Failed to start Timesketch\n"
-      return 1
-    end
-  end
-  if test (pwd) = "/opt/share"
-    sudo docker exec -i timesketch-worker log2timeline.py --status-view window --storage-file /share/plaso/$argv[1] /share/$argv[2] --partitions "all" --vss_stores "all"
-  else
-    printf "Your evidence and current directory must be '/opt/share'\n"
-  end
+  _plaso_ready; or return 1
+  _plaso_check_args $argv[1] $argv[2]; or return 1
+  _plaso_status_view
+  _plaso_run log2timeline.py --status-view $_plaso_view --storage-file /share/plaso/$argv[1] /share/$argv[2] --partitions all --vss_stores all
 end
 
 # --- Forensic Image Mounting ---
@@ -236,20 +245,26 @@ function psort
     printf "Outputting to the /opt/share/plaso directory.\n"
     return 0
   end
-  if not _container_running timesketch-worker
-    printf "Timesketch is not running. Starting...\n"
-    starttimesketch
-    sleep 10
-    if not _container_running timesketch-worker
-      printf "Failed to start Timesketch\n"
-      return 1
-    end
+  _plaso_ready; or return 1
+  if not test -f plaso/$argv[2]
+    printf "Timeline '%s' not found in /opt/share/plaso\n" $argv[2]
+    return 1
   end
-  if test (pwd) = "/opt/share"
-    sudo docker exec -i timesketch-worker psort.py -o l2tcsv -w /share/plaso/$argv[1] /share/plaso/$argv[2]
-  else
-    printf "Your current directory must be '/opt/share'\n"
+  _plaso_run psort.py -o l2tcsv -w /share/plaso/$argv[1] /share/plaso/$argv[2]
+end
+
+function pinfo
+  if test (count $argv) -lt 1; or test "$argv[1]" = "-h"
+    printf "Usage: pinfo TIMELINENAME.plaso\n\n"
+    printf "Shows what was parsed into a storage file in /opt/share/plaso.\n"
+    return 0
   end
+  _plaso_ready; or return 1
+  if not test -f plaso/$argv[1]
+    printf "Timeline '%s' not found in /opt/share/plaso\n" $argv[1]
+    return 1
+  end
+  _plaso_run pinfo.py -v /share/plaso/$argv[1]
 end
 
 # --- Container Management ---
