@@ -151,13 +151,20 @@
   changed_when: fw_reload.rc == 0
 
 # RPM Fusion (free) — required for full ffmpeg with patent-encumbered codecs.
-# Adds the repo definition + GPG key. Idempotent: dnf install is a no-op if
-# the release package is already present.
+# Adds the repo definition + GPG key. A URL install is not a no-op when the
+# package is present: dnf re-downloads the RPM every run, and a stale libdnf5
+# @commandline cache then fails the whole playbook. Skip once the repo exists.
+- name: Check for RPM Fusion (free) repository
+  ansible.builtin.stat:
+    path: /etc/yum.repos.d/rpmfusion-free.repo
+  register: rpmfusion_free_repo
+
 - name: Enable RPM Fusion (free) repository
   ansible.builtin.dnf:
     name: "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
     state: present
     disable_gpg_check: true
+  when: not rpmfusion_free_repo.stat.exists
 
 # Yazi is not in Fedora's main repos — only the upstream-maintained COPR.
 # `creates:` makes this idempotent: re-runs skip after the repo file appears.
