@@ -2,11 +2,13 @@
 # GreymHatter Integration Test Suite
 # Runs on a deployed VM to validate all DFIR tools work correctly.
 #
-# Usage: bash run-tests.sh [--test0] [--test1] [--test3] [--all]
+# Usage: bash run-tests.sh [--test0] [--test1] [--test3] [--test4] [--all]
 #   --test0  Container smoke test (fast, <60s) — asserts expected containers
 #            are running and respond. Use this as the inner-loop sanity check.
 #   --test1  Memory analysis (Volatility 2 & 3)
 #   --test3  Timeline analysis (log2timeline, hayabusa, Timesketch)
+#   --test4  Curriculum plugin contract — every Volatility plugin and tool
+#            the IS-4523 memory lectures and labs depend on
 #   --all    Run all tests (default; test0 always runs as preflight)
 #
 # Exit codes:
@@ -167,6 +169,105 @@ Homepage (3000)|http://localhost:3000|200 301 302
 CyberChef (8080)|http://localhost:8080|200
 Courses (8000)|http://localhost:8000|200 301 302
 EOF
+}
+
+function test4() {
+    header "TEST 4: Curriculum Plugin Contract (IS-4523)"
+
+    # Every Volatility 3 plugin named in the IS-4523 memory lectures and the
+    # 3.1.0 lab. If a plugin disappears from a rebuilt image, a slide or an
+    # assignment step silently stops working and nobody finds out until a
+    # student runs it in class.
+    #
+    # volatility3_branch is "stable", an unpinned git branch, so the plugin set
+    # can move between builds. This test is the tripwire for that.
+    #
+    # Source of truth: IS-4523 Curriculum, Module 3, lectures 3.1.1 and 3.1.2
+    # and labs/3.1.0. Update this list when those change.
+    local curriculum_plugins=(
+        windows.info
+        windows.pslist windows.psscan windows.pstree windows.psxview
+        windows.dlllist windows.cmdline windows.handles
+        windows.netscan windows.netstat
+        windows.malfind windows.vadinfo windows.pedump
+        windows.envars windows.getsids
+        windows.modules windows.modscan windows.driverscan
+        windows.threads windows.thrdscan
+        windows.svclist windows.svcscan
+        windows.registry.userassist windows.registry.hashdump
+        windows.malware.malfind windows.malware.psxview
+        windows.malware.hollowprocesses windows.malware.processghosting
+        windows.malware.ldrmodules windows.malware.suspicious_threads
+        windows.malware.drivermodule windows.malware.svcdiff
+        windows.malware.skeleton_key_check
+        windows.malware.direct_system_calls
+        windows.malware.indirect_system_calls
+        windows.malware.unhooked_system_calls
+        linux.pstree mac.pslist
+    )
+
+    if ! command -v vol >/dev/null 2>&1; then
+        fail "vol not found — cannot verify the curriculum plugin contract"
+        return
+    fi
+
+    info "Volatility 3: $(pip3 show volatility3 2>/dev/null | command grep -i '^version' | cut -d' ' -f2)"
+
+    # One call to the argument parser gives the authoritative plugin list.
+    # Far cheaper than invoking each plugin, and it needs no memory image.
+    local available
+    available=$(vol -f /nonexistent.mem zzz.NoSuchPlugin 2>&1 \
+        | command grep -oE '\(choose from [^)]*\)' \
+        | sed 's/(choose from //; s/)$//' | tr ',' '\n' | sed 's/^ *//')
+
+    if [ -z "$available" ]; then
+        fail "could not read the plugin list from vol — the parser output changed?"
+        return
+    fi
+
+    local total=0 missing=0
+    for plugin in "${curriculum_plugins[@]}"; do
+        total=$((total+1))
+        # Plugin names are given in short form; match them against the full
+        # dotted class path, e.g. windows.pslist -> windows.pslist.PsList
+        if echo "$available" | command grep -qiE "^${plugin//./\\.}(\\.|$)"; then
+            [ "$VERBOSE" = true ] && echo "      ok  $plugin"
+        else
+            fail "plugin absent: $plugin"
+            missing=$((missing+1))
+        fi
+    done
+
+    if [ "$missing" -eq 0 ]; then
+        success "all $total curriculum plugins resolve"
+    else
+        warn "$missing of $total curriculum plugins are missing from this build"
+    fi
+
+    # Commands the lectures tell students to run directly.
+    info "--- supporting tools ---"
+    for c in vol2 capa floss vt clamscan freshclam strings file sha256sum; do
+        if command -v "$c" >/dev/null 2>&1; then
+            [ "$VERBOSE" = true ] && echo "      ok  $c"
+        else
+            fail "tool absent: $c"
+        fi
+    done
+    command -v capa >/dev/null 2>&1 && success "supporting tools present"
+
+    # 3.1.2 teaches that default strings misses UTF-16LE and -e l finds it.
+    # That claim is only true with GNU strings, so assert it rather than
+    # assume the base image ships GNU binutils.
+    local u16=/tmp/.gh-utf16-probe
+    printf 'A\0S\0C\0I\0I\0' > "$u16"
+    if [ -n "$(strings "$u16" 2>/dev/null)" ]; then
+        fail "strings: default pass found text in a UTF-16LE buffer — lecture claim is wrong on this build"
+    elif [ "$(strings -e l "$u16" 2>/dev/null)" = "ASCII" ]; then
+        success "strings -e l recovers UTF-16LE, default pass does not (as taught)"
+    else
+        fail "strings -e l did not recover UTF-16LE — is this GNU strings?"
+    fi
+    rm -f "$u16"
 }
 
 function run_verbose() {
@@ -452,9 +553,10 @@ print(len(sketch.get('timelines',[])))
 RUN_TEST0=false
 RUN_TEST1=false
 RUN_TEST3=false
+RUN_TEST4=false
 
 if [ $# -eq 0 ]; then
-    RUN_TEST1=true; RUN_TEST3=true
+    RUN_TEST1=true; RUN_TEST3=true; RUN_TEST4=true
 fi
 
 for arg in "$@"; do
@@ -462,7 +564,8 @@ for arg in "$@"; do
         --test0)   RUN_TEST0=true ;;
         --test1)   RUN_TEST1=true ;;
         --test3)   RUN_TEST3=true ;;
-        --all)     RUN_TEST0=true; RUN_TEST1=true; RUN_TEST3=true ;;
+        --test4)   RUN_TEST4=true ;;
+        --all)     RUN_TEST0=true; RUN_TEST1=true; RUN_TEST3=true; RUN_TEST4=true ;;
         --verbose) VERBOSE=true ;;
     esac
 done
@@ -489,6 +592,7 @@ header "GreymHatter Integration Test Suite"
 [ "$RUN_TEST0" = "true" ] && test0
 [ "$RUN_TEST1" = "true" ] && test1
 [ "$RUN_TEST3" = "true" ] && test3
+[ "$RUN_TEST4" = "true" ] && test4
 
 # --- Summary ---
 header "Test Results"
