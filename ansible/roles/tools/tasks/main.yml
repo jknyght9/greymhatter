@@ -64,6 +64,9 @@
 - name: Install YARA
   ansible.builtin.include_tasks: yara.yml
 
+- name: Install document analysis tools
+  ansible.builtin.include_tasks: document-analysis.yml
+
 # --- DFIR utilities ---
 - name: Install dfir-pstools
   ansible.builtin.include_tasks: dfir-pstools.yml

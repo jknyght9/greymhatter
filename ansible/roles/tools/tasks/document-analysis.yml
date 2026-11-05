@@ -1,0 +1,25 @@
+---
+# Document examination tooling for IS-4523 Module 4.
+#
+# exiftool is the one that earns its place across every format: the pictures inside a
+# document are evidence in their own right, and reading them is the last step of the
+# examination pass the lecture teaches.
+
+- name: Install document analysis packages
+  ansible.builtin.dnf:
+    name:
+      - perl-Image-ExifTool   # exiftool
+      - qpdf                  # qpdf --qdf, to decompress a PDF for reading
+    state: present
+    install_weak_deps: false
+
+# oletools carries olevba (VBA macros out of vbaProject.bin), rtfobj (\objdata carving)
+# and oleid. msoffcrypto-tool decrypts a protected Office document without opening it,
+# which is what keeps cp:lastModifiedBy and dcterms:modified intact for the examiner.
+- name: Install Python document analysis tools
+  ansible.builtin.pip:
+    name:
+      - oletools
+      - msoffcrypto-tool
+    executable: pip3
+    state: present

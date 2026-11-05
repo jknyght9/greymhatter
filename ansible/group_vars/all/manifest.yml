@@ -344,6 +344,31 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
+  - cmd: exiftool
+    probe: "exiftool -ver"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: qpdf
+    probe: "qpdf --version"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: olevba
+    probe: "olevba -h"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: rtfobj
+    probe: "rtfobj -h"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: msoffcrypto-tool
+    probe: "msoffcrypto-tool --help"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
   - cmd: yara
     probe: "yara --version"
     arch: [x86_64, aarch64]
