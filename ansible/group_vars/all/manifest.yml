@@ -337,6 +337,13 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
+  # Probes the OpenCL platform rather than the package: hashcat installs and runs
+  # --version happily with no backend, and only fails when a crack is attempted.
+  - cmd: pocl
+    probe: "hashcat -I | grep -q 'Portable Computing Language'"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
   - cmd: yara
     probe: "yara --version"
     arch: [x86_64, aarch64]

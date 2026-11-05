@@ -7,6 +7,10 @@
       - exfatprogs
       - foremost
       - hashcat
+      # hashcat is useless without an OpenCL platform, and the Fusion base has no GPU.
+      # pocl is the CPU runtime: without it hashcat exits with CL_PLATFORM_NOT_FOUND_KHR
+      # before trying a single candidate. IS-4523 4.1.0 depends on this.
+      - pocl
     state: present
     install_weak_deps: false
 
