@@ -1,11 +1,13 @@
 ---
 # PE / malware triage tooling for IS-4523 4.2.
 
-# ssdeep (fuzzy hashing), upx (packer), binwalk (embedded file carving).
+# TLSH (fuzzy hashing; the recommended replacement for ssdeep), ssdeep (legacy,
+# still seen in older reports), upx (packer), binwalk (embedded file carving).
 # binwalk is 2.3.x (Python) on F42 and 3.x (Rust) on F44; the CLI differs.
 - name: Install PE triage packages
   ansible.builtin.dnf:
     name:
+      - python3-tlsh
       - ssdeep
       - upx
       - binwalk

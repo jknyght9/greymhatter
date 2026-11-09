@@ -379,6 +379,12 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/pe-analysis.yml
 
+  # python3-tlsh ships a module only, no CLI
+  - cmd: tlsh
+    probe: "python3 -c 'import tlsh'"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
   - cmd: ssdeep
     probe: "ssdeep -V"
     arch: [x86_64, aarch64]
