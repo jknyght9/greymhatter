@@ -369,6 +369,32 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/document-analysis.yml
 
+  - cmd: readpe
+    probe: "readpe --version"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
+  - cmd: pescan
+    probe: "pescan --version"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
+  - cmd: ssdeep
+    probe: "ssdeep -V"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
+  - cmd: upx
+    probe: "upx --version"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
+  # binwalk 2.x (F42) exits 3 on --version; -h exits 0 on both 2.x and 3.x
+  - cmd: binwalk
+    probe: "binwalk -h"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
   - cmd: yara
     probe: "yara --version"
     arch: [x86_64, aarch64]

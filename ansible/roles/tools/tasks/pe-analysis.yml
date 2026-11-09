@@ -1,0 +1,87 @@
+---
+# PE / malware triage tooling for IS-4523 4.2.
+
+# ssdeep (fuzzy hashing), upx (packer), binwalk (embedded file carving).
+# binwalk is 2.3.x (Python) on F42 and 3.x (Rust) on F44; the CLI differs.
+- name: Install PE triage packages
+  ansible.builtin.dnf:
+    name:
+      - ssdeep
+      - upx
+      - binwalk
+    state: present
+    install_weak_deps: false
+
+# readpe (formerly pev): PE header dumps (readpe) and suspicious-indicator
+# flagging (pescan). Not packaged for Fedora, so it is compiled in a container
+# from a pinned tag (see Dockerfile.readpe). Gated on readpe itself, not fls,
+# so greymhatter-update adds it to already-deployed VMs.
+
+- name: Check if readpe is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/readpe
+  register: readpe_check
+
+- name: Build readpe from source in Docker
+  when: not readpe_check.stat.exists
+  block:
+    - name: Copy Dockerfile.readpe to build location
+      ansible.builtin.copy:
+        src: Dockerfile.readpe
+        dest: /tmp/Dockerfile.readpe
+        mode: "0644"
+
+    - name: Build readpe container
+      ansible.builtin.command:
+        cmd: >-
+          docker build -f /tmp/Dockerfile.readpe
+          --build-arg FEDORA_VERSION={{ ansible_distribution_major_version }}
+          -t greymhatter-readpe /tmp
+      register: readpe_build
+      changed_when: readpe_build.rc == 0
+
+    - name: Create temporary container for binary extraction
+      ansible.builtin.command:
+        cmd: docker create --name greymhatter-readpe-extract greymhatter-readpe
+      register: readpe_create
+      changed_when: readpe_create.rc == 0
+
+    - name: Extract compiled readpe tree
+      ansible.builtin.command:
+        cmd: docker cp greymhatter-readpe-extract:/output/readpe/usr/local/. /usr/local/
+      register: readpe_extract
+      changed_when: readpe_extract.rc == 0
+
+    - name: Update shared library cache
+      ansible.builtin.command: ldconfig
+      register: readpe_ldconfig
+      changed_when: readpe_ldconfig.rc == 0
+
+    - name: Remove readpe builder container
+      ansible.builtin.command:
+        cmd: docker rm greymhatter-readpe-extract
+      register: readpe_rm
+      changed_when: readpe_rm.rc == 0
+      # Idempotent cleanup — container may not exist on partial rerun.
+      failed_when: false
+
+    - name: Remove readpe builder image
+      ansible.builtin.command:
+        cmd: docker rmi greymhatter-readpe
+      register: readpe_rmi
+      changed_when: readpe_rmi.rc == 0
+      # Idempotent cleanup — image may not exist on partial rerun.
+      failed_when: false
+
+    - name: Clean up readpe Dockerfile
+      ansible.builtin.file:
+        path: /tmp/Dockerfile.readpe
+        state: absent
+
+    - name: Verify readpe tools run
+      ansible.builtin.command:
+        cmd: "{{ item }} --version"
+      changed_when: false
+      loop:
+        - readpe
+        - pescan

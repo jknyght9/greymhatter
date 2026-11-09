@@ -1,0 +1,25 @@
+# GreymHatter readpe builder
+# readpe (formerly pev) is not packaged for Fedora; compile it in a container
+# and extract /output/ to the host, like Dockerfile.builder. Separate from
+# that builder so deployed VMs get readpe without rebuilding sleuthkit and
+# the libyal tools.
+
+# Build against the host's Fedora release so libcrypto/glibc match it.
+ARG FEDORA_VERSION=44
+FROM fedora:${FEDORA_VERSION}
+
+RUN dnf install -y gcc make git openssl-devel pkgconf-pkg-config \
+    && dnf clean all
+
+# Pinned release; bump when a new tag is verified.
+ARG READPE_VERSION=v0.85.1
+
+# RUNPATH so the tools find libpe.so in /usr/local/lib, which is not on
+# Fedora's default library path.
+RUN git clone --branch "$READPE_VERSION" --depth 1 https://github.com/mentebinaria/readpe /build/readpe \
+    && cd /build/readpe \
+    && make -j"$(nproc)" LDFLAGS="-Wl,-rpath,/usr/local/lib" \
+    && make install DESTDIR=/output/readpe \
+    && rm -rf /build/readpe
+
+CMD ["echo", "Build complete. Extract binaries from /output/"]
