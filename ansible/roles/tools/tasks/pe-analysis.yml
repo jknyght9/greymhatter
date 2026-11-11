@@ -87,3 +87,33 @@
       loop:
         - readpe
         - pescan
+
+# Detect It Easy: installed for evaluation; not part of IS-4523 material.
+- name: Check installed Detect It Easy version
+  ansible.builtin.command: rpm -q --qf '%{VERSION}' detectiteasy
+  register: die_check
+  changed_when: false
+  # Probe: rc=1 means not installed (expected first run).
+  failed_when: false
+
+- name: Install Detect It Easy
+  when: die_check.stdout != die_version
+  block:
+    - name: Download Detect It Easy RPM
+      ansible.builtin.get_url:
+        url: "https://github.com/horsicq/DIE-engine/releases/download/{{ die_version }}/{{ die_rpm[ansible_architecture].file }}"
+        dest: /tmp/detectiteasy.rpm
+        checksum: "sha256:{{ die_rpm[ansible_architecture].sha256 }}"
+        mode: "0644"
+
+    - name: Install Detect It Easy RPM
+      ansible.builtin.dnf:
+        name: /tmp/detectiteasy.rpm
+        state: present
+        # Upstream RPMs are unsigned; integrity comes from the pinned checksum.
+        disable_gpg_check: true
+
+    - name: Remove Detect It Easy download
+      ansible.builtin.file:
+        path: /tmp/detectiteasy.rpm
+        state: absent

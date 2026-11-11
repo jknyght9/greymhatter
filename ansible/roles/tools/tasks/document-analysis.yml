@@ -10,6 +10,8 @@
     name:
       - perl-Image-ExifTool   # exiftool
       - qpdf                  # qpdf --qdf, to decompress a PDF for reading
+      - mupdf                 # mutool show/info: PDF object and stream dumps
+      - python-unversioned-command  # pdfid.py/pdf-parser.py use #!/usr/bin/env python
     state: present
     install_weak_deps: false
 
@@ -23,3 +25,28 @@
       - msoffcrypto-tool
     executable: pip3
     state: present
+
+# PDF structure triage (Didier Stevens): pdfid flags /JS, /JavaScript,
+# /OpenAction, /AA, /Launch, /EmbeddedFile; pdf-parser walks objects and streams.
+- name: Install pdfid and pdf-parser
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/DidierStevens/DidierStevensSuite/{{ didier_stevens_commit }}/{{ item.name }}"
+    dest: "{{ tools_dir }}/{{ item.name }}"
+    checksum: "sha256:{{ item.sha256 }}"
+    mode: "0755"
+  loop:
+    - name: pdfid.py
+      sha256: "{{ pdfid_sha256 }}"
+    - name: pdf-parser.py
+      sha256: "{{ pdf_parser_sha256 }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Link pdfid and pdf-parser without the .py suffix
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/{{ item }}.py"
+    dest: "{{ tools_dir }}/{{ item }}"
+    state: link
+  loop:
+    - pdfid
+    - pdf-parser

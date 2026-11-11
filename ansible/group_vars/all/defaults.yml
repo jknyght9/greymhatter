@@ -22,6 +22,48 @@ volatility3_branch: stable
 ctop_version: "0.7.7"
 eza_version: "0.23.4"
 
+# Static analysis (IS-4523 Module 4), pinned 2026-11-11. Checksums are SHA256 of
+# the exact upstream download; bump version and checksum together.
+yara_x_version: "1.23.0"
+yara_x_sha256:
+  x86_64: da0c17f23fc743dcd44ad6d3135c906a4c0d197685b661c4cdc923c2f8967a64
+  aarch64: 3547bc532d2861c6408c990d0b28047d921d32241791e755ae48c3368fa2be93
+# Neo23x0/signature-base (Detection Rule License 1.1). Pinned so lab answer
+# keys cannot drift when upstream rules change.
+signature_base_commit: de3c7252c22b3376352b5a68defa46459a12a693
+signature_base_sha256: cf95ae1f0e51235d0eb7a4231559808ed49e23c4b0d0ac078a68ba290302fde0
+# Rule files that reference LOKI/THOR external variables (filename, filepath,
+# extension) and fail to compile in plain yara/yr. Left out of the index.
+# Re-derive on a commit bump: compile each yara/*.yar alone with `yara -w`.
+signature_base_excluded:
+  - configured_vulns_ext_vars.yar
+  - expl_citrix_netscaler_adc_exploitation_cve_2023_3519.yar
+  - expl_connectwise_screenconnect_vuln_feb24.yar
+  - gen_fake_amsi_dll.yar
+  - gen_mal_3cx_compromise_mar23.yar
+  - gen_susp_obfuscation.yar
+  - gen_vcruntime140_dll_sideloading.yar
+  - gen_webshells_ext_vars.yar
+  - general_cloaking.yar
+  - generic_anomalies.yar
+  - thor_inverse_matches.yar
+  - yara-rules_vuln_drivers_strict_renamed.yar
+  - yara_mixed_ext_vars.yar
+# DidierStevens/DidierStevensSuite (pdfid.py, pdf-parser.py)
+didier_stevens_commit: 7d625d0b05c4638b981a2a2cc9a8481d7b73e56d
+pdfid_sha256: e958a01f1c2596470f27d3c308061b85d7059ff476a58d74f1957a71b4f1248f
+pdf_parser_sha256: a9fa2faa25e88ab0293543d14aa168ff21fc9fd25a0a8ad657b0dad3171214ac
+# Detect It Easy (horsicq/DIE-engine). Upstream RPMs are unsigned, so they
+# are fetched by checksum. Installed for evaluation, not taught in IS-4523.
+die_version: "4.0.0"
+die_rpm:
+  x86_64:
+    file: DetectItEasy_4.0.0_fedora_45_amd64.rpm
+    sha256: 7264dea6e25426b62bbd7a8dac0c77a59eaabba2fdc07300bf5bbbba109156a5
+  aarch64:
+    file: DetectItEasy-fedora-qt5-aarch64.rpm
+    sha256: f736509ca68f461dc1ea7b635158ccf3154fdadc0feeff0c182f0fed25143944
+
 # Fonts and themes
 hack_font_version: "3.1.1"
 colloid_icon_tag: "2024-10-18"

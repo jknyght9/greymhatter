@@ -401,6 +401,36 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/pe-analysis.yml
 
+  - cmd: yr
+    probe: "/opt/tools/yr --version"
+    arch: [x86_64, aarch64]
+    source: tools/yara.yml
+
+  - cmd: signature-base
+    probe: "yara -w /opt/yara-rules/signature-base.yar /dev/null"
+    arch: [x86_64, aarch64]
+    source: tools/yara.yml
+
+  - cmd: pdfid
+    probe: "/opt/tools/pdfid --version"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: pdf-parser
+    probe: "/opt/tools/pdf-parser --version"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: mutool
+    probe: "mutool -v"
+    arch: [x86_64, aarch64]
+    source: tools/document-analysis.yml
+
+  - cmd: diec
+    probe: "diec --version"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
   - cmd: yara
     probe: "yara --version"
     arch: [x86_64, aarch64]
