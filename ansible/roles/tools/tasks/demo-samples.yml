@@ -1,0 +1,21 @@
+---
+# IS-4523 4.2.2: generator for the PE before-and-after demo set. Ships the
+# script, never the samples: they are derived from the installed upx, and an
+# EICAR file inside a distributed image gets quarantined in transit. The
+# script keeps the EICAR string split so it is not detectable at rest.
+
+# The script copies this binary; fail the build, not the classroom, if
+# dfir-pstools ever moves it.
+- name: Check demo source binary from dfir-pstools
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/dfir-pstools/bins/bin/file.exe"
+  register: demo_source_exe
+  failed_when: not demo_source_exe.stat.exists
+
+- name: Install make-demo-samples.sh
+  ansible.builtin.copy:
+    src: make-demo-samples.sh
+    dest: "{{ tools_dir }}/make-demo-samples.sh"
+    owner: root
+    group: root
+    mode: "0755"

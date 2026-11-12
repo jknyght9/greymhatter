@@ -74,5 +74,9 @@
 - name: Install dfir-pstools
   ansible.builtin.include_tasks: dfir-pstools.yml
 
+# After dfir-pstools: the demo generator copies file.exe from it
+- name: Install PE demo sample generator
+  ansible.builtin.include_tasks: demo-samples.yml
+
 - name: Install Eric Zimmerman tools (.NET 9)
   ansible.builtin.include_tasks: ezimmerman.yml

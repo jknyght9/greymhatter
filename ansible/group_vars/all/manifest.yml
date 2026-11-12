@@ -431,6 +431,11 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/pe-analysis.yml
 
+  - path: /opt/tools/make-demo-samples.sh
+    probe: "test -x /opt/tools/make-demo-samples.sh && test -f /opt/tools/dfir-pstools/bins/bin/file.exe"
+    arch: [x86_64, aarch64]
+    source: tools/demo-samples.yml
+
   - cmd: yara
     probe: "yara --version"
     arch: [x86_64, aarch64]
