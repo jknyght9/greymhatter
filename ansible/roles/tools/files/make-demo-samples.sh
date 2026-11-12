@@ -21,15 +21,14 @@ printf '%s%s%s' 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR' '-STANDARD-ANTIVIRUS-TEST-FI
 
 # the rule from the slides, so you can run it rather than retype it
 cat > upx.yar <<'YARA'
-rule UPX_Packed_PE
+rule UPX_Packed_PE             // the name reported when it matches
 {
-    meta:
-        description = "A PE carrying UPX section names"
-    strings:
-        $s0 = "UPX0"
-        $s1 = "UPX1"
-    condition:
-        uint16(0) == 0x5A4D and all of them
+    strings:                   // what to look for, each given a $name
+        $s0 = "UPX0"           // the first section UPX writes
+        $s1 = "UPX1"           // and the second
+    condition:                 // when the rule fires
+        uint16(0) == 0x5A4D    // first two bytes are MZ, so this is a PE
+        and all of them        // and both strings above are present
 }
 YARA
 
