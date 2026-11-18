@@ -379,6 +379,12 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/pe-analysis.yml
 
+  # No args prints usage and exits 0; exits 1 if the pefile module is missing
+  - cmd: pefile
+    probe: "pefile"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
   # python3-tlsh ships a module only, no CLI
   - cmd: tlsh
     probe: "python3 -c 'import tlsh'"

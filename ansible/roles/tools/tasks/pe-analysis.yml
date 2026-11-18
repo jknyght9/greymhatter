@@ -88,6 +88,20 @@
         - readpe
         - pescan
 
+# pefile ships no CLI script, only `python3 -m pefile`, which students mistype.
+# The module itself is installed with Volatility 3 (tools/volatility3.yml).
+# IS-4523 uses it for PE headers and per-section entropy.
+- name: Install pefile command wrapper
+  ansible.builtin.copy:
+    dest: /usr/local/bin/pefile
+    content: |
+      #!/bin/sh
+      # pefile: the pefile module's own dump, without the "python3 -m" incantation.
+      exec python3 -m pefile "$@"
+    owner: root
+    group: root
+    mode: "0755"
+
 # Detect It Easy: installed for evaluation; not part of IS-4523 material.
 - name: Check installed Detect It Easy version
   ansible.builtin.command: rpm -q --qf '%{VERSION}' detectiteasy
