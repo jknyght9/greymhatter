@@ -1,15 +1,20 @@
 ---
-# Eric Zimmerman DFIR tools — .NET 9 cross-platform builds.
+# Eric Zimmerman DFIR tools — .NET 10 cross-platform builds.
 # Runs on both amd64 and arm64; tools are framework-dependent DLLs invoked via `dotnet`.
 
-# --- .NET 9 runtime (installed to /opt/dotnet, arch-agnostic via dotnet-install.sh) ---
-- name: Check if .NET 9 runtime is installed
-  ansible.builtin.stat:
-    path: /opt/dotnet/shared/Microsoft.NETCore.App
-  register: dotnet9_check
+# --- .NET 10 runtime (installed to /opt/dotnet, arch-agnostic via dotnet-install.sh) ---
+# Get-ZimmermanTools dropped .NET 9 builds; the tools target net10.0. Gate on a
+# 10.x runtime, not the directory, so existing .NET 9 installs get upgraded
+# (dotnet-install.sh installs side by side).
+- name: Check if .NET 10 runtime is installed
+  ansible.builtin.find:
+    paths: /opt/dotnet/shared/Microsoft.NETCore.App
+    patterns: "10.*"
+    file_type: directory
+  register: dotnet10_check
 
-- name: Install .NET 9 runtime
-  when: not dotnet9_check.stat.exists
+- name: Install .NET 10 runtime
+  when: dotnet10_check.matched == 0
   block:
     - name: Download dotnet-install.sh
       ansible.builtin.get_url:
@@ -17,9 +22,9 @@
         dest: /tmp/dotnet-install.sh
         mode: "0755"
 
-    - name: Run dotnet-install.sh (runtime, channel 9.0)
+    - name: Run dotnet-install.sh (runtime, channel 10.0)
       ansible.builtin.command:
-        cmd: /tmp/dotnet-install.sh --runtime dotnet --channel 9.0 --install-dir /opt/dotnet
+        cmd: /tmp/dotnet-install.sh --runtime dotnet --channel 10.0 --install-dir /opt/dotnet
       changed_when: true
 
     - name: Remove dotnet installer
@@ -66,11 +71,13 @@
     mode: "0755"
     force: true
 
-# Get-ZimmermanTools creates its own net9/ subfolder under -Dest, so point
-# -Dest at the parent to end up with .../ezimmerman/net9/.
-- name: Fetch/update Zimmerman tools (net9)
+# Get-ZimmermanTools creates its own net/ subfolder under -Dest. On Linux its
+# zip extractor appends a hard-coded '\', so the tools actually land in a
+# directory literally named "net\". The entrypoint search covers both.
+# (net9/ from older runs is no longer updated upstream and is ignored.)
+- name: Fetch/update Zimmerman tools (.NET 10)
   ansible.builtin.command:
-    cmd: pwsh -File {{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1 -Dest {{ tools_dir }}/ezimmerman -NetVersion 9
+    cmd: pwsh -File {{ tools_dir }}/ezimmerman/Get-ZimmermanTools.ps1 -Dest {{ tools_dir }}/ezimmerman -NetVersion 10
     chdir: "{{ tools_dir }}/ezimmerman"
   register: ezt_run
   changed_when: "'downloaded' in ezt_run.stdout | lower or 'updated' in ezt_run.stdout | lower"
@@ -79,9 +86,10 @@
 # WPF GUI runtimeconfigs (RegistryExplorer, TimelineExplorer, etc.) list BOTH
 # Microsoft.NETCore.App and Microsoft.WindowsDesktop.App, so filter by the
 # WindowsDesktop presence — those apps won't run on Linux either way.
+# "net\" first so a fixed upstream net/ wins when both exist.
 - name: Find EZ tool CLI entrypoints
   ansible.builtin.shell: |
-    find {{ tools_dir }}/ezimmerman/net9 -type f -name '*.runtimeconfig.json' | while read -r rc; do
+    find "{{ tools_dir }}/ezimmerman/net\\" "{{ tools_dir }}/ezimmerman/net" -type f -name '*.runtimeconfig.json' 2>/dev/null | while read -r rc; do
       base="$(basename "$rc" .runtimeconfig.json)"
       dir="$(dirname "$rc")"
       dll="$dir/$base.dll"
@@ -93,6 +101,13 @@
     executable: /bin/bash
   register: ezt_entrypoints
   changed_when: false
+
+# An empty list here means the download layout changed again. Without this,
+# the stale-wrapper step below silently deletes every wrapper.
+- name: Assert Zimmerman CLI tools were found
+  ansible.builtin.assert:
+    that: ezt_entrypoints.stdout_lines | length > 0
+    fail_msg: "No Zimmerman CLI entrypoints under {{ tools_dir }}/ezimmerman/net or net\\; has Get-ZimmermanTools changed its layout?"
 
 - name: Compute wanted wrapper names
   ansible.builtin.set_fact:
