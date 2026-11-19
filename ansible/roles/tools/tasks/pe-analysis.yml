@@ -102,6 +102,24 @@
     group: root
     mode: "0755"
 
+# python3-tlsh ships a module only, no CLI. Output matches sha256sum
+# ("HASH  FILE"), one line per file, so samples can be compared pairwise.
+- name: Install tlsh command wrapper
+  ansible.builtin.copy:
+    dest: /usr/local/bin/tlsh
+    content: |
+      #!/usr/bin/env python3
+      # tlsh: hash a file with TLSH, which ships as a module with no command line.
+      import sys, tlsh
+      if len(sys.argv) < 2:
+          sys.exit("usage: tlsh FILE [FILE ...]")
+      for p in sys.argv[1:]:
+          with open(p, "rb") as f:
+              print(f"{tlsh.hash(f.read())}  {p}")
+    owner: root
+    group: root
+    mode: "0755"
+
 # Detect It Easy: installed for evaluation; not part of IS-4523 material.
 - name: Check installed Detect It Easy version
   ansible.builtin.command: rpm -q --qf '%{VERSION}' detectiteasy

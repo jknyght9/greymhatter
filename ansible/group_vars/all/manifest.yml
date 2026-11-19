@@ -385,6 +385,25 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/pe-analysis.yml
 
+  # Hashes its own wrapper script; fails if the tlsh module is missing
+  - cmd: tlsh
+    probe: "tlsh /usr/local/bin/tlsh"
+    arch: [x86_64, aarch64]
+    source: tools/pe-analysis.yml
+
+  # Eric Zimmerman tools: dotnet wrappers in hatter's ~/.local/bin. Probing
+  # RECmd and EvtxECmd catches a missing .NET runtime or an upstream layout
+  # change that leaves no wrappers.
+  - path: "{{ user_local_bin }}/RECmd"
+    probe: "{{ user_local_bin }}/RECmd --help"
+    arch: [x86_64, aarch64]
+    source: tools/ezimmerman.yml
+
+  - path: "{{ user_local_bin }}/EvtxECmd"
+    probe: "{{ user_local_bin }}/EvtxECmd --help"
+    arch: [x86_64, aarch64]
+    source: tools/ezimmerman.yml
+
   # python3-tlsh ships a module only, no CLI
   - cmd: tlsh
     probe: "python3 -c 'import tlsh'"
