@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Removed
+- Course material delivery: the `courses` role, the MkDocs course container on port 8000, `/opt/courses`, and the `course-update` shell function
+
 ## v2.1.0 — 2026-08-28
 
 ### Added

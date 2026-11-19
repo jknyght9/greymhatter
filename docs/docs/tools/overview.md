@@ -7,7 +7,6 @@ Services run as Docker containers and are managed via `docker compose`. Lightwei
 | Service | Port | Protocol | Auto-start | Start/Stop |
 |---|---|---|---|---|
 | Homepage | 3000 | HTTP | Yes | — |
-| Course Materials | 8000 | HTTP | Yes | `course-update` |
 | CyberChef | 8080 | HTTP | Yes | — |
 | Timesketch | 443 | HTTPS | No | `starttimesketch` / `stoptimesketch` |
 | Yeti | 8888 | HTTPS | No | `startyeti` / `stopyeti` |

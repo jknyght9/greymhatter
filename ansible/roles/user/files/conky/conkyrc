@@ -84,8 +84,7 @@ ${color2}/opt/share ${alignr}${exec du -sh /opt/share 2>/dev/null | cut -f1}${co
 
 ${color3}${hr 1}${color}
 ${color0}${font JetBrains Mono:Bold:size=9}Services${font}${color}
-${color2}Courses ${alignr}${exec docker ps -f name=courses -q 2>/dev/null | grep -q . && echo Up || echo --}
-CyberChef ${alignr}${exec docker ps -f name=cyberchef -q 2>/dev/null | grep -q . && echo Up || echo --}
+${color2}CyberChef ${alignr}${exec docker ps -f name=cyberchef -q 2>/dev/null | grep -q . && echo Up || echo --}
 Homepage ${alignr}${exec docker ps -f name=homepage -q 2>/dev/null | grep -q . && echo Up || echo --}
 SpiderFoot ${alignr}${exec docker ps -f name=spiderfoot -q 2>/dev/null | grep -q . && echo Up || echo --}
 Timesketch ${alignr}${exec docker ps -f name=timesketch-web -q 2>/dev/null | grep -q . && echo Up || echo --}

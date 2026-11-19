@@ -23,7 +23,6 @@ Used for system login, Timesketch, and Yeti.
 | `/opt/share/plaso/` | Plaso timeline storage |
 | `/opt/timesketch/` | Timesketch installation |
 | `/opt/yeti-docker/prod/` | Yeti installation |
-| `/opt/courses/` | Course materials |
 | `~/.config/fish/config.fish` | Fish shell functions and aliases |
 
 ## Container Services
@@ -31,7 +30,6 @@ Used for system login, Timesketch, and Yeti.
 | Service | Port | Protocol | Auto-start | Start/Stop |
 |---|---|---|---|---|
 | Homepage | 3000 | HTTP | Yes | — |
-| Course Materials | 8000 | HTTP | Yes | `course-update` |
 | CyberChef | 8080 | HTTP | Yes | — |
 | Timesketch | 443 | HTTPS | No | `starttimesketch` / `stoptimesketch` |
 | Yeti | 8888 | HTTPS | No | `startyeti` / `stopyeti` |

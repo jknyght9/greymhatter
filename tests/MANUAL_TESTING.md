@@ -141,7 +141,6 @@ timesketch-import -h                            # import timeline
 ```bash
 disk-expand status                   # show disk/LV/filesystem sizes
 greymhatter-update                   # pull repo + run Ansible
-course-update                        # update course materials
 netioc 8.8.8.8                       # WHOIS lookup via Cymru
 update-hashsets                      # refresh ClamAV hashsets
 ```
@@ -151,10 +150,9 @@ update-hashsets                      # refresh ClamAV hashsets
 ### Auto-start (verify running after boot)
 
 ```bash
-docker ps                            # should show homepage, cyberchef, courses, clamav-hashbuilder
+docker ps                            # should show homepage, cyberchef, clamav-hashbuilder
 curl -so /dev/null -w '%{http_code}' http://localhost:3000    # Homepage: 200
 curl -so /dev/null -w '%{http_code}' http://localhost:8080    # CyberChef: 200
-curl -so /dev/null -w '%{http_code}' http://localhost:8000    # Courses: 200
 ```
 
 ### Manual-start
@@ -236,7 +234,6 @@ Open Firefox and check each service:
 
 - [ ] `http://localhost:3000` — Homepage dashboard with links
 - [ ] `http://localhost:8080` — CyberChef (test a Base64 encode/decode)
-- [ ] `http://localhost:8000` — Course materials (if configured)
 - [ ] `https://localhost` — Timesketch login (after `starttimesketch`)
 
 ## Architecture-Specific Notes

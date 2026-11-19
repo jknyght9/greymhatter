@@ -12,7 +12,6 @@ A digital forensics and incident response (DFIR) distribution based on Fedora Li
 - **Ghostty terminal** with Fish shell and pre-configured DFIR helper functions
 - **Forensic tools**: Hayabusa, Sleuthkit (VMDK/VHD), Volatility 2 & 3, capa, FLOSS, bulk_extractor, yq
 - **Analysis platforms**: Timesketch, Yeti, SpiderFoot, CyberChef (Docker containers)
-- **Course delivery**: MkDocs-based course materials served locally
 - **Dual architecture**: AMD64 and ARM64 (Apple Silicon) support
 - **Automated builds**: Packer + Ansible for reproducible VM images
 
@@ -80,7 +79,6 @@ greymhatter/
 │   ├── roles/user/      # User creation, dotfiles, fish shell
 │   ├── roles/tools/     # DFIR tools (compiled via Docker builder)
 │   ├── roles/containers/ # Timesketch, Yeti, SpiderFoot, CyberChef
-│   ├── roles/courses/   # MkDocs course material delivery
 │   ├── roles/samba/     # SMB file sharing
 │   └── roles/verify/    # Post-install verification + manifest
 ├── packer/              # Packer templates (Proxmox + Fusion)
@@ -98,7 +96,6 @@ greymhatter/
 |------------|------|------------|-------------------|
 | Homepage   | 3000 | Yes        | —                 |
 | CyberChef  | 8080 | Yes        | —                 |
-| Courses    | 8000 | Yes        | —                 |
 | Timesketch | 443  | No         | `starttimesketch` |
 | Yeti       | 8888 | No         | `startyeti`       |
 | SpiderFoot | 5001 | No         | `startspiderfoot` |

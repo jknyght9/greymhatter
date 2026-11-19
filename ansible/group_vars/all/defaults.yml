@@ -72,9 +72,6 @@ colloid_icon_tag: "2024-10-18"
 maxmind_account_id: ""
 maxmind_license_key: ""
 
-# Course materials (set to a git repo URL to clone course content)
-courses_repo: ""
-
 # Docker
 docker_network_name: greymhatter
 

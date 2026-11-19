@@ -136,7 +136,6 @@
   loop:
     - 3000/tcp    # Homepage dashboard
     - 5001/tcp    # SpiderFoot
-    - 8000/tcp    # Course materials (mkdocs)
     - 8080/tcp    # CyberChef
     - 8888/tcp    # Yeti
     - 3389/tcp    # xRDP

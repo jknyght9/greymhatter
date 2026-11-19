@@ -146,7 +146,7 @@ function test0() {
 
     # Always-running containers (must be Up)
     local container
-    for container in homepage cyberchef clamav-hashbuilder courses; do
+    for container in homepage cyberchef clamav-hashbuilder; do
         if docker ps --format '{{.Names}}' | grep -q "$container"; then
             success "$container container running"
         else
@@ -167,7 +167,6 @@ function test0() {
     done <<EOF
 Homepage (3000)|http://localhost:3000|200 301 302
 CyberChef (8080)|http://localhost:8080|200
-Courses (8000)|http://localhost:8000|200 301 302
 EOF
 }
 

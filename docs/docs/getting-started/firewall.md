@@ -67,6 +67,5 @@ sudo firewall-cmd --reload
 | 3389/tcp | xRDP remote desktop |
 | 5001/tcp | SpiderFoot |
 | 5900/tcp | VNC |
-| 8000/tcp | Course materials |
 | 8080/tcp | CyberChef |
 | 8888/tcp | Yeti |

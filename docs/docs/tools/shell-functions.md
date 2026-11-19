@@ -87,9 +87,6 @@ disk-expand grow
 ```bash
 # Pull latest repo and re-run Ansible playbook
 greymhatter-update
-
-# Update course materials
-course-update
 ```
 
 ## OSINT

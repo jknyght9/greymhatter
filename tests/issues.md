@@ -3,7 +3,7 @@
 
 ## ARM64
 
-- Courses, CyberChef, Homepage containers not started on login
+- CyberChef, Homepage containers not started on login
 - greymhatter/volatility2:latest image not found
 - powershell installed; however, pwsh is not an executable (chmod +x) and DFIR-PSTools is not importing correctly
 - no hashsets in /opt/hashsets

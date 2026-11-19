@@ -28,8 +28,6 @@
       tags: [tools]
     - role: containers
       tags: [containers]
-    - role: courses
-      tags: [courses]
     - role: samba
       tags: [samba]
     - role: verify

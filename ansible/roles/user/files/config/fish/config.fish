@@ -350,19 +350,6 @@ function timesketch-import
   timesketch_importer --sketch_id $SKETCH $argv[1]
 end
 
-# --- Course Materials ---
-
-function course-update
-  if not test -d /opt/courses
-    printf "Course materials not installed at /opt/courses\n"
-    return 1
-  end
-  git -C /opt/courses pull 2>/dev/null
-  docker compose -f /opt/courses/compose.yml pull
-  docker compose -f /opt/courses/compose.yml up -d
-  printf "Course materials updated and available at http://localhost:8000\n"
-end
-
 # --- Hashsets ---
 
 function update-hashsets

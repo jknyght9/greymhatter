@@ -64,7 +64,7 @@ greymhatter/
 │   ├── playbook.yml         # Main entry point
 │   ├── group_vars/all/defaults.yml   # Pinned versions and variables
 │   └── roles/               # base, docker, desktop, user, tools,
-│                            # containers, courses, samba, verify
+│                            # containers, samba, verify
 ├── packer/                  # Packer templates
 │   ├── greymhatter.pkr.hcl  # AMD64 (Proxmox)
 │   ├── fusion/              # ARM64 (VMware Fusion)
