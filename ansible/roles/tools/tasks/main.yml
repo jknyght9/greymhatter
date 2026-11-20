@@ -78,5 +78,5 @@
 - name: Install PE demo sample generator
   ansible.builtin.include_tasks: demo-samples.yml
 
-- name: Install Eric Zimmerman tools (.NET 9)
+- name: Install Eric Zimmerman tools (.NET 10)
   ansible.builtin.include_tasks: ezimmerman.yml

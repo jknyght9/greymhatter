@@ -86,10 +86,13 @@
 # WPF GUI runtimeconfigs (RegistryExplorer, TimelineExplorer, etc.) list BOTH
 # Microsoft.NETCore.App and Microsoft.WindowsDesktop.App, so filter by the
 # WindowsDesktop presence — those apps won't run on Linux either way.
-# "net\" first so a fixed upstream net/ wins when both exist.
+# Search all of ezimmerman/ except the obsolete net9/, so no literal backslash
+# is needed: Ansible's argument splitter reads "...net\\" as an escaped quote
+# and aborts the play. sort -r puts .../net/ after .../net\ so a fixed
+# upstream net/ wins when both exist (the wrapper step keeps the last one).
 - name: Find EZ tool CLI entrypoints
   ansible.builtin.shell: |
-    find "{{ tools_dir }}/ezimmerman/net\\" "{{ tools_dir }}/ezimmerman/net" -type f -name '*.runtimeconfig.json' 2>/dev/null | while read -r rc; do
+    find {{ tools_dir }}/ezimmerman -path {{ tools_dir }}/ezimmerman/net9 -prune -o -type f -name '*.runtimeconfig.json' -print | sort -r | while read -r rc; do
       base="$(basename "$rc" .runtimeconfig.json)"
       dir="$(dirname "$rc")"
       dll="$dir/$base.dll"
