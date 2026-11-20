@@ -319,15 +319,16 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
+  # Pinned upstream build; checks the version, not just presence
   - cmd: hashcat
-    probe: "hashcat --version"
+    probe: "/usr/local/bin/hashcat --version | grep -qx 'v{{ hashcat_version }}'"
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
   # Probes the OpenCL platform rather than the package: hashcat installs and runs
   # --version happily with no backend, and only fails when a crack is attempted.
   - cmd: pocl
-    probe: "hashcat -I | grep -q 'Portable Computing Language'"
+    probe: "/usr/local/bin/hashcat -I | grep -q 'Portable Computing Language'"
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
@@ -430,6 +431,17 @@ expected_binaries:
 
   - cmd: luks2hashcat
     probe: "/opt/tools/luks2hashcat --help"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: bitlocker2hashcat
+    probe: "/opt/tools/bitlocker2hashcat --help"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  # No args prints usage; exits non-zero only if perl or its LZMA module is missing
+  - cmd: 7z2hashcat
+    probe: "/opt/tools/7z2hashcat 2>&1 | grep -q -i usage"
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 

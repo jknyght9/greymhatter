@@ -6,29 +6,111 @@
       - dislocker
       - exfatprogs
       - foremost
-      - hashcat
       # hashcat is useless without an OpenCL platform, and the Fusion base has no GPU.
       # pocl is the CPU runtime: without it hashcat exits with CL_PLATFORM_NOT_FOUND_KHR
       # before trying a single candidate. IS-4523 4.1.0 depends on this.
       - pocl
+      # The OpenCL loader hashcat dlopens. Fedora's hashcat RPM pulled it in;
+      # the source build below does not, and without it pocl is never found.
+      - ocl-icd
     state: present
     install_weak_deps: false
 
-# hashcat's VeraCrypt (294xx/299xx) and LUKS modes take a hash string, not the
-# raw volume header; these extractors produce it. Pinned to the RPM's version.
-- name: Install hashcat extractors
+# --- hashcat (upstream, pinned) ---
+# Fedora's RPM lags upstream by a major version; remove it so /usr/bin/hashcat
+# cannot shadow or be confused with the pinned build in /usr/local/bin.
+- name: Remove Fedora hashcat package
+  ansible.builtin.dnf:
+    name:
+      - hashcat
+      # Weak dependency of the RPM; it requires hashcat, so removing hashcat
+      # alone fails depsolve on boxes that have it.
+      - hashcat-doc
+    state: absent
+
+- name: Check installed hashcat version
+  ansible.builtin.command: /usr/local/bin/hashcat --version
+  register: hashcat_check
+  changed_when: false
+  # Probe: rc=2 (no such file) on first run is expected.
+  failed_when: false
+
+- name: Check hashcat extractors are installed
+  ansible.builtin.stat:
+    path: "{{ tools_dir }}/veracrypt2hashcat.py"
+  register: hashcat_extractors
+
+# hashcat's VeraCrypt (294xx/299xx), LUKS and BitLocker modes take a hash
+# string, not the raw volume; the extractors in the same tree produce it.
+- name: Build and install hashcat {{ hashcat_version }}
+  when: >-
+    hashcat_check.stdout | trim != 'v' + hashcat_version
+    or not hashcat_extractors.stat.exists
+  block:
+    - name: Download hashcat source
+      ansible.builtin.get_url:
+        url: "https://github.com/hashcat/hashcat/archive/refs/tags/v{{ hashcat_version }}.tar.gz"
+        dest: /tmp/hashcat-src.tar.gz
+        checksum: "sha256:{{ hashcat_src_sha256 }}"
+        mode: "0644"
+
+    - name: Extract hashcat source
+      ansible.builtin.unarchive:
+        src: /tmp/hashcat-src.tar.gz
+        dest: /tmp
+        remote_src: true
+
+    - name: Compile hashcat
+      ansible.builtin.command:
+        cmd: make -j{{ ansible_processor_vcpus | default(2) }}
+        chdir: /tmp/hashcat-{{ hashcat_version }}
+      register: hashcat_make
+      changed_when: hashcat_make.rc == 0
+
+    - name: Install hashcat to /usr/local
+      ansible.builtin.command:
+        cmd: make install
+        chdir: /tmp/hashcat-{{ hashcat_version }}
+      register: hashcat_install
+      changed_when: hashcat_install.rc == 0
+
+    - name: Install hashcat extractors
+      ansible.builtin.copy:
+        src: /tmp/hashcat-{{ hashcat_version }}/tools/{{ item }}.py
+        dest: "{{ tools_dir }}/{{ item }}.py"
+        remote_src: true
+        mode: "0755"
+      loop:
+        - veracrypt2hashcat
+        - luks2hashcat
+        - bitlocker2hashcat
+
+    - name: Remove hashcat build files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/hashcat-src.tar.gz
+        - /tmp/hashcat-{{ hashcat_version }}
+
+# 7-Zip archives (IS-4483 3.7.1). Perl; LZMA module for compressed headers.
+- name: Install 7z2hashcat dependency
+  ansible.builtin.dnf:
+    name: perl-Compress-Raw-Lzma
+    state: present
+
+- name: Install 7z2hashcat
   ansible.builtin.get_url:
-    url: "https://raw.githubusercontent.com/hashcat/hashcat/{{ hashcat_tools_tag }}/tools/{{ item.name }}.py"
-    dest: "{{ tools_dir }}/{{ item.name }}.py"
-    checksum: "sha256:{{ item.sha256 }}"
+    url: "https://raw.githubusercontent.com/philsmd/7z2hashcat/{{ sevenz2hashcat_version }}/7z2hashcat.pl"
+    dest: "{{ tools_dir }}/7z2hashcat.pl"
+    checksum: "sha256:{{ sevenz2hashcat_sha256 }}"
     mode: "0755"
-  loop:
-    - name: veracrypt2hashcat
-      sha256: "{{ veracrypt2hashcat_sha256 }}"
-    - name: luks2hashcat
-      sha256: "{{ luks2hashcat_sha256 }}"
-  loop_control:
-    label: "{{ item.name }}"
+
+- name: Link 7z2hashcat without the .pl suffix
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/7z2hashcat.pl"
+    dest: "{{ tools_dir }}/7z2hashcat"
+    state: link
 
 - name: Link hashcat extractors without the .py suffix
   ansible.builtin.file:
@@ -38,6 +120,7 @@
   loop:
     - veracrypt2hashcat
     - luks2hashcat
+    - bitlocker2hashcat
 
 - name: Check if VeraCrypt is installed
   ansible.builtin.command:
