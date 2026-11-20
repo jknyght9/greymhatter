@@ -120,7 +120,23 @@
   loop:
     - veracrypt2hashcat
     - luks2hashcat
-    - bitlocker2hashcat
+
+# Upstream bitlocker2hashcat prints its parsing progress on stdout, so
+# `bitlocker2hashcat vol > hash` gives hashcat a file it cannot parse. Keep the
+# $bitlocker$ lines on stdout and send the rest to stderr, like the others.
+- name: Install bitlocker2hashcat wrapper
+  ansible.builtin.copy:
+    dest: "{{ tools_dir }}/bitlocker2hashcat"
+    content: |
+      #!/bin/bash
+      python3 {{ tools_dir }}/bitlocker2hashcat.py "$@" | while IFS= read -r line; do
+        case "$line" in
+          '$bitlocker$'*) printf '%s\n' "$line" ;;
+          *) printf '%s\n' "$line" >&2 ;;
+        esac
+      done
+      exit "${PIPESTATUS[0]}"
+    mode: "0755"
 
 - name: Check if VeraCrypt is installed
   ansible.builtin.command:
