@@ -60,6 +60,11 @@ pdf_parser_sha256: a9fa2faa25e88ab0293543d14aa168ff21fc9fd25a0a8ad657b0dad317121
 # Bump version and checksum together.
 hashcat_version: "8.0.0"
 hashcat_src_sha256: 6281721ef2bc57aed1ffa1a186aa39d01cee09899741cb58e027733a373c2ae3
+# office2hashcat: John the Ripper's office2john.py (openwall/john), wrapped to
+# print the bare $office$/$oldoffice$ form. The old standalone office2hashcat.py
+# (stricture) is gone upstream and its last copy fails on Python 3.9+.
+office2john_commit: 101fc50fc3af97f32a201ab3c339d30924ec11c8
+office2john_sha256: 6cf33d1b4f7256304df7c8b58bee63131b4ae10756550a980747d95fc48e2862
 # philsmd/7z2hashcat (not in hashcat's tree). $7z$ for mode 11600.
 sevenz2hashcat_version: "2.0"
 sevenz2hashcat_sha256: 40fbb2862664109b7ab18f6c953e234ae4d722f1be0a25d8381189a1a8f5c09f

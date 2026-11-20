@@ -112,6 +112,32 @@
     dest: "{{ tools_dir }}/7z2hashcat"
     state: link
 
+# Office documents (IS-4523 4.1.0, 4.3.x; IS-4483 3.7.1). office2john prefixes
+# "filename:" and, on $oldoffice$ lines, adds John-only fields (a 5th *block for
+# RC4 CryptoAPI, a :::summary::file suffix) that hashcat 9700/9800 reject. The
+# wrapper strips them, reproducing the old office2hashcat output exactly.
+- name: Install olefile for office2john
+  ansible.builtin.pip:
+    name: olefile
+    executable: pip3
+    state: present
+
+- name: Install office2john
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/openwall/john/{{ office2john_commit }}/run/office2john.py"
+    dest: "{{ tools_dir }}/office2john.py"
+    checksum: "sha256:{{ office2john_sha256 }}"
+    mode: "0755"
+
+- name: Install office2hashcat wrapper
+  ansible.builtin.copy:
+    dest: "{{ tools_dir }}/office2hashcat"
+    content: |
+      #!/bin/bash
+      python3 {{ tools_dir }}/office2john.py "$@" | sed -E 's/^[^$]*://; /^\$oldoffice\$/{ s/:::.*$//; s/^(\$oldoffice\$[^*]*\*[^*]*\*[^*]*\*[^*]*)\*.*$/\1/; }'
+      exit "${PIPESTATUS[0]}"
+    mode: "0755"
+
 - name: Link hashcat extractors without the .py suffix
   ansible.builtin.file:
     src: "{{ tools_dir }}/{{ item }}.py"

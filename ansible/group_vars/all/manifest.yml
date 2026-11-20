@@ -439,6 +439,12 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/encryption.yml
 
+  # No args prints Usage on stderr and exits 1; also proves olefile imports
+  - cmd: office2hashcat
+    probe: "python3 -c 'import olefile' && /opt/tools/office2hashcat 2>&1 | grep -q Usage"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
   # No args prints usage; exits non-zero only if perl or its LZMA module is missing
   - cmd: 7z2hashcat
     probe: "/opt/tools/7z2hashcat 2>&1 | grep -q -i usage"
