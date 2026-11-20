@@ -423,6 +423,16 @@ expected_binaries:
     arch: [x86_64, aarch64]
     source: tools/yara.yml
 
+  - cmd: veracrypt2hashcat
+    probe: "/opt/tools/veracrypt2hashcat --help"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
+  - cmd: luks2hashcat
+    probe: "/opt/tools/luks2hashcat --help"
+    arch: [x86_64, aarch64]
+    source: tools/encryption.yml
+
   - cmd: pdfid
     probe: "/opt/tools/pdfid --version"
     arch: [x86_64, aarch64]

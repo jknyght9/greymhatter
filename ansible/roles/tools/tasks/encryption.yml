@@ -14,6 +14,31 @@
     state: present
     install_weak_deps: false
 
+# hashcat's VeraCrypt (294xx/299xx) and LUKS modes take a hash string, not the
+# raw volume header; these extractors produce it. Pinned to the RPM's version.
+- name: Install hashcat extractors
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/hashcat/hashcat/{{ hashcat_tools_tag }}/tools/{{ item.name }}.py"
+    dest: "{{ tools_dir }}/{{ item.name }}.py"
+    checksum: "sha256:{{ item.sha256 }}"
+    mode: "0755"
+  loop:
+    - name: veracrypt2hashcat
+      sha256: "{{ veracrypt2hashcat_sha256 }}"
+    - name: luks2hashcat
+      sha256: "{{ luks2hashcat_sha256 }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Link hashcat extractors without the .py suffix
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/{{ item }}.py"
+    dest: "{{ tools_dir }}/{{ item }}"
+    state: link
+  loop:
+    - veracrypt2hashcat
+    - luks2hashcat
+
 - name: Check if VeraCrypt is installed
   ansible.builtin.command:
     cmd: veracrypt --text --version

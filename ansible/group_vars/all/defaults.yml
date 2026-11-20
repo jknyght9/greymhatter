@@ -53,6 +53,12 @@ signature_base_excluded:
 didier_stevens_commit: 7d625d0b05c4638b981a2a2cc9a8481d7b73e56d
 pdfid_sha256: e958a01f1c2596470f27d3c308061b85d7059ff476a58d74f1957a71b4f1248f
 pdf_parser_sha256: a9fa2faa25e88ab0293543d14aa168ff21fc9fd25a0a8ad657b0dad3171214ac
+# hashcat hash extractors (tools/ in the hashcat source tree; not in Fedora's
+# RPM). Tag must match the installed hashcat RPM: extractor output format and
+# the binary's hash modes change together (e.g. 29421 wants $veracrypt$).
+hashcat_tools_tag: "v6.2.6"
+veracrypt2hashcat_sha256: f97bc82e61ef605e2df4f5507d03d9c91f9218a35cb90960bae012a498aa6326
+luks2hashcat_sha256: d1981eab39e3a06a726dcc080366a5899431e607f4543b4d28e99b89d11870b3
 # Detect It Easy (horsicq/DIE-engine). Upstream RPMs are unsigned, so they
 # are fetched by checksum. Installed for evaluation, not taught in IS-4523.
 die_version: "4.0.0"
